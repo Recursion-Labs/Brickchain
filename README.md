@@ -97,10 +97,10 @@ Our test suite confirms functionality across critical scenarios:
 
 | Role | Name | GitHub Profile |
 |---|---|---|
-| **Lead** | Md Athar Jamal Makki | [@atharhive](https://github.com/atharhive) |
-| **Frontend** | Akshad Jogi | [@akshad-exe](https://github.com/akshad-exe) |
-| **Smart Contract Dev** | Ayush Sarkar | [@dev-Ninjaa](https://github.com/dev-Ninjaa) |
-| **Backend**| Samarth Mahapatra | [@samarth3301](https://github.com/samarth3301) |
+| **Research & Project Management** | Md Athar Jamal Makki | [@atharhive](https://github.com/atharhive) |
+| **Tech Lead & Backend**| Samarth Mahapatra | [@samarth3301](https://github.com/samarth3301) |
+| **Smart Contract & Frontend** | Akshad Jogi | [@akshad-exe](https://github.com/akshad-exe) |
+| **Smart Contract & Backend** | Ayush Sarkar | [@dev-Ninjaa](https://github.com/dev-Ninjaa) |
 
 -----
 
