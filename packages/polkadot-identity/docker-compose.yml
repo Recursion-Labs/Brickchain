@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: polkadot_realestate
+      POSTGRES_USER: polkadot
+      POSTGRES_PASSWORD: secure_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U polkadot -d polkadot_realestate"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  polkadot-identity:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://polkadot:secure_password@postgres:5432/polkadot_realestate
+      RUST_LOG: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
