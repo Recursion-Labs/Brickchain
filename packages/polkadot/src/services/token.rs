@@ -1,86 +1,18 @@
 use anyhow::{anyhow, Result};
-use chrono::Utc;
-use sqlx::Row;
-use tracing::{info, warn};
+use tracing::info;
 use uuid::Uuid;
+use std::sync::Arc;
 
 use crate::database::Database;
-use crate::models::*;
+use crate::models::{GlobalTokenState, TokenState, TokenTransfer};
 
-pub struct RealEstateService {
-    db: Database,
+pub struct TokenService {
+    db: Arc<Database>,
 }
 
-impl RealEstateService {
-    pub fn new(db: Database) -> Self {
+impl TokenService {
+    pub fn new(db: Arc<Database>) -> Self {
         Self { db }
-    }
-
-    /// Create a new property (aligns with register_property circuit)
-    pub async fn create_property(
-        &self,
-        address: String,
-        description: String,
-        value_usd: i64,
-    ) -> Result<Uuid> {
-        let property_id = Uuid::new_v4();
-        
-        sqlx::query(r#"
-            INSERT INTO properties (id, address, description, value_usd, status)
-            VALUES ($1, $2, $3, $4, 'registered')
-        "#)
-        .bind(property_id)
-        .bind(&address)
-        .bind(&description)
-        .bind(value_usd)
-        .execute(self.db.pool())
-        .await?;
-
-        info!("Created property: {} at {}", property_id, address);
-        Ok(property_id)
-    }
-
-    /// Update property status (aligns with tokenize_property, transfer_property_ownership, deactivate_property circuits)
-    pub async fn update_property_status(
-        &self,
-        property_id: Uuid,
-        status: PropertyStatus,
-    ) -> Result<()> {
-        sqlx::query(r#"
-            UPDATE properties 
-            SET status = $1, updated_at = NOW()
-            WHERE id = $2
-        "#)
-        .bind(status)
-        .bind(property_id)
-        .execute(self.db.pool())
-        .await?;
-
-        self.increment_nonce().await?;
-        info!("Updated property {} status to {:?}", property_id, status);
-        Ok(())
-    }
-
-    /// Create a new token holder
-    pub async fn create_token_holder(
-        &self,
-        polkadot_address: String,
-        name: String,
-    ) -> Result<Uuid> {
-        let holder_id = Uuid::new_v4();
-        
-        sqlx::query(r#"
-            INSERT INTO token_holders (id, polkadot_address, name)
-            VALUES ($1, $2, $3)
-        "#)
-        .bind(holder_id)
-        .bind(&polkadot_address)
-        .bind(&name)
-        .execute(self.db.pool())
-        .await?;
-
-        info!("Created token holder: {} ({})", holder_id, polkadot_address);
-        Ok(holder_id)
     }
 
     /// Mint tokens (aligns with mint circuit)
@@ -128,7 +60,7 @@ impl RealEstateService {
 
         // Update global state
         sqlx::query(r#"
-            UPDATE global_token_state 
+            UPDATE global_token_state
             SET total_supply = total_supply + $1,
                 circulating_supply = circulating_supply + $1,
                 nonce = nonce + 1,
@@ -183,7 +115,7 @@ impl RealEstateService {
 
         // Update sender balance
         sqlx::query(r#"
-            UPDATE token_balances 
+            UPDATE token_balances
             SET balance = balance - $3, updated_at = NOW()
             WHERE holder_id = $1 AND property_id = $2
         "#)
@@ -220,7 +152,7 @@ impl RealEstateService {
 
         // Update global state
         sqlx::query(r#"
-            UPDATE global_token_state 
+            UPDATE global_token_state
             SET nonce = nonce + 1,
                 holder_count = (
                     SELECT COUNT(DISTINCT holder_id) FROM token_balances WHERE balance > 0
@@ -232,7 +164,7 @@ impl RealEstateService {
         .await?;
 
         tx.commit().await?;
-        info!("Transferred {} tokens from {} to {} for property {}", 
+        info!("Transferred {} tokens from {} to {} for property {}",
               amount, from_holder_id, to_holder_id, property_id);
         Ok(())
     }
@@ -272,7 +204,7 @@ impl RealEstateService {
 
         // Update balance
         sqlx::query(r#"
-            UPDATE token_balances 
+            UPDATE token_balances
             SET balance = balance - $3, updated_at = NOW()
             WHERE holder_id = $1 AND property_id = $2
         "#)
@@ -295,7 +227,7 @@ impl RealEstateService {
 
         // Update global state
         sqlx::query(r#"
-            UPDATE global_token_state 
+            UPDATE global_token_state
             SET total_supply = total_supply - $1,
                 circulating_supply = circulating_supply - $1,
                 nonce = nonce + 1,
@@ -317,7 +249,7 @@ impl RealEstateService {
     /// Pause token operations (aligns with pause_token circuit)
     pub async fn pause_token(&self) -> Result<()> {
         sqlx::query(r#"
-            UPDATE global_token_state 
+            UPDATE global_token_state
             SET token_state = 'paused', nonce = nonce + 1, updated_at = NOW()
             WHERE id = 1
         "#)
@@ -336,7 +268,7 @@ impl RealEstateService {
         }
 
         sqlx::query(r#"
-            UPDATE global_token_state 
+            UPDATE global_token_state
             SET token_state = 'active', nonce = nonce + 1, updated_at = NOW()
             WHERE id = 1
         "#)
@@ -372,30 +304,6 @@ impl RealEstateService {
         Ok(state)
     }
 
-    /// Get property by ID
-    pub async fn get_property(&self, property_id: Uuid) -> Result<Property> {
-        let property = sqlx::query_as::<_, Property>(
-            "SELECT * FROM properties WHERE id = $1"
-        )
-        .bind(property_id)
-        .fetch_one(self.db.pool())
-        .await?;
-
-        Ok(property)
-    }
-
-    /// Get token holder by ID
-    pub async fn get_token_holder(&self, holder_id: Uuid) -> Result<TokenHolder> {
-        let holder = sqlx::query_as::<_, TokenHolder>(
-            "SELECT * FROM token_holders WHERE id = $1"
-        )
-        .bind(holder_id)
-        .fetch_one(self.db.pool())
-        .await?;
-
-        Ok(holder)
-    }
-
     /// Get all transfers for a property
     pub async fn get_property_transfers(&self, property_id: Uuid) -> Result<Vec<TokenTransfer>> {
         let transfers = sqlx::query_as::<_, TokenTransfer>(
@@ -406,13 +314,5 @@ impl RealEstateService {
         .await?;
 
         Ok(transfers)
-    }
-
-    /// Helper to increment nonce
-    async fn increment_nonce(&self) -> Result<()> {
-        sqlx::query("UPDATE global_token_state SET nonce = nonce + 1, updated_at = NOW() WHERE id = 1")
-            .execute(self.db.pool())
-            .await?;
-        Ok(())
     }
 }
