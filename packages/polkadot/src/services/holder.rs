@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use crate::database::Database;
 
+#[derive(Clone)]
 pub struct TokenHolderService {
     db: Arc<Database>,
 }

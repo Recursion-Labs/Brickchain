@@ -5,9 +5,11 @@ use tracing_subscriber;
 mod database;
 mod models;
 mod services;
+mod api;
 
 use database::Database;
 use services::RealEstateService;
+use api::start_api_server;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -15,23 +17,32 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt().init();
 
     info!("Starting Polkadot Real Estate Database Service");
-    
+
     // Initialize database connection
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgresql://localhost/polkadot_realestate".to_string());
-    
+
     let db = Database::new(&database_url).await?;
-    
+
     // Run migrations
     db.migrate().await?;
-    
-    // Initialize service
-    let service = RealEstateService::new(db);
-    
-    // Example usage demonstrating contract alignment
-    demo_real_estate_operations(&service).await?;
-    
-    info!("Database service initialized successfully");
+
+    // Check if we should start API server
+    let start_api = std::env::var("START_API").unwrap_or_else(|_| "false".to_string());
+
+    if start_api == "true" {
+        info!("Starting API server on port 8080");
+        start_api_server(db).await?;
+    } else {
+        // Initialize service for demo
+        let service = RealEstateService::new(db);
+
+        // Example usage demonstrating contract alignment
+        demo_real_estate_operations(&service).await?;
+
+        info!("Database service initialized successfully");
+    }
+
     Ok(())
 }
 

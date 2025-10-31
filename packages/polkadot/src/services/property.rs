@@ -6,6 +6,7 @@ use std::sync::Arc;
 use crate::database::Database;
 use crate::models::PropertyStatus;
 
+#[derive(Clone)]
 pub struct PropertyService {
     db: Arc<Database>,
 }

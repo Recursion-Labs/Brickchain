@@ -1,10 +1,12 @@
 pub mod database;
 pub mod models;
 pub mod services;
+pub mod api;
 
 pub use database::Database;
 pub use models::*;
 pub use services::RealEstateService;
+pub use api::*;
 
 #[cfg(test)]
 mod tests {
