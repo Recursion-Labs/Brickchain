@@ -4,7 +4,7 @@ use uuid::Uuid;
 use std::sync::Arc;
 
 use crate::database::Database;
-use crate::models::{Property, PropertyStatus};
+use crate::models::PropertyStatus;
 
 pub struct PropertyService {
     db: Arc<Database>,
@@ -57,17 +57,5 @@ impl PropertyService {
 
         info!("Updated property {} status to {:?}", property_id, status);
         Ok(())
-    }
-
-    /// Get property by ID
-    pub async fn get_property(&self, property_id: Uuid) -> Result<Property> {
-        let property = sqlx::query_as::<_, Property>(
-            "SELECT * FROM properties WHERE id = $1"
-        )
-        .bind(property_id)
-        .fetch_one(self.db.pool())
-        .await?;
-
-        Ok(property)
     }
 }

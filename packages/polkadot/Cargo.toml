@@ -1,7 +1,13 @@
+# /Users/samarthhhh/Documents/mlh-internship/BrickChain/packages/polkadot/Cargo.toml
 [package]
 name = "polkadot"
 version = "0.1.0"
 edition = "2021"
+
+[workspace]
+members = [
+    ".",           # main crate at this dir
+]
 
 [dependencies]
 tokio = { version = "1.0", features = ["full"] }
