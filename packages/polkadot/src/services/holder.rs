@@ -4,7 +4,6 @@ use uuid::Uuid;
 use std::sync::Arc;
 
 use crate::database::Database;
-use crate::models::TokenHolder;
 
 pub struct TokenHolderService {
     db: Arc<Database>,
@@ -35,17 +34,5 @@ impl TokenHolderService {
 
         info!("Created token holder: {} ({})", holder_id, polkadot_address);
         Ok(holder_id)
-    }
-
-    /// Get token holder by ID
-    pub async fn get_token_holder(&self, holder_id: Uuid) -> Result<TokenHolder> {
-        let holder = sqlx::query_as::<_, TokenHolder>(
-            "SELECT * FROM token_holders WHERE id = $1"
-        )
-        .bind(holder_id)
-        .fetch_one(self.db.pool())
-        .await?;
-
-        Ok(holder)
     }
 }

@@ -75,23 +75,6 @@ impl RealEstateService {
         self.token.transfer_tokens(from_holder_id, to_holder_id, property_id, amount).await
     }
 
-    pub async fn burn_tokens(
-        &self,
-        from_holder_id: uuid::Uuid,
-        property_id: uuid::Uuid,
-        amount: i64,
-    ) -> anyhow::Result<()> {
-        self.token.burn_tokens(from_holder_id, property_id, amount).await
-    }
-
-    pub async fn pause_token(&self) -> anyhow::Result<()> {
-        self.token.pause_token().await
-    }
-
-    pub async fn unpause_token(&self) -> anyhow::Result<()> {
-        self.token.unpause_token().await
-    }
-
     pub async fn get_token_balance(&self, holder_id: uuid::Uuid, property_id: uuid::Uuid) -> anyhow::Result<i64> {
         self.token.get_token_balance(holder_id, property_id).await
     }
@@ -100,15 +83,4 @@ impl RealEstateService {
         self.token.get_global_state().await
     }
 
-    pub async fn get_property(&self, property_id: uuid::Uuid) -> anyhow::Result<crate::models::Property> {
-        self.property.get_property(property_id).await
-    }
-
-    pub async fn get_token_holder(&self, holder_id: uuid::Uuid) -> anyhow::Result<crate::models::TokenHolder> {
-        self.holder.get_token_holder(holder_id).await
-    }
-
-    pub async fn get_property_transfers(&self, property_id: uuid::Uuid) -> anyhow::Result<Vec<crate::models::TokenTransfer>> {
-        self.token.get_property_transfers(property_id).await
-    }
 }

@@ -18,30 +18,3 @@ pub enum PropertyStatus {
     Transferred,
     Deactivated,
 }
-
-/// Transfer type enum
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
-#[sqlx(type_name = "transfer_type", rename_all = "lowercase")]
-pub enum TransferType {
-    Mint,
-    Transfer,
-    Burn,
-}
-
-impl Default for TokenState {
-    fn default() -> Self {
-        TokenState::Active
-    }
-}
-
-impl Default for PropertyStatus {
-    fn default() -> Self {
-        PropertyStatus::Registered
-    }
-}
-
-impl Default for TransferType {
-    fn default() -> Self {
-        TransferType::Transfer
-    }
-}

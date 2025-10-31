@@ -1,8 +1,7 @@
 use anyhow::Result;
-use sqlx::{PgPool, Row};
-use tracing::{info, warn};
+use sqlx::{PgPool};
+use tracing::{info};
 
-use crate::models::*;
 
 pub struct Database {
     pool: PgPool,
@@ -55,7 +54,6 @@ impl Database {
         self.create_token_balances_table().await?;
         self.create_token_transfers_table().await?;
         self.create_global_token_state_table().await?;
-        self.create_property_ownership_table().await?;
         
         // Initialize global state if not exists
         self.initialize_global_state().await?;
@@ -183,27 +181,6 @@ impl Database {
         "#)
         .execute(&self.pool)
         .await?;
-
-        Ok(())
-    }
-
-    async fn create_property_ownership_table(&self) -> Result<()> {
-        sqlx::query(r#"
-            CREATE TABLE IF NOT EXISTS property_ownership (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                property_id UUID NOT NULL REFERENCES properties(id),
-                previous_owner_id UUID REFERENCES token_holders(id),
-                new_owner_id UUID NOT NULL REFERENCES token_holders(id),
-                transfer_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                transaction_hash TEXT
-            )
-        "#)
-        .execute(&self.pool)
-        .await?;
-
-        sqlx::query("CREATE INDEX IF NOT EXISTS idx_property_ownership_property ON property_ownership(property_id)")
-            .execute(&self.pool)
-            .await?;
 
         Ok(())
     }

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use tracing::{info, warn};
+use tracing::{info};
 use tracing_subscriber;
 
 mod database;
@@ -12,8 +12,8 @@ use services::RealEstateService;
 #[tokio::main]
 async fn main() -> Result<()> {
     // Initialize tracing
-    tracing_subscriber::init();
-    
+    tracing_subscriber::fmt().init();
+
     info!("Starting Polkadot Real Estate Database Service");
     
     // Initialize database connection
