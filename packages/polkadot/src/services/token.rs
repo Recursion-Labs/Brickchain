@@ -6,6 +6,7 @@ use std::sync::Arc;
 use crate::database::Database;
 use crate::models::{GlobalTokenState, TokenState};
 
+#[derive(Clone)]
 pub struct TokenService {
     db: Arc<Database>,
 }

@@ -23,14 +23,18 @@ RUN useradd -m -u 1001 appuser
 WORKDIR /app
 
 # Copy the binary from builder stage
-COPY --from=builder /app/target/release/polkadot-identity /app/polkadot-identity
+COPY --from=builder /app/target/release/polkadot /app/polkadot
 
 # Change ownership to app user
 RUN chown -R appuser:appuser /app
 USER appuser
 
-# Expose port (if you add a web server later)
+# Expose port for API server
 EXPOSE 8080
 
+# Set environment variables
+ENV START_API=true
+ENV DATABASE_URL=postgresql://user:password@db:5432/polkadot_realestate
+
 # Run the application
-CMD ["./polkadot-identity"]
+CMD ["./polkadot"]

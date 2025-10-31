@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub mod property;
 pub mod token;
 pub mod holder;
@@ -11,6 +13,7 @@ pub use global_state::GlobalStateService;
 use std::sync::Arc;
 use crate::database::Database;
 
+#[derive(Clone)]
 pub struct RealEstateService {
     pub property: PropertyService,
     pub token: TokenService,

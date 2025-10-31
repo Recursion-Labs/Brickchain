@@ -2,6 +2,7 @@ use anyhow::Result;
 use std::sync::Arc;
 use crate::database::Database;
 
+#[derive(Clone)]
 pub struct GlobalStateService {
     db: Arc<Database>,
 }
