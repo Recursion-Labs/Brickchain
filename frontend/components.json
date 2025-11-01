@@ -14,5 +14,8 @@
     "components": "@/components",
     "utils": "@/lib/utils",
     "ui": "@/components/ui"
+  },
+  "registries": {
+      "@paceui-ui": "https://ui.paceui.com/r/{name}.json"
   }
 }
