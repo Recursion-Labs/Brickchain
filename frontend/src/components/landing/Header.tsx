@@ -9,8 +9,13 @@ import { SunIcon, MoonIcon } from 'lucide-react';
 
 function Header() {
     const [open, setOpen] = React.useState(false);
+    const [mounted, setMounted] = React.useState(false);
     const scrolled = useScroll(10);
     const { theme, setTheme } = useTheme();
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const links = [
         {
@@ -82,7 +87,7 @@ function Header() {
                         onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                         className="text-foreground hover:opacity-90"
                     >
-                        {theme === 'dark' ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
+                        {mounted && (theme === 'dark' ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />)}
                     </Button>
                     <Button variant="outline" className="text-foreground">
                         Sign In
@@ -129,8 +134,8 @@ function Header() {
                             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                             className="w-full text-foreground justify-start"
                         >
-                            {theme === 'dark' ? <SunIcon className="h-4 w-4 mr-2" /> : <MoonIcon className="h-4 w-4 mr-2" />}
-                            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                            {mounted && (theme === 'dark' ? <SunIcon className="h-4 w-4 mr-2" /> : <MoonIcon className="h-4 w-4 mr-2" />)}
+                            {mounted && (theme === 'dark' ? 'Light Mode' : 'Dark Mode')}
                         </Button>
                         <Button variant="outline" className="w-full text-foreground">
                             Sign In

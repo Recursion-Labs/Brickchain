@@ -3,7 +3,7 @@ import Hero from "@/components/landing/Hero";
 // import Features from "@/components/landing/Features";
 import HowItWorks from "@/components/landing/HowItWorks";
 import { FAQs } from "@/components/landing/FAQs";
-import { Footer } from "@/components/landing/footer";
+import { Footer } from "@/components/landing/Footer";
 
 export default function Home() {
   return (
