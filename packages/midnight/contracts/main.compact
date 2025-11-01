@@ -1,0 +1,9 @@
+pragma language_version >= 0.16 && <= 0.18;
+
+import CompactStandardLibrary;
+
+export ledger message: Opaque<"string">;
+
+export circuit storeMessage(customMessage: Opaque<"string">): [] {
+    message = disclose(customMessage);
+}
