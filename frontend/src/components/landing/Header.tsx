@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { Book, Menu, Sunset, Trees, Zap } from "lucide-react";
 
 import {
@@ -54,7 +55,7 @@ interface Navbar1Props {
 const Header = ({
   logo = {
     url: "#",
-    src: "#",
+    src: "https://ik.imagekit.io/mwhha64ay/Brickchain/logo.png",
     alt: "logo",
     title: "Brickchain",
   },
@@ -137,7 +138,7 @@ const Header = ({
 }: Navbar1Props) => {
   return (
     <section className="sticky top-0 z-50 bg-black border-b border-gray-800">
-      <div className="container py-4">
+      <div className="max-w-7xl mx-auto py-4 px-4">
         {/* Desktop Menu */}
         <nav className="hidden items-center justify-between lg:flex">
           <div className="flex items-center gap-6">
@@ -145,12 +146,9 @@ const Header = ({
             <a href={logo.url} className="flex items-center gap-2">
               <img
                 src={logo.src}
-                className="max-h-10 dark:invert"
+                className="max-h-12 dark:invert"
                 alt={logo.alt}
               />
-              <span className="text-2xl font-bold tracking-tighter ml-2 text-white">
-                {logo.title}
-              </span>
             </a>
             <div className="flex items-center">
               <NavigationMenu>
@@ -177,7 +175,7 @@ const Header = ({
             <a href={logo.url} className="flex items-center gap-2">
               <img
                 src={logo.src}
-                className="max-h-10 dark:invert"
+                className="max-h-12 dark:invert"
                 alt={logo.alt}
               />
             </a>
@@ -193,7 +191,7 @@ const Header = ({
                     <a href={logo.url} className="flex items-center gap-2">
                       <img
                         src={logo.src}
-                        className="max-h-10 dark:invert"
+                        className="max-h-12 dark:invert"
                         alt={logo.alt}
                       />
                     </a>
