@@ -36,6 +36,7 @@ const EnvConfigSchema = z.object({
 		.int()
 		.nonnegative()
 		.default(0),
+	JWT_SECRET: z.string().min(1, { message: "JWT_SECRET is required" }),
 });
 export type EnvConfig = z.infer<typeof EnvConfigSchema>;
 
@@ -46,6 +47,7 @@ const rawConfig = {
 	REDIS_HOST: process.env.REDIS_HOST,
 	REDIS_PORT: process.env.REDIS_PORT,
 	REDIS_DB: process.env.REDIS_DB,
+	JWT_SECRET: process.env.JWT_SECRET,
 };
 
 let envVars: EnvConfig;
@@ -65,6 +67,6 @@ try {
 	throw new Error("Environment configuration validation failed. Check environment variables.");
 }
 
-export const { PORT, NODE_ENV, RESEND_API_KEY, REDIS_HOST, REDIS_PORT, REDIS_DB } = envVars;
+export const { PORT, NODE_ENV, RESEND_API_KEY, REDIS_HOST, REDIS_PORT, REDIS_DB, JWT_SECRET } = envVars;
 
 export default envVars;
