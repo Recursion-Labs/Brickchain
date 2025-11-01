@@ -1,0 +1,8 @@
+services:
+  brickChain_auth:
+    build:
+      context: packages/api/.
+      dockerfile: packages/api/Dockerfile
+    container_name: brickChain_auth
+    ports:
+      - "3000:3000"
