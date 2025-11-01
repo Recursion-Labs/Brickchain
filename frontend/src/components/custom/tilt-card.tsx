@@ -8,7 +8,6 @@ import gsap from "gsap";
 import { cn } from "@/lib/utils";
 
 type TiltCardProps = {
-    maxTilt?: number;
     highlightClassName?: string;
     wrapperClassName?: string;
 } & ComponentProps<"div">;
@@ -18,7 +17,6 @@ export const TiltCard = ({
     highlightClassName,
     className,
     wrapperClassName,
-    maxTilt = 10,
     ...props
 }: TiltCardProps) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -33,29 +31,15 @@ export const TiltCard = ({
             if (!container || !card || !highlight) return;
 
             const handleMouseLeave = () => {
-                gsap.to(card, {
-                    rotateX: 0,
-                    rotateY: 0,
-                    duration: 0.6,
-                    ease: "power3.out",
-                });
+                // Removed rotation reset
             };
 
             const handleMouseMove = (e: MouseEvent) => {
                 const bounds = card.getBoundingClientRect();
                 const offsetX = e.clientX - bounds.left;
                 const offsetY = e.clientY - bounds.top;
-                const centerX = bounds.width / 2;
-                const centerY = bounds.height / 2;
-                const percentX = (offsetX - centerX) / centerX;
-                const percentY = (offsetY - centerY) / centerY;
 
-                gsap.to(card, {
-                    rotateY: percentX * maxTilt,
-                    rotateX: -percentY * maxTilt,
-                    duration: 0.3,
-                    ease: "power3.out",
-                });
+                // Removed rotation animations
                 gsap.to(highlight, {
                     left: bounds.width - offsetX + "px",
                     top: bounds.height - offsetY + "px",
