@@ -1,135 +1,299 @@
-'use client';
-import React from 'react';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { MenuToggleIcon } from '@/components/menu-toggle-icon';
-import { useScroll } from '@/components/use-scroll';
+import { Book, Menu, Sunset, Trees, Zap } from "lucide-react";
 
-function Header() {
-    const [open, setOpen] = React.useState(false);
-    const scrolled = useScroll(10);
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
-    const links = [
-        {
-            label: 'Features',
-            href: '#',
-        },
-        {
-            label: 'Pricing',
-            href: '#',
-        },
-        {
-            label: 'About',
-            href: '#',
-        },
-        {
-            label: 'Whitelist',
-            href: '/waitlist',
-        },
-    ];
-
-    React.useEffect(() => {
-        if (open) {
-            // Disable scroll
-            document.body.style.overflow = 'hidden';
-        } else {
-            // Re-enable scroll
-            document.body.style.overflow = '';
-        }
-
-        // Cleanup when component unmounts (important for Next.js)
-        return () => {
-            document.body.style.overflow = '';
-        };
-    }, [open]);
-
-    return (
-            <header
-                className={cn(
-                    'sticky top-4 z-50 mx-auto w-full max-w-5xl border-b border-transparent md:rounded-xl md:border md:transition-all md:ease-out bg-background text-foreground',
-                    {
-                        'bg-background/95 supports-backdrop-filter:bg-background/50 border-border backdrop-blur-lg md:max-w-4xl md:shadow':
-                            scrolled && !open,
-                        'bg-background/90': open,
-                    },
-                )}
-            >
-            <nav
-                className={cn(
-                    'flex h-14 w-full items-center justify-between px-4 md:h-12 md:transition-all md:ease-out',
-                    {
-                        'md:px-2': scrolled,
-                    },
-                )}
-            >
-                <WordmarkIcon className="h-4" />
-                <div className="hidden items-center gap-2 md:flex">
-                    {links.map((link, i) => (
-                        <a
-                            key={i}
-                            className={buttonVariants({ variant: 'ghost', className: 'text-foreground hover:opacity-90' })}
-                            href={link.href}
-                        >
-                            {link.label}
-                        </a>
-                    ))}
-                    <Button variant="outline" className="text-foreground">
-                        Sign In
-                    </Button>
-                    <Button asChild>
-                        <a href="/waitlist">Get Started</a>
-                    </Button>
-                </div>
-                <Button size="icon" variant="outline" onClick={() => setOpen(!open)} className="md:hidden">
-                    <MenuToggleIcon open={open} className="size-5" duration={300} />
-                </Button>
-            </nav>
-
-            <div
-                className={cn(
-                    'bg-background/90 fixed top-14 right-0 bottom-0 left-0 z-50 flex flex-col overflow-hidden border-y md:hidden',
-                    open ? 'block' : 'hidden',
-                )}
-            >
-                <div
-                    data-slot={open ? 'open' : 'closed'}
-                    className={cn(
-                        'data-[slot=open]:animate-in data-[slot=open]:zoom-in-95 data-[slot=closed]:animate-out data-[slot=closed]:zoom-out-95 ease-out',
-                        'flex h-full w-full flex-col justify-between gap-y-2 p-4',
-                    )}
-                >
-                    <div className="grid gap-y-2">
-                        {links.map((link) => (
-                            <a
-                                key={link.label}
-                                className={buttonVariants({
-                                    variant: 'ghost',
-                                    className: 'justify-start text-foreground',
-                                })}
-                                href={link.href}
-                            >
-                                {link.label}
-                            </a>
-                        ))}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                        <Button variant="outline" className="w-full text-foreground">
-                            Sign In
-                        </Button>
-                        <Button className="w-full" asChild>
-                            <a href="/waitlist">Get Started</a>
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        </header>
-    );
+interface MenuItem {
+  title: string;
+  url: string;
+  description?: string;
+  icon?: React.ReactNode;
+  items?: MenuItem[];
 }
 
-export const WordmarkIcon = (props: React.ComponentProps<"svg">) => (
-  <svg viewBox="0 0 84 24" fill="currentColor" {...props}>
-    <path d="M45.035 23.984c-1.34-.062-2.566-.441-3.777-1.16-1.938-1.152-3.465-3.187-4.02-5.36-.199-.784-.238-1.128-.234-2.058 0-.691.008-.87.062-1.207.23-1.5.852-2.883 1.852-4.144.297-.371 1.023-1.09 1.41-1.387 1.399-1.082 2.84-1.68 4.406-1.816.536-.047 1.528-.02 2.047.054 1.227.184 2.227.543 3.106 1.121 1.277.84 2.5 2.184 3.367 3.7.098.168.172.308.172.312-.004 0-1.047.723-2.32 1.598l-2.711 1.867c-.61.422-2.91 2.008-2.993 2.062l-.074.047-1-1.574c-.55-.867-1.008-1.594-1.012-1.61-.007-.019.922-.648 2.188-1.476 1.215-.793 2.2-1.453 2.191-1.46-.02-.032-.508-.27-.691-.34a5 5 0 0 0-.465-.13c-.371-.09-1.105-.125-1.426-.07-1.285.219-2.336 1.3-2.777 2.852-.215.761-.242 1.636-.074 2.355.129.527.383 1.102.691 1.543.234.332.727.82 1.047 1.031.664.434 1.195.586 1.969.555.613-.023 1.027-.129 1.64-.426 1.184-.574 2.16-1.554 2.828-2.843.122-.235.208-.372.227-.368.082.032 3.77 1.938 3.79 1.961.034.032-.407.93-.696 1.414a12 12 0 0 1-1.051 1.477c-.36.422-1.102 1.14-1.492 1.445a9.9 9.9 0 0 1-3.23 1.684 9.2 9.2 0 0 1-2.95.351M74.441 23.996c-1.488-.043-2.8-.363-4.066-.992-1.687-.848-2.992-2.14-3.793-3.774-.605-1.234-.863-2.402-.863-3.894.004-1.149.176-2.156.527-3.11.14-.378.531-1.171.75-1.515 1.078-1.703 2.758-2.934 4.805-3.524.847-.242 1.465-.332 2.433-.351 1.032-.024 1.743.055 2.48.277l.31.09.007 2.48c.004 1.364 0 2.481-.008 2.481a1 1 0 0 1-.12-.055c-.688-.347-2.09-.488-2.962-.296-.754.167-1.296.453-1.785.945a3.7 3.7 0 0 0-1.043 2.11c-.047.382-.02 1.109.055 1.437a3.4 3.4 0 0 0 .941 1.738c.75.75 1.715 1.102 2.875 1.05.645-.03 1.118-.14 1.563-.366q1.721-.864 2.02-3.145c.035-.293.042-1.266.042-7.957V0H84l-.012 8.434c-.008 7.851-.011 8.457-.054 8.757-.196 1.274-.586 2.25-1.301 3.243-1.293 1.808-3.555 3.07-6.145 3.437-.664.098-1.43.14-2.047.125M9.848 23.574a14 14 0 0 1-1.137-.152c-2.352-.426-4.555-1.781-6.117-3.774-.27-.335-.75-1.05-.95-1.406-1.156-2.047-1.695-4.27-1.64-6.77.047-1.995.43-3.66 1.23-5.316.524-1.086 1.04-1.87 1.793-2.715C4.567 1.72 6.652.535 8.793.171 9.68.02 10.093 0 12.297 0h1.789v5.441l-.961.016c-2.36.04-3.441.215-4.441.719-.836.414-1.278.879-1.895 1.976-.219.399-.535 1.02-.535 1.063 0 .02 1.285.027 3.918.027h3.914v5.113h-3.914c-2.54 0-3.918.008-3.918.028 0 .05.254.597.441.953.344.656.649 1.086 1.051 1.48.668.657 1.356.985 2.445 1.16.645.106 1.274.145 2.61.16l1.285.016v5.442l-2.055-.004a120 120 0 0 1-2.183-.016M16.469 14.715c0-5.504.011-9.04.031-9.29a5.54 5.54 0 0 1 1.527-3.48c.778-.82 1.922-1.457 3.118-1.734C21.915.035 22.422 0 24.39 0h1.652v4.914h-1.426c-1.324 0-1.445.004-1.644.055-.739.191-1.059.699-1.106 1.754l-.015.355h4.191v4.914h-4.184v11.602h-5.39ZM27.023 14.727c0-5.223.012-9.04.028-9.278.129-1.98 1.234-3.68 3.012-4.62.87-.462 1.777-.716 2.851-.802A61 61 0 0 1 34.945 0h1.649v4.914h-1.426c-1.32 0-1.441.004-1.64.055-.739.191-1.063.699-1.106 1.754l-.02.355h4.192v4.914H32.41v11.602h-5.387ZM55.48 15.406V7.22h4.66v1.363c0 1.3.005 1.363.051 1.363.04 0 .075-.054.133-.203.38-.98.969-1.68 1.711-2.031.563-.266 1.422-.43 2.492-.48l.414-.02v4.914l-.414.035c-.738.063-1.597.195-2.058.313-.297.082-.688.28-.875.449-.324.289-.532.703-.625 1.254-.094.547-.098.879-.098 5.144v4.274h-5.39Zm0 0" />
-  </svg>
-);
+interface Navbar1Props {
+  logo?: {
+    url: string;
+    src: string;
+    alt: string;
+    title: string;
+  };
+  menu?: MenuItem[];
+  auth?: {
+    login: {
+      title: string;
+      url: string;
+    };
+    signup: {
+      title: string;
+      url: string;
+    };
+  };
+}
+
+const Header = ({
+  logo = {
+    url: "#",
+    src: "#",
+    alt: "logo",
+    title: "Brickchain",
+  },
+  menu = [
+    { title: "Home", url: "#" },
+    {
+      title: "Products",
+      url: "#",
+      items: [
+        {
+          title: "Blog",
+          description: "The latest industry news, updates, and info",
+          icon: <Book className="size-5 shrink-0" />,
+          url: "#",
+        },
+        {
+          title: "Company",
+          description: "Our mission is to innovate and empower the world",
+          icon: <Trees className="size-5 shrink-0" />,
+          url: "#",
+        },
+        {
+          title: "Careers",
+          description: "Browse job listing and discover our workspace",
+          icon: <Sunset className="size-5 shrink-0" />,
+          url: "#",
+        },
+        {
+          title: "Support",
+          description:
+            "Get in touch with our support team or visit our community forums",
+          icon: <Zap className="size-5 shrink-0" />,
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Resources",
+      url: "#",
+      items: [
+        {
+          title: "Help Center",
+          description: "Get all the answers you need right here",
+          icon: <Zap className="size-5 shrink-0" />,
+          url: "#",
+        },
+        {
+          title: "Contact Us",
+          description: "We are here to help you with any questions you have",
+          icon: <Sunset className="size-5 shrink-0" />,
+          url: "#",
+        },
+        {
+          title: "Status",
+          description: "Check the current status of our services and APIs",
+          icon: <Trees className="size-5 shrink-0" />,
+          url: "#",
+        },
+        {
+          title: "Terms of Service",
+          description: "Our terms and conditions for using our services",
+          icon: <Book className="size-5 shrink-0" />,
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Pricing",
+      url: "#",
+    },
+    {
+      title: "Blog",
+      url: "#",
+    },
+  ],
+  auth = {
+    login: { title: "Login", url: "#" },
+    signup: { title: "Sign up", url: "#" },
+  },
+}: Navbar1Props) => {
+  return (
+    <section className="sticky top-0 z-50 bg-black border-b border-gray-800">
+      <div className="container py-4">
+        {/* Desktop Menu */}
+        <nav className="hidden items-center justify-between lg:flex">
+          <div className="flex items-center gap-6">
+            {/* Logo */}
+            <a href={logo.url} className="flex items-center gap-2">
+              <img
+                src={logo.src}
+                className="max-h-10 dark:invert"
+                alt={logo.alt}
+              />
+              <span className="text-2xl font-bold tracking-tighter ml-2 text-white">
+                {logo.title}
+              </span>
+            </a>
+            <div className="flex items-center">
+              <NavigationMenu>
+                <NavigationMenuList>
+                  {menu.map((item) => renderMenuItem(item))}
+                </NavigationMenuList>
+              </NavigationMenu>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button asChild variant="ghost" size="sm" className="text-white hover:bg-gray-800">
+              <a href={auth.login.url}>{auth.login.title}</a>
+            </Button>
+            <Button asChild size="sm" className="bg-white text-black hover:bg-gray-200">
+              <a href={auth.signup.url}>{auth.signup.title}</a>
+            </Button>
+          </div>
+        </nav>
+
+        {/* Mobile Menu */}
+        <div className="block lg:hidden">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <a href={logo.url} className="flex items-center gap-2">
+              <img
+                src={logo.src}
+                className="max-h-10 dark:invert"
+                alt={logo.alt}
+              />
+            </a>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-white hover:bg-gray-800">
+                  <Menu className="size-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="overflow-y-auto bg-black text-white border-gray-800">
+                <SheetHeader>
+                  <SheetTitle>
+                    <a href={logo.url} className="flex items-center gap-2">
+                      <img
+                        src={logo.src}
+                        className="max-h-10 dark:invert"
+                        alt={logo.alt}
+                      />
+                    </a>
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col gap-6 p-4">
+                  <Accordion
+                    type="single"
+                    collapsible
+                    className="flex w-full flex-col gap-4"
+                  >
+                    {menu.map((item) => renderMobileMenuItem(item))}
+                  </Accordion>
+
+                  <div className="flex flex-col gap-3">
+                    <Button asChild variant="ghost" className="text-white hover:bg-gray-800 justify-start">
+                      <a href={auth.login.url}>{auth.login.title}</a>
+                    </Button>
+                    <Button asChild className="bg-white text-black hover:bg-gray-200 justify-start">
+                      <a href={auth.signup.url}>{auth.signup.title}</a>
+                    </Button>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const renderMenuItem = (item: MenuItem) => {
+  if (item.items) {
+    return (
+        <NavigationMenuItem key={item.title}>
+          <NavigationMenuTrigger className="text-white hover:text-white bg-black hover:bg-gray-800">{item.title}</NavigationMenuTrigger>
+          <NavigationMenuContent className="bg-black text-white border-gray-800">
+          {item.items.map((subItem) => (
+            <NavigationMenuLink asChild key={subItem.title} className="w-80">
+              <SubMenuLink item={subItem} />
+            </NavigationMenuLink>
+          ))}
+        </NavigationMenuContent>
+      </NavigationMenuItem>
+    );
+  }
+
+  return (
+    <NavigationMenuItem key={item.title}>
+      <NavigationMenuLink
+        href={item.url}
+        className="bg-black hover:bg-gray-800 text-white hover:text-white group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors"
+      >
+        {item.title}
+      </NavigationMenuLink>
+    </NavigationMenuItem>
+  );
+};
+
+const renderMobileMenuItem = (item: MenuItem) => {
+  if (item.items) {
+    return (
+      <AccordionItem key={item.title} value={item.title} className="border-b-0">
+        <AccordionTrigger className="text-md py-0 font-semibold hover:no-underline text-white">
+          {item.title}
+        </AccordionTrigger>
+        <AccordionContent className="mt-2">
+          {item.items.map((subItem) => (
+            <SubMenuLink key={subItem.title} item={subItem} />
+          ))}
+        </AccordionContent>
+      </AccordionItem>
+    );
+  }
+
+  return (
+    <a key={item.title} href={item.url} className="text-md font-semibold text-white">
+      {item.title}
+    </a>
+  );
+};
+
+const SubMenuLink = ({ item }: { item: MenuItem }) => {
+  return (
+    <a
+      className="hover:bg-gray-800 text-white flex min-w-80 select-none flex-row gap-4 rounded-md p-3 leading-none no-underline outline-none transition-colors"
+      href={item.url}
+    >
+      <div className="text-white">{item.icon}</div>
+      <div>
+        <div className="text-sm font-semibold text-white">{item.title}</div>
+        {item.description && (
+          <p className="text-gray-300 text-sm leading-snug">
+            {item.description}
+          </p>
+        )}
+      </div>
+    </a>
+  );
+};
 
 export { Header };
