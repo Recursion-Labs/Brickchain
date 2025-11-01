@@ -1,6 +1,6 @@
+/* eslint-disable @next/next/no-img-element */
 import { PlayCircleIcon, ZapIcon } from "lucide-react";
 
-import { RevealText } from "@/components/reveal-text";
 import { SpringButton } from "@/components/spring-button";
 import { TiltCard } from "@/components/tilt-card";
 
@@ -15,10 +15,9 @@ const Hero = () => {
             </div>
             <p>Built for property tokenization</p>
           </div>
-
-          <RevealText className="mt-3 text-2xl leading-[1.25] font-semibold sm:text-3xl lg:text-4xl">
+          <div className="mt-3 text-2xl leading-[1.25] font-semibold sm:text-3xl lg:text-4xl">
             Tokenize Real Estate with Privacy-First Blockchain
-          </RevealText>
+          </div>
           <p className="text-foreground/80 mt-3 max-w-lg max-sm:text-sm lg:mt-5">
             Transform property ownership into fractional, tradable digital assets.
             Trade real estate shares privately and securely using zero-knowledge proofs
