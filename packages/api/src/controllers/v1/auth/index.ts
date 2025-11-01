@@ -1,1 +1,1 @@
-export { default as authControllers } from "./auth.controller"
+export { default as authControllers } from "./auth.controller";

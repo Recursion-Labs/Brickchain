@@ -1,1 +1,1 @@
-export { default as walletControllers} from "./wallet.controller"
+export { default as walletControllers } from "./wallet.controller";
