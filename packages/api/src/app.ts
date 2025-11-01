@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import helmet from "helmet";
-import router from "./routes/v1";
+import router from "./routes";
 import { errorConverter, errorHandler } from "./handlers/error.handler";
 
 const app = express();
