@@ -1,5 +1,5 @@
-import { Waitlist1 } from "./waitlist1";
+import { Waitlist } from "./waitlist";
 
 export default function WaitlistPage() {
-  return <Waitlist1 />;
+  return <Waitlist />;
 }
