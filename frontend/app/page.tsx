@@ -1,18 +1,20 @@
-import Header from "@/components/landing/Header";
+import { Header } from "@/components/landing/Header";
 import Hero from "@/components/landing/Hero";
-import Features from "@/components/landing/Features";
+// import Features from "@/components/landing/Features";
 import HowItWorks from "@/components/landing/HowItWorks";
-import Footer from "@/components/landing/Footer";
+import { FAQs } from "@/components/landing/FAQs";
+import { Footer } from "@/components/landing/footer";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-background">
       <Header />
       <Hero />
       <div className="container mx-auto px-4">
-        <Features />
+        {/* <Features /> */}
         <HowItWorks />
       </div>
+      <FAQs />
       <Footer />
     </div>
   );
