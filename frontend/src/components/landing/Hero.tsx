@@ -1,8 +1,8 @@
 import { PlayCircleIcon, ZapIcon } from "lucide-react";
 
-import { RevealText } from "@/components/reveal-text";
-import { SpringButton } from "@/components/spring-button";
-import { TiltCard } from "@/components/tilt-card";
+import { RevealText } from "@/components/custom/reveal-text";
+import { SpringButton } from "@/components/custom/spring-button";
+import { TiltCard } from "@/components/custom/tilt-card";
 
 const Hero = () => {
   return (
