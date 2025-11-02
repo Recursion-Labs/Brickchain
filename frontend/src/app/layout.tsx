@@ -34,11 +34,23 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `(() => {
               try {
-                const b = document && document.body;
-                if (b && b.removeAttribute) {
-                  b.removeAttribute('data-new-gr-c-s-check-loaded');
-                  b.removeAttribute('data-gr-ext-installed');
-                }
+                // Remove attributes commonly injected by browser extensions on <html> and <body>
+                const html = document && document.documentElement;
+                const body = document && document.body;
+                const remove = (el: any, attr: string) => {
+                  try { el && el.removeAttribute && el.removeAttribute(attr); } catch (e) { /* ignore */ }
+                };
+
+                // Known problematic attributes seen in hydration mismatch errors
+                const attrs = [
+                  'data-new-gr-c-s-check-loaded',
+                  'data-gr-ext-installed',
+                  'suppresshydrationwarning',
+                  'data-qb-installed',
+                  'cz-shortcut-listen'
+                ];
+
+                attrs.forEach(a => { remove(html, a); remove(body, a); });
               } catch (e) { /* ignore */ }
             })();`,
           }}
