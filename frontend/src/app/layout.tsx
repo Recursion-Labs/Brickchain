@@ -27,6 +27,23 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        {/* Remove common extension-injected attributes (e.g. Grammarly) before React hydration
+            This prevents hydration mismatch caused by browser extensions that modify the DOM
+            before React compares server HTML to client HTML. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(() => {
+              try {
+                const b = document && document.body;
+                if (b && b.removeAttribute) {
+                  b.removeAttribute('data-new-gr-c-s-check-loaded');
+                  b.removeAttribute('data-gr-ext-installed');
+                }
+              } catch (e) { /* ignore */ }
+            })();`,
+          }}
+        />
+
         {children}
       </body>
     </html>
