@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon -r module-alias/register src/index.ts",
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
     "start": "cross-env NODE_ENV=production node -r module-alias/register dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "biome lint --write ./src",
