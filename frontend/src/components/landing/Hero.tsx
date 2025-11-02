@@ -20,12 +20,15 @@ const Hero = () => {
               Tokenize Real Estate with Privacy-First Blockchain
             </div>
             <p className="text-foreground/80 mt-3 max-w-lg max-sm:text-sm lg:mt-5">
-              Transform property ownership into fractional, tradable digital assets.
-              Trade real estate shares privately and securely using zero-knowledge proofs
-              on the Midnight blockchain.
+              Transform property ownership into fractional, tradable digital
+              assets. Trade real estate shares privately and securely using
+              zero-knowledge proofs on the Midnight blockchain.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3 pt-4 sm:pt-6">
-              <a href="/waitlist" className="bg-primary text-primary-foreground cursor-pointer overflow-hidden rounded-full py-2 ps-4 pe-5 font-medium inline-flex items-center justify-center">
+              <a
+                href="/waitlist"
+                className="bg-primary text-primary-foreground cursor-pointer overflow-hidden rounded-full py-2 ps-4 pe-5 font-medium inline-flex items-center justify-center"
+              >
                 Join Waitlist
               </a>
               <SpringButton
@@ -39,17 +42,17 @@ const Hero = () => {
             <div className="flex items-center justify-center gap-2 pt-4 lg:pt-6">
               <div className="flex -space-x-4 *:transition-all *:duration-300 *:hover:-translate-y-2">
                 <img
-                  src="/images/avatars/1.jpg"
+                  src="https://avatar.iran.liara.run/public/100"
                   alt="Avatar"
                   className="border-background size-10 rounded-full border-4 sm:size-12"
                 />
                 <img
-                  src="/images/avatars/2.jpg"
+                  src="https://avatar.iran.liara.run/public/46"
                   alt="Avatar"
                   className="border-background size-10 rounded-full border-4 sm:size-12"
                 />
                 <img
-                  src="/images/avatars/3.jpg"
+                  src="https://avatar.iran.liara.run/public/32"
                   alt="Avatar"
                   className="border-background size-10 rounded-full border-4 sm:size-12"
                 />
