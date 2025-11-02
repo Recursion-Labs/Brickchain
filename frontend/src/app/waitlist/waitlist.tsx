@@ -16,6 +16,7 @@ const Waitlist = () => {
     type: 'success' | 'error';
     message: string;
   }>({ isOpen: false, type: 'success', message: '' });
+  const [copied, setCopied] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,8 +72,14 @@ const Waitlist = () => {
           Join the Waitlist
         </h2>
         <p className="text-md text-muted-foreground mx-auto max-w-xl text-center lg:text-lg">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-          eiusmod tempor incididunt ut labore et dolore magna aliqua.
+          Join BrickChain for early access to privacy-first property tokenization and developer tools.
+        </p>
+        <ul className="mt-4 mx-auto max-w-md text-left list-inside list-disc text-sm text-muted-foreground lg:text-sm">
+          <li>Priority beta access</li>
+          <li>Early developer SDKs & wallet integrations</li>
+        </ul>
+        <p className="mt-4 text-xs text-muted-foreground/80 mx-auto max-w-xl text-center">
+          Invites roll out soon — we’ll email you when it’s your turn. We only use your email for product updates.
         </p>
         <form onSubmit={handleSubmit} className="relative z-20 mt-10 flex w-full max-w-md items-center gap-3 rounded-full p-1">
           <Input
@@ -99,7 +106,7 @@ const Waitlist = () => {
             ))}
           </span>
           <p className="text-muted-foreground/80 tracking-tight">
-            +1000 people already joined
+            1,000+ people have signed up
           </p>
         </div>
       </BackgroundLines>
@@ -108,51 +115,77 @@ const Waitlist = () => {
       {popup.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="relative mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 ease-out">
-            <div className="flex items-center justify-between">
-              <div className={`flex h-12 w-12 items-center justify-center rounded-full animate-in zoom-in duration-500 delay-150 ${
-                popup.type === 'success' ? 'bg-green-100' : 'bg-red-100'
-              }`}>
-                {popup.type === 'success' ? (
-                  <svg className="h-6 w-6 text-green-600 animate-in zoom-in duration-300 delay-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                ) : (
-                  <svg className="h-6 w-6 text-red-600 animate-in zoom-in duration-300 delay-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                )}
-              </div>
+            <div className="flex items-start justify-between gap-4">
+              {popup.type === 'success' ? (
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-600 shadow-lg">
+                    <svg className="h-8 w-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                    <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={closePopup}
-                className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                aria-label="Close dialog"
+                className="ml-auto text-gray-400 hover:text-gray-600 transition-colors duration-200"
               >
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            <div className="mt-4 animate-in slide-in-from-bottom-2 duration-300 delay-200">
-              <h3 className={`text-lg font-semibold animate-in slide-in-from-bottom-1 duration-300 delay-300 ${
-                popup.type === 'success' ? 'text-green-900' : 'text-red-900'
-              }`}>
-                {popup.type === 'success' ? 'Success!' : 'Oops!'}
-              </h3>
-              <p className={`mt-2 text-sm animate-in slide-in-from-bottom-1 duration-300 delay-400 ${
-                popup.type === 'success' ? 'text-green-700' : 'text-red-700'
-              }`}>
-                {popup.message}
-              </p>
-            </div>
-            <div className="mt-6 flex justify-end animate-in slide-in-from-bottom-2 duration-300 delay-500">
-              <Button
-                onClick={closePopup}
-                className={`transition-all duration-200 hover:scale-105 ${
-                  popup.type === 'success' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
-                }`}
-              >
-                {popup.type === 'success' ? 'Great!' : 'Try Again'}
-              </Button>
-            </div>
+
+            {popup.type === 'success' ? (
+              <div className="mt-4">
+                <h3 className="text-xl font-semibold text-slate-900">You are on the list 🎉</h3>
+                <p className="mt-2 text-sm text-slate-600">Thanks — we have sent a confirmation to your inbox. We will email you when invites roll out.</p>
+
+                <div className="mt-5 flex gap-3">
+                  <Button onClick={closePopup} className="bg-black text-white hover:opacity-95">
+                    Close
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText('I just joined the BrickChain waitlist — join here: https://brickchain.example/waitlist');
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 1800);
+                      } catch (err) {
+                        console.error('copy failed', err);
+                      }
+                    }}
+                    variant="ghost"
+                    className="border border-gray-200 text-gray-800"
+                  >
+                    {copied ? 'Copied!' : 'Share'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 animate-in slide-in-from-bottom-2 duration-300 delay-200">
+                <h3 className={`text-lg font-semibold animate-in slide-in-from-bottom-1 duration-300 delay-300 text-red-900`}>
+                  Oops!
+                </h3>
+                <p className={`mt-2 text-sm animate-in slide-in-from-bottom-1 duration-300 delay-400 text-red-700`}>
+                  {popup.message}
+                </p>
+                <div className="mt-6 flex justify-end">
+                  <Button onClick={closePopup} className="bg-red-600 hover:bg-red-700">
+                    Try Again
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
