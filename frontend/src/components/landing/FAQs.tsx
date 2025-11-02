@@ -109,7 +109,7 @@ const categories = [
 ];
 
 function FAQs() {
-  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [activeCategory, setActiveCategory] = useState<string>('general');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const filteredFaqs =
@@ -122,7 +122,7 @@ function FAQs() {
   };
 
   return (
-    <section className="bg-background py-16">
+    <section id="faqs" className="bg-background min-h-screen flex items-center py-8 md:py-16">
       <div className="container mx-auto max-w-6xl px-4 md:px-6">
         <div className="mb-12 flex flex-col items-center">
           <Badge

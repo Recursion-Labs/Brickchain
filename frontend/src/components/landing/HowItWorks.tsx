@@ -29,7 +29,7 @@ export default function HowItWorks() {
   ];
 
   return (
-    <section id="how-it-works" className="py-24">
+    <section id="how-it-works" className="min-h-screen flex items-center py-8 md:py-16">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-foreground mb-4">

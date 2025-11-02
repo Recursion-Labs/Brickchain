@@ -6,31 +6,31 @@ import { Button } from "@/components/ui/button";
 
 function Footer() {
   return (
-    <footer className="min-h-screen py-12 px-4 md:px-6 bg-black flex items-center justify-center">
+    <footer className="w-full pt-12 pb-0 px-4 md:px-6 bg-black flex flex-col overflow-hidden">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between">
           <div className="mb-8 md:mb-0">
             <Link href="/" className="flex items-center gap-2">
               <Icons.logo className="icon-class w-8" />
-              <h2 className="text-lg font-bold">Spectrum UI</h2>
+              <h2 className="text-lg font-bold">Recursion Labs</h2>
             </Link>
 
             <h1 className="dark:text-gray-300 mt-4">
               Build by{" "}
               <span className="dark:text-[#039ee4]">
-                <Link href="https://x.com/arihantCodes">@Arihantjain</Link>
+                <Link href="https://x.com/recursionlab">@recursionlab</Link>
               </span>
             </h1>
             <div className="mt-2">
-            <Link  href="https://x.com/compose/tweet?text=I%27ve%20been%20using%20%23SpectrumUI%20 share%20yourtought%20%40arihantCodes%20">
-              <Button variant='secondary'>
-                Share Your Thoughts On
-                <Icons.twitter className="icon-class ml-1 w-3.5 " />
-              </Button>
-            </Link>
+              <Link href="https://x.com/compose/tweet?text=I%27ve%20been%20using%20%23Brickchain%20 share%20yourtought%20%40recursionlab%20">
+                <Button variant="secondary">
+                  Share Your Thoughts On
+                  <Icons.twitter className="icon-class ml-1 w-3.5 " />
+                </Button>
+              </Link>
             </div>
             <p className="text-sm dark:text-gray-400 mt-5">
-              © {new Date().getFullYear()} Spectrum UI. All rights reserved.
+              © {new Date().getFullYear()} Recursion Labs. All rights reserved.
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -38,28 +38,35 @@ function Footer() {
               <h3 className="font-semibold mb-4">Pages</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="/docs" className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">
+                  <Link
+                    href="/docs"
+                    className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
+                  >
                     Docs
                   </Link>
                 </li>
                 <li>
-                  <Link href="/docs" className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">
+                  <Link
+                    href="/docs"
+                    className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
+                  >
                     Components
                   </Link>
                 </li>
                 <li>
-                  <Link href="/examples" className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">
+                  <Link
+                    href="/examples"
+                    className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
+                  >
                     Examples
                   </Link>
                 </li>
                 <li>
-                  <Link href="/pricing" className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">
+                  <Link
+                    href="/pricing"
+                    className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
+                  >
                     Pricing
-                  </Link>
-                </li>
-                <li>
-                  <Link href="https://blog.arihant.us/" className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">
-                    Blog
                   </Link>
                 </li>
               </ul>
@@ -68,17 +75,26 @@ function Footer() {
               <h3 className="font-semibold mb-4">Socials</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="https://github.com/arihantcodes/spectrum-ui" className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">
+                  <Link
+                    href="https://github.com/recursion-Labs/"
+                    className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
+                  >
                     Github
                   </Link>
                 </li>
                 <li>
-                  <Link href="https://www.linkedin.com/in/arihantcodes" className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">
+                  <Link
+                    href="https://www.linkedin.com"
+                    className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
+                  >
                     LinkedIn
                   </Link>
                 </li>
                 <li>
-                  <Link href="https://x.com/arihantcodes" className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">
+                  <Link
+                    href="https://x.com/recursionlab"
+                    className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
+                  >
                     X
                   </Link>
                 </li>
@@ -88,26 +104,30 @@ function Footer() {
               <h3 className="font-semibold mb-4">Legal</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="/privacy-policy" className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">
+                  <Link
+                    href="/privacy-policy"
+                    className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
+                  >
                     Privacy Policy
                   </Link>
                 </li>
                 <li>
-                  <Link href="/tos" className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">
+                  <Link
+                    href="/tos"
+                    className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
+                  >
                     Terms of Service
                   </Link>
                 </li>
-              
               </ul>
             </div>
           </div>
         </div>
-        <div className=" w-full flex mt-4 items-center justify-center   ">
-          <h1 className="text-center text-5xl md:text-7xl lg:text-[12rem] font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-700 to-neutral-900 select-none whitespace-nowrap">
-            Recurison Labs
+        <div className="w-full flex items-center justify-center overflow-hidden px-2">
+          <h1 className="text-center text-4xl sm:text-5xl md:text-7xl lg:text-[6rem] xl:text-[10rem] 2xl:text-[10rem] font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-700 to-neutral-900 select-none leading-tight max-w-full whitespace-normal lg:whitespace-nowrap">
+            Recursion Labs
           </h1>
         </div>
-      
       </div>
     </footer>
   );

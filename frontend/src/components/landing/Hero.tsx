@@ -6,25 +6,25 @@ import { TiltCard } from "@/components/custom/tilt-card";
 
 const Hero = () => {
   return (
-    <div className="min-h-screen flex items-center overflow-hidden p-2 sm:p-4 lg:p-6 xl:p-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="grid h-full grid-cols-1 gap-12 sm:gap-16 lg:grid-cols-2 lg:gap-20">
-          <div className="order-2 flex flex-col items-center justify-center text-center lg:order-1">
+  <div id="hero" className="min-h-screen lg:min-h-[calc(100vh-64px)] flex items-center overflow-hidden p-2 sm:p-4 lg:p-6 xl:p-8">
+      <div className="mx-auto max-w-7xl h-full">
+  <div className="grid h-full grid-cols-1 gap-12 sm:gap-16 lg:grid-cols-[45%_55%] lg:gap-20 items-center lg:items-stretch">
+          <div className="order-2 flex flex-col items-center lg:items-start justify-center text-center lg:text-left lg:order-1 px-4">
             <div className="bg-background flex items-center gap-1.5 rounded-full py-2 ps-2 pe-4 text-base border border-foreground">
               <div className="bg-foreground text-background rounded-full p-1.5">
                 <ZapIcon className="size-5" />
               </div>
               <p>Built for property tokenization</p>
             </div>
-            <div className="mt-6 text-4xl leading-[1.1] font-semibold sm:text-5xl lg:text-6xl xl:text-7xl text-left">
+            <div className="mt-6 text-3xl leading-[1.05] font-semibold sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl">
               Tokenize Real Estate with Privacy-First Blockchain
             </div>
-            <p className="text-foreground/80 mt-6 max-w-xl text-lg sm:text-xl lg:text-2xl lg:mt-8 text-left">
+            <p className="text-foreground/80 mt-6 max-w-md md:max-w-lg text-lg sm:text-xl lg:text-xl lg:mt-8">
               Transform property ownership into fractional, tradable digital
               assets. Trade real estate shares privately and securely using
               zero-knowledge proofs on the Midnight blockchain.
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-8 sm:pt-10">
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-8 sm:pt-10">
               <a
                 href="/waitlist"
                 className="bg-primary text-primary-foreground cursor-pointer overflow-hidden rounded-full py-4 px-8 text-lg font-medium inline-flex items-center justify-center"
@@ -39,7 +39,7 @@ const Hero = () => {
                 <PlayCircleIcon className="size-6" />
               </SpringButton>
             </div>
-            <div className="flex items-center justify-center gap-4 pt-8 lg:pt-10">
+            <div className="flex items-center justify-center lg:justify-start gap-4 pt-8 lg:pt-10">
               <div className="flex -space-x-4 *:transition-all *:duration-300 *:hover:-translate-y-2">
                 <img
                   src="https://avatar.iran.liara.run/public/100"
@@ -67,12 +67,12 @@ const Hero = () => {
           </div>
 
           <TiltCard
-            wrapperClassName="order-1 lg:order-2"
-            className="bg-background rounded-md p-2"
+            wrapperClassName="order-1 lg:order-2 h-full flex items-center justify-center"
+            className="bg-background rounded-md p-2 h-full"
           >
             <img
               src="https://images.unsplash.com/photo-1674027392842-29f8354e236c?w=1000"
-              className="h-[28rem] w-full rounded-md object-cover sm:h-[32rem] lg:h-[40rem]"
+              className="w-full h-full rounded-md object-cover"
               alt="Hero Image"
             />
           </TiltCard>

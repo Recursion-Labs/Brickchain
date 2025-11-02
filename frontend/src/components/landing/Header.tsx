@@ -60,7 +60,10 @@ const Header = ({
     title: "Brickchain",
   },
   menu = [
-    { title: "Home", url: "#" },
+    { title: "Home", url: "#hero" },
+    { title: "How it works", url: "#how-it-works" },
+    { title: "FAQs", url: "#faqs" },
+    { title: "Waitlist", url: "/waitlist" },
     {
       title: "Products",
       url: "#",
@@ -124,10 +127,6 @@ const Header = ({
     },
     {
       title: "Pricing",
-      url: "#",
-    },
-    {
-      title: "Blog",
       url: "#",
     },
   ],
