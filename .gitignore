@@ -11,3 +11,6 @@ logs
 
 
 managed
+
+target
+Cargo.lock

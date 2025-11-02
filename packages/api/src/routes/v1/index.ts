@@ -8,6 +8,10 @@ const default_routes = [
 		path: "/auth",
 		routes: authRoutes,
 	},
+	{
+		path: "/pdf",
+		routes: require("./pdf/routes").default,
+	},
 ];
 default_routes.forEach((route) => {
 	router.use(route.path, route.routes);

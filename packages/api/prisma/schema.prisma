@@ -20,3 +20,14 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Document {
+  id           String   @id            // sha256 hex
+  filename     String
+  mime         String
+  sizeBytes    Int
+  cid          String?
+  createdAt    DateTime @default(now())
+  // optional: link to user when auth is implemented
+  ownerId      String?
+}
