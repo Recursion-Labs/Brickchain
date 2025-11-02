@@ -54,8 +54,8 @@ interface Navbar1Props {
 
 const Header = ({
   logo = {
-    url: "#",
-    src: "https://ik.imagekit.io/mwhha64ay/Brickchain/logo.png",
+    url: "",
+    src: "https://ik.imagekit.io/mwhha64ay/Brickchain/Recursionlogo.png",
     alt: "logo",
     title: "Brickchain",
   },
@@ -146,9 +146,12 @@ const Header = ({
             <a href={logo.url} className="flex items-center gap-2">
               <img
                 src={logo.src}
-                className="max-h-12 dark:invert"
+                className="max-h-12"
                 alt={logo.alt}
               />
+              <span className="ml-2 text-xl font-bold tracking-tighter text-white">
+                {logo.title}
+              </span>
             </a>
             <div className="flex items-center">
               <NavigationMenu>
@@ -159,10 +162,19 @@ const Header = ({
             </div>
           </div>
           <div className="flex gap-2">
-            <Button asChild variant="ghost" size="sm" className="text-white hover:bg-gray-800">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-gray-800"
+            >
               <a href={auth.login.url}>{auth.login.title}</a>
             </Button>
-            <Button asChild size="sm" className="bg-white text-black hover:bg-gray-200">
+            <Button
+              asChild
+              size="sm"
+              className="bg-white text-black hover:bg-gray-200"
+            >
               <a href={auth.signup.url}>{auth.signup.title}</a>
             </Button>
           </div>
@@ -175,13 +187,20 @@ const Header = ({
             <a href={logo.url} className="flex items-center gap-2">
               <img
                 src={logo.src}
-                className="max-h-12 dark:invert"
+                className="max-h-12"
                 alt={logo.alt}
               />
+              <span className="ml-2 text-lg font-semibold text-white">
+                {logo.title}
+              </span>
             </a>
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-white hover:bg-gray-800">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:bg-gray-800"
+                >
                   <Menu className="size-4" />
                 </Button>
               </SheetTrigger>
@@ -191,9 +210,12 @@ const Header = ({
                     <a href={logo.url} className="flex items-center gap-2">
                       <img
                         src={logo.src}
-                        className="max-h-12 dark:invert"
+                        className="max-h-12"
                         alt={logo.alt}
                       />
+                      <span className="ml-2 text-lg font-semibold text-white">
+                        {logo.title}
+                      </span>
                     </a>
                   </SheetTitle>
                 </SheetHeader>
@@ -207,10 +229,17 @@ const Header = ({
                   </Accordion>
 
                   <div className="flex flex-col gap-3">
-                    <Button asChild variant="ghost" className="text-white hover:bg-gray-800 justify-start">
+                    <Button
+                      asChild
+                      variant="ghost"
+                      className="text-white hover:bg-gray-800 justify-start"
+                    >
                       <a href={auth.login.url}>{auth.login.title}</a>
                     </Button>
-                    <Button asChild className="bg-white text-black hover:bg-gray-200 justify-start">
+                    <Button
+                      asChild
+                      className="bg-white text-black hover:bg-gray-200 justify-start"
+                    >
                       <a href={auth.signup.url}>{auth.signup.title}</a>
                     </Button>
                   </div>
