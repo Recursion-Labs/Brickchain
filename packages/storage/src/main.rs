@@ -64,7 +64,8 @@ fn main() -> Result<()> {
                 use tokio::runtime::Runtime;
                 use store::chain::publish_remark;
                 let rt = Runtime::new()?;
-                rt.block_on(publish_remark(&node_url, &seed, &meta))?;
+                let block_hash = rt.block_on(publish_remark(&node_url, &seed, &meta))?;
+                eprintln!("Published to chain in block: {}", block_hash);
             }
             #[cfg(not(feature = "chain"))]
             if publish { bail!("binary not built with `chain` feature") };
