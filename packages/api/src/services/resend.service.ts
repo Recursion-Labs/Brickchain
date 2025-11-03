@@ -8,7 +8,7 @@ import { redis } from "@/config/database";
 const resendClient = new Resend(envVars.RESEND_API_KEY);
 
 export async function sendOTP(email: string, otp: string) {
-	const templatePath = path.join(__dirname, "../templates/index.html");
+	const templatePath = path.join(__dirname, "../templates/otp.html");
 	let html = "<p>Your OTP code is: <strong>" + otp + "</strong></p>";
 	await redis.setValue(`otp:${email}`, otp, 300);
 	try {
