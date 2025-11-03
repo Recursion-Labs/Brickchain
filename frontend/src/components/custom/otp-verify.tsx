@@ -25,6 +25,7 @@ export default function OTPVerify({
   const [otp, setOtp] = useState<string[]>(["", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [expiryTime, setExpiryTime] = useState(300); // 5 minutes in seconds
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -34,6 +35,13 @@ export default function OTPVerify({
       return () => clearTimeout(timer);
     }
   }, [resendCooldown]);
+
+  useEffect(() => {
+    if (expiryTime > 0) {
+      const timer = setTimeout(() => setExpiryTime(expiryTime - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [expiryTime]);
 
   const handleChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
@@ -81,6 +89,12 @@ export default function OTPVerify({
 
   const isComplete = otp.every((digit) => digit);
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
   const PanelContent = (
     <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-8 border border-gray-50">
       {/* Brand Logo */}
@@ -93,6 +107,9 @@ export default function OTPVerify({
         <h2 className="text-xl font-bold text-black">Verify your email</h2>
         <p className="text-sm text-gray-600 mt-3">
           We&apos;ve sent a code to <span className="font-semibold text-gray-800">{email}</span>
+        </p>
+        <p className="text-xs text-gray-500 mt-2">
+          Code expires in <span className={`font-semibold ${expiryTime <= 60 ? "text-red-500" : "text-gray-600"}`}>{formatTime(expiryTime)}</span>
         </p>
       </div>
 
@@ -183,6 +200,9 @@ export default function OTPVerify({
         <h1 className="text-4xl font-bold text-white mb-2">Verify your email</h1>
         <p className="text-gray-400">
           We&apos;ve sent a code to {email}
+        </p>
+        <p className="text-sm text-gray-500 mt-2">
+          Code expires in <span className={`font-semibold ${expiryTime <= 60 ? "text-red-400" : "text-gray-400"}`}>{formatTime(expiryTime)}</span>
         </p>
       </div>
 
