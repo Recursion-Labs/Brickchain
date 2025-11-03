@@ -17,7 +17,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "moduleResolution": "node",
-    
+    "ignoreDeprecations": "6.0", // Suppress deprecation warnings for TypeScript 6.0 - Remove this line while deploying in production
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
     "outDir": "./dist",
