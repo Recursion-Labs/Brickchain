@@ -1,7 +1,7 @@
 import { Router } from "express";
 import authRoutes from "./auth/routes";
 import publicRoutes from "./public/routes";
-import userRoutes from "./user/routes"
+import userRoutes from "./user/routes";
 
 const router = Router();
 
@@ -20,8 +20,8 @@ const default_routes = [
 	},
 	{
 		path: "/user",
-		routes: userRoutes
-	}
+		routes: userRoutes,
+	},
 ];
 default_routes.forEach((route) => {
 	router.use(route.path, route.routes);

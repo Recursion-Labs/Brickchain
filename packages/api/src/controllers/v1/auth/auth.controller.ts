@@ -6,6 +6,9 @@ import { sendOTP } from "@/services/resend.service";
 import { generateCode } from "@/tools/codes";
 import { db, redis } from "@/config/database";
 import { logger } from "@/utils/logger";
+import { User } from "generated/prisma/client";
+import { generateTokens } from "@/services/jwt.service"
+import { v4 as uuidv4 } from "uuid";
 
 const register = catchAsync(async (req: Request, res: Response) => {
 	const { email } = req.body as RegisterInput;
@@ -27,7 +30,8 @@ const sendOtp = catchAsync(async (req: Request, res: Response) => {
 		throw new APIError(400, "Email is required");
 	}
 	const check_reg = await redis.getValue(`user:${email}:registered`);
-	if (!check_reg) {
+	const check = await db.user.findFirst({ where: { email } });
+	if (!check_reg && !check) {
 		throw new APIError(404, "User not registered");
 	}
 	try {
@@ -50,13 +54,23 @@ const verifyOtp = catchAsync(async (req: Request, res: Response) => {
 	if (storedOtp !== otp) {
 		throw new APIError(400, "Invalid OTP");
 	}
-	await db.user.create({
-		data: {
-			email: email,
-		},
-	});
+	let user: User | null
+	user = await db.user.findFirst({ where: { email } });
+	if (!user) {
+		user = await db.user.create({
+			data: {
+				email: email,
+			},
+		});
+	}
+	const jti = uuidv4();
+	const { refreshToken, accessToken } = await generateTokens(user, jti);
 	res.status(200).json({
 		message: "OTP verified successfully",
+		tokens : {
+			accessToken,
+			refreshToken
+		}
 	});
 	return;
 });

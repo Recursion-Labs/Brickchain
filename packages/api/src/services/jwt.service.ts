@@ -2,8 +2,7 @@ import envVars from "@/config/envVars";
 import { User } from "generated/prisma/client";
 import jwt from "jsonwebtoken";
 
-
-function generateTokens(user: User, jti: string) {
+export async function generateTokens(user: User, jti: string) {
 	const accessToken = jwt.sign({ id: user.id, jti }, envVars.JWT_SECRET, { expiresIn: "7d" });
 	const refreshToken = jwt.sign({ id: user.id, jti }, envVars.JWT_SECRET, { expiresIn: "30d" });
 	return {
@@ -12,7 +11,7 @@ function generateTokens(user: User, jti: string) {
 	};
 }
 
-function verifyToken(token: string) {
+export async function verifyToken(token: string) {
 	try {
 		const secret = envVars.JWT_SECRET;
 		if (!secret) {
@@ -23,9 +22,4 @@ function verifyToken(token: string) {
 	} catch (error) {
 		throw new Error("Invalid token");
 	}
-}
-
-export default {
-    generateTokens,
-    verifyToken
 }
