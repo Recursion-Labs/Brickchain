@@ -11,6 +11,8 @@ interface OTPVerifyProps {
   onVerify?: (otp: string) => void;
   onResend?: () => void;
   isLoading?: boolean;
+  /** layout: 'full' renders a full screen card. 'panel' renders white card only. 'standalone' renders full right-side design. */
+  layout?: "full" | "panel" | "standalone";
 }
 
 export default function OTPVerify({
@@ -18,6 +20,7 @@ export default function OTPVerify({
   onVerify,
   onResend,
   isLoading = false,
+  layout = "full",
 }: OTPVerifyProps) {
   const [otp, setOtp] = useState<string[]>(["", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -78,6 +81,208 @@ export default function OTPVerify({
 
   const isComplete = otp.every((digit) => digit);
 
+  const PanelContent = (
+    <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-8 border border-gray-50">
+      {/* Brand Logo */}
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold text-black tracking-tight">BrickChain</h1>
+      </div>
+
+      {/* Heading */}
+      <div className="mb-8 text-center">
+        <h2 className="text-xl font-bold text-black">Verify your email</h2>
+        <p className="text-sm text-gray-600 mt-3">
+          We&apos;ve sent a code to <span className="font-semibold text-gray-800">{email}</span>
+        </p>
+      </div>
+
+      {/* OTP Input Fields with Animations */}
+      <div className="flex justify-center gap-2 mb-8">
+        {otp.map((digit, index) => (
+          <motion.input
+            key={index}
+            ref={(el) => {
+              inputRefs.current[index] = el;
+            }}
+            type="text"
+            inputMode="numeric"
+            maxLength={1}
+            value={digit}
+            onChange={(e) => handleChange(index, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(index, e)}
+            onFocus={() => setActiveIndex(index)}
+            onBlur={() => {
+              if (!digit) setActiveIndex(null);
+            }}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: index * 0.05 }}
+            className={cn(
+              "h-16 w-16 text-center text-2xl font-bold rounded-xl transition-all",
+              "bg-neutral-900 text-white",
+              "border-2",
+              activeIndex === index
+                ? "border-purple-500 shadow-lg shadow-purple-500/50"
+                : "border-neutral-800 hover:border-neutral-600",
+              "focus:outline-none focus:border-purple-500 focus:shadow-lg focus:shadow-purple-500/50"
+            )}
+            aria-label={`OTP digit ${index + 1}`}
+          />
+        ))}
+      </div>
+
+      {/* Submit Button */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="mb-6"
+      >
+        <Button
+          onClick={handleSubmit}
+          disabled={!isComplete || loading || isLoading}
+          className="w-full h-12 bg-linear-to-r from-purple-600 to-purple-500 text-white font-semibold rounded-lg shadow-lg hover:from-purple-700 hover:to-purple-600 transition-all disabled:opacity-50"
+        >
+          {loading || isLoading ? (
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Verifying...</span>
+            </div>
+          ) : (
+            "Verify"
+          )}
+        </Button>
+      </motion.div>
+
+      {/* Resend Link */}
+      <motion.div
+        className="text-center text-sm"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+      >
+        <span className="text-gray-600">Didn&apos;t receive the code? </span>
+        <button
+          onClick={handleResend}
+          disabled={resendCooldown > 0}
+          className={`font-semibold transition-colors ${
+            resendCooldown > 0
+              ? "text-gray-400 cursor-not-allowed"
+              : "text-purple-600 hover:text-purple-700"
+          }`}
+        >
+          {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend"}
+        </button>
+      </motion.div>
+    </div>
+  );
+
+  const StandaloneContent = (
+    <div className="w-full">
+      <div className="mb-8 animate-in fade-in duration-300">
+        <h1 className="text-4xl font-bold text-white mb-2">Verify your email</h1>
+        <p className="text-gray-400">
+          We&apos;ve sent a code to {email}
+        </p>
+      </div>
+
+      {/* OTP Input Fields */}
+      <div className="flex justify-center gap-3 mb-8 animate-in fade-in duration-300 delay-100">
+        {otp.map((digit, index) => (
+          <motion.input
+            key={index}
+            ref={(el) => {
+              inputRefs.current[index] = el;
+            }}
+            type="text"
+            inputMode="numeric"
+            maxLength={1}
+            value={digit}
+            onChange={(e) => handleChange(index, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(index, e)}
+            onFocus={() => setActiveIndex(index)}
+            onBlur={() => {
+              if (!digit) setActiveIndex(null);
+            }}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: index * 0.05 }}
+            className={cn(
+              "h-16 w-16 text-center text-2xl font-bold rounded-xl transition-all",
+              "bg-gray-800 text-white",
+              "border-2",
+              activeIndex === index
+                ? "border-purple-500 shadow-lg shadow-purple-500/50"
+                : "border-gray-700 hover:border-gray-600",
+              "focus:outline-none focus:border-purple-500 focus:shadow-lg focus:shadow-purple-500/50"
+            )}
+            aria-label={`OTP digit ${index + 1}`}
+          />
+        ))}
+      </div>
+
+      {/* Submit Button */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="mb-6 animate-in fade-in duration-300 delay-150"
+      >
+        <Button
+          onClick={handleSubmit}
+          disabled={!isComplete || loading || isLoading}
+          className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+        >
+          {loading || isLoading ? (
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Verifying...</span>
+            </div>
+          ) : (
+            "Verify"
+          )}
+        </Button>
+      </motion.div>
+
+      {/* Resend Link */}
+      <motion.div
+        className="text-center text-sm animate-in fade-in duration-300 delay-200"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+      >
+        <span className="text-gray-400">Didn&apos;t receive the code? </span>
+        <button
+          onClick={handleResend}
+          disabled={resendCooldown > 0}
+          className={`font-medium transition-colors ${
+            resendCooldown > 0
+              ? "text-gray-500 cursor-not-allowed"
+              : "text-purple-400 hover:text-purple-300"
+          }`}
+        >
+          {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend"}
+        </button>
+      </motion.div>
+    </div>
+  );
+
+  if (layout === "panel") {
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+        {PanelContent}
+      </motion.div>
+    );
+  }
+
+  if (layout === "standalone") {
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+        {StandaloneContent}
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       className="flex items-center justify-center min-h-screen bg-black p-6"
@@ -85,143 +290,7 @@ export default function OTPVerify({
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-2xl p-8">
-        {/* Brand Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">BrickChain</h1>
-        </div>
-
-        {/* Heading */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold">Verify your email</h2>
-          <p className="text-sm text-gray-600 mt-2">
-            We&apos;ve sent a code to{" "}
-            <span className="font-medium text-black">{email}</span>
-          </p>
-        </div>
-
-        {/* OTP Input Fields with Animations */}
-        <div className="mb-6">
-          <div className="flex justify-center gap-2 mb-4">
-            {otp.map((digit, index) => (
-              <motion.div
-                key={index}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: index * 0.05 }}
-                className="relative"
-              >
-                {/* Animated glow background */}
-                <motion.div
-                  className={cn(
-                    "absolute inset-0 rounded-lg",
-                    "border border-cyan-400"
-                  )}
-                  initial={{
-                    opacity: 0,
-                    scale: 1,
-                    filter: "blur(0px)",
-                  }}
-                  animate={{
-                    opacity: activeIndex === index ? 1 : 0,
-                    scale: activeIndex === index ? 1 : 0.85,
-                    filter: activeIndex === index ? "blur(0px)" : "blur(2px)",
-                  }}
-                  transition={{
-                    duration: 0.3,
-                    ease: "easeInOut",
-                  }}
-                  style={{
-                    boxShadow:
-                      activeIndex === index
-                        ? "inset 0 0 12px rgba(34, 211, 238, 0.6), 0 0 12px rgba(34, 211, 238, 0.4)"
-                        : "inset 0 0 8px rgba(34, 211, 238, 0.3)",
-                  }}
-                />
-
-                {/* Input field */}
-                <input
-                  ref={(el) => {
-                    inputRefs.current[index] = el;
-                  }}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleChange(index, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(index, e)}
-                  onFocus={() => setActiveIndex(index)}
-                  onBlur={() => {
-                    if (!digit) setActiveIndex(null);
-                  }}
-                  className={cn(
-                    "relative h-12 w-12 text-center text-xl font-bold rounded-lg border-2 transition-all",
-                    "bg-linear-to-br from-neutral-800 to-neutral-900 text-white",
-                    "focus:outline-none focus:ring-2 focus:ring-offset-0",
-                    digit
-                      ? "border-cyan-400 focus:border-cyan-400 focus:ring-cyan-400"
-                      : "border-neutral-700 focus:border-cyan-400 focus:ring-cyan-400"
-                  )}
-                  aria-label={`OTP digit ${index + 1}`}
-                />
-
-                {/* Animated digit entrance */}
-                {digit && (
-                  <motion.span
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-                  />
-                )}
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Submit Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <Button
-              onClick={handleSubmit}
-              disabled={!isComplete || loading || isLoading}
-              className="w-full h-10 bg-black text-white font-medium rounded-lg hover:bg-gray-900 transition-colors"
-            >
-              {loading || isLoading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Verifying...</span>
-                </div>
-              ) : (
-                "Verify"
-              )}
-            </Button>
-          </motion.div>
-        </div>
-
-        {/* Resend Link */}
-        <motion.div
-          className="text-center text-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          <span className="text-gray-600">Didn&apos;t receive the code? </span>
-          <button
-            onClick={handleResend}
-            disabled={resendCooldown > 0}
-            className={`font-medium transition-colors ${
-              resendCooldown > 0
-                ? "text-gray-400 cursor-not-allowed"
-                : "text-black hover:underline"
-            }`}
-          >
-            {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend"}
-          </button>
-        </motion.div>
-      </div>
+      {PanelContent}
     </motion.div>
   );
 }
