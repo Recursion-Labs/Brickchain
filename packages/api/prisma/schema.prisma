@@ -17,6 +17,7 @@ datasource db {
 model User {
   id String @id @default(uuid())
   email String @unique
+  role Role @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -30,4 +31,9 @@ model Document {
   createdAt    DateTime @default(now())
   // optional: link to user when auth is implemented
   ownerId      String?
+}
+
+enum Role {
+  ADMIN
+  USER
 }
