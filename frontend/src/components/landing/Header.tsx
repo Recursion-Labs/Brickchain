@@ -60,9 +60,9 @@ const Header = ({
     title: "Brickchain",
   },
   menu = [
-    { title: "Home", url: "#hero" },
-    { title: "How it works", url: "#how-it-works" },
-    { title: "FAQs", url: "#faqs" },
+    { title: "Home", url: "/#hero" },
+    { title: "How it works", url: "/#how-it-works" },
+    { title: "FAQs", url: "/#faqs" },
     { title: "Waitlist", url: "/waitlist" },
     { title: "Forum", url: "/forum" },
     {
@@ -79,7 +79,7 @@ const Header = ({
           title: "Contact Us",
           description: "We are here to help you with any questions you have",
           icon: <Sunset className="size-5 shrink-0" />,
-          url: "#",
+          url: "/contact",
         },
         {
           title: "Status",
@@ -227,7 +227,7 @@ const renderMenuItem = (item: MenuItem) => {
     return (
         <NavigationMenuItem key={item.title}>
           <NavigationMenuTrigger className="text-white hover:text-white bg-black hover:bg-gray-800">{item.title}</NavigationMenuTrigger>
-          <NavigationMenuContent className="bg-black text-white border-gray-800">
+          <NavigationMenuContent className="bg-black text-white border-gray-800 ">
           {item.items.map((subItem) => (
             <NavigationMenuLink asChild key={subItem.title} className="w-80">
               <SubMenuLink item={subItem} />
