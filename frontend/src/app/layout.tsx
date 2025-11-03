@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import  "@/styles/globals.css"
+import { ToastProvider } from "@/components/providers/toast-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,6 +28,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <ToastProvider />
         {/* Remove common extension-injected attributes (e.g. Grammarly) before React hydration
             This prevents hydration mismatch caused by browser extensions that modify the DOM
             before React compares server HTML to client HTML. */}
