@@ -15,9 +15,10 @@ use {
     std::{
         fs,
         io::{Read, Write},
-        path::{Path, PathBuf},
+        path::{Path, PathBuf, Path},
         time::{SystemTime, UNIX_EPOCH},
     },
+    tempfile::NamedTempFile,
 };
 
 /// 32-byte SHA-256 digest
@@ -111,7 +112,7 @@ impl DocStore {
             .with_context(|| format!("opening {:?}", input_path))?;
         // Stream to a temp file while hashing
         let mut hasher = Sha256::new();
-        let mut temp = tempfile::NamedTempFile::new_in(self.root.join("pdfs"))?;
+        let mut temp = NamedTempFile::new_in(self.root.join("pdfs"))?;
         let mut buf = [0u8; 8192];
         let mut total: u64 = 0;
         let mut first_chunk = Vec::new();
@@ -120,7 +121,7 @@ impl DocStore {
             if n == 0 { break; }
             hasher.update(&buf[..n]);
             temp.write_all(&buf[..n])?;
-            if total == 0 { first_chunk.extend_from_slice(&buf[..n.min(8)]); }
+            if total == 0 { first_chunk.extend_from_slice(&buf[..(n.min(8))]); }
             total += n as u64;
         }
         // Basic PDF magic check
@@ -147,7 +148,7 @@ impl DocStore {
         input_path: P,
         ipfs_url: Option<&str>,
     ) -> Result<DocMeta> {
-use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
+        use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
         use ipfs_api_prelude::TryFromUri;
         use std::io::Cursor;
 
@@ -156,7 +157,7 @@ use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
         let mut file = fs::File::open(input_path)
             .with_context(|| format!("opening {:?}", input_path))?;
         let mut hasher = Sha256::new();
-        let mut temp = tempfile::NamedTempFile::new_in(self.root.join("pdfs"))?;
+        let mut temp = NamedTempFile::new_in(self.root.join("pdfs"))?;
         let mut buf = [0u8; 8192];
         let mut total: u64 = 0;
         let mut first_chunk = Vec::new();
@@ -165,7 +166,7 @@ use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
             if n == 0 { break; }
             hasher.update(&buf[..n]);
             temp.write_all(&buf[..n])?;
-            if total == 0 { first_chunk.extend_from_slice(&buf[..n.min(8)]); }
+            if total == 0 { first_chunk.extend_from_slice(&buf[..(n.min(8))]); }
             total += n as u64;
         }
         if !(first_chunk.starts_with(b"%PDF-")) {
@@ -191,7 +192,7 @@ use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
     }
 
     /// Fetch metadata by hex id.
-pub fn get_by_hex(&self, id_hex: &str) -> Result<Option<DocMeta>> {
+    pub fn get_by_hex(&self, id_hex: &str) -> Result<Option<DocMeta>> {
         let bytes = hex::decode(id_hex)?;
         if bytes.len() != 32 {
             bail!("expected 32-byte id, got {}", bytes.len());
@@ -247,22 +248,54 @@ pub mod on_chain_schema {
 #[cfg(feature = "chain")]
 pub mod chain {
     use super::*;
-    use anyhow::Result;
     use subxt::{tx::PairSigner, OnlineClient, PolkadotConfig};
     use subxt_signer::sr25519::Keypair;
+    use alloc::string::String;
+    /// on-chain payload structure for document metadata publication
 
-    /// Publish a remark containing minimal document info.
-    /// Payload format: JSON { sha256_hex, cid, size_bytes }
-    pub async fn publish_remark(ws_url: &str, seed: &str, meta: &DocMeta) -> Result<()> {
-        #[derive(serde::Serialize)]
-        struct Payload<'a> { sha256_hex: &'a str, cid: &'a Option<String>, size_bytes: u64 }
-        let payload = serde_json::to_vec(&Payload { sha256_hex: &meta.id_hex, cid: &meta.cid, size_bytes: meta.size_bytes })?;
-        let api = OnlineClient::<PolkadotConfig>::from_url(ws_url).await?;
-        let pair = Keypair::from_phrase(seed, None).map(|(kp, _)| kp)?;
-        let signer = PairSigner::new(pair);
-        // system.remark
-        let call = subxt::dynamic::tx("System", "remark").push_arg_bytes(&payload);
-        let _events = api.tx().sign_and_submit_then_watch_default(&call, &signer).await?.wait_for_in_block().await?;
-        Ok(())
+    #[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+    pub struct onChainPayload {
+        pub sha256_hex: String,
+        pub cid: Option<String>,
+        pub size_bytes: u64,
+        pub filename: String,
+        pub timestamp: u64,
     }
+
+    impl From<&DocMeta> for onChainPayload {
+        fn from(meta: &DocMeta) -> Self {
+            Self {
+                sha256_hex: meta.id_hex.clone(),
+                cid: meta.cid.clone(),
+                size_bytes: meta.size_bytes,
+                filename: meta.filename.clone(),
+                timestamp: meta.created_at_unix_ms,
+            }
+        }
+    }
+}
+
+    /// publishing a remark containing document metadata to the chain, this is storing the document hash on-chain and the actual document off-chain.
+
+pub async fn publish(ws_url: &str, seed: &str, meta: &DocMeta) -> Result<String> {
+    let payload = crate::chain::onChainPayload::from(meta);
+    let payload_bytes = serde_json::to_vec(&payload).context("Failed to serialize payload")?;
+    let api = OnlineClient::<PolkadotConfig>::from_url(ws_url).await.context("Failed to connect to node")?;
+    let pair = Keypair::from_phrase(seed, None).map(|(kp,_)| kp).context("Invalid seed phrase")?;
+    let singer = PairSigner::new(pair);
+
+    /// Publish a remark extrinsic with the given payload
+
+    let call = subxt::dynamic::tx("System", "remark").push_arg_bytes(&payload_bytes);
+    let events = api.tx().sign_and_submit_then_watch_default(&call, &singer).await.context("Failed to submit transaction")?.wait_for_in_block().await.context("Failed to wait for block inclusion")?;
+
+    let block_hash = events.block_hash();
+    Ok(format!("{:?}", block_hash))
+}
+
+pub async fn verify_onchain(ws_url: &str, sha256_hex: &str) -> Result<bool> {
+    let _api = OnlineClient::<PolkadotConfig>::from_url(ws_url).await.context("Failed to connect to node")?;
+    // Implementation of on-chain verification logic goes here @samarth3301 likh dena bhai.
+    let _ = sha256_hex;
+    Ok(true)
 }
