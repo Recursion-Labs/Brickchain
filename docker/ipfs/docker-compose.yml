@@ -1,0 +1,13 @@
+services:
+  ipfs:
+    image: ipfs/kubo:latest
+    ports:
+      - "5001:5001"
+      - "8080:8080"
+    volumes:
+      - ipfs_staging:/export
+      - ipfs_data:/data/ipfs
+volumes:
+  pdfdb:
+  ipfs_staging:
+  ipfs_data:
