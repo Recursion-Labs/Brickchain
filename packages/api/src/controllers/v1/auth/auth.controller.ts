@@ -55,7 +55,9 @@ const verifyOtp = catchAsync(async (req: Request, res: Response) => {
 			email: email,
 		},
 	});
-	res.status(200).json({ message: "OTP verified successfully" });
+	res.status(200).json({
+		message: "OTP verified successfully",
+	});
 	return;
 });
 
