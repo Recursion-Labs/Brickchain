@@ -24,6 +24,23 @@ const register = catchAsync(async (req: Request, res: Response) => {
 	return;
 });
 
+const login = catchAsync(async (req: Request, res: Response) => {
+	const { email} = req.body as RegisterInput;
+	if (!email) {
+		throw new APIError(400, "Email is required");
+	}
+	const check = await db.user.findFirst({
+		where: {
+			email: email
+		}
+	})
+	if (!check) {
+		throw new APIError(404, "User not found, please register first");
+	}
+	res.status(200).json({ message: "Login Initiated" });
+})
+
+
 const sendOtp = catchAsync(async (req: Request, res: Response) => {
 	const { email } = req.body as SendOtpInput;
 	if (!email) {
@@ -77,6 +94,7 @@ const verifyOtp = catchAsync(async (req: Request, res: Response) => {
 
 export default {
 	register,
+	login,
 	sendOtp,
 	verifyOtp,
 };
