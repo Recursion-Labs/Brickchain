@@ -15,19 +15,16 @@ datasource db {
 }
 
 model User {
-  id String @id @default(uuid())
-  email String @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(uuid())
+  email         String   @unique
+  walletAddress String
+  name          String
+  role          Role     @default(USER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
-model Document {
-  id           String   @id            // sha256 hex
-  filename     String
-  mime         String
-  sizeBytes    Int
-  cid          String?
-  createdAt    DateTime @default(now())
-  // optional: link to user when auth is implemented
-  ownerId      String?
+enum Role {
+  ADMIN
+  USER
 }
