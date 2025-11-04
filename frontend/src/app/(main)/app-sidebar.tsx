@@ -158,9 +158,9 @@ export function AppSidebar() {
       } as React.CSSProperties}
     >
       {/* Header with Logo and Trigger */}
-      <SidebarHeader className="border-b border-border">
-        <div className="flex items-center justify-between gap-2 px-2">
-          <div className="flex items-center gap-2 flex-1">
+      <SidebarHeader className="h-16 border-b border-border">
+        {isCollapsed ? (
+          <div className="flex items-center justify-between gap-2 px-2">
             <Image
               src="https://ik.imagekit.io/mwhha64ay/Brickchain/black-trans-logo.png"
               alt="BrickChain"
@@ -168,14 +168,23 @@ export function AppSidebar() {
               height={32}
               className="w-8 h-8 shrink-0 invert"
             />
-            {!isCollapsed && (
-              <div className="flex flex-col min-w-0">
-                <span className="font-bold text-sm leading-tight text-sidebar-foreground truncate">BrickChain</span>
-              </div>
-            )}
+            <SidebarTrigger className="h-6 w-6" />
           </div>
-          <SidebarTrigger className="ml-auto" />
-        </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3 px-8">
+            <div className="flex items-center gap-3 flex-1 justify-center">
+              <Image
+                src="https://ik.imagekit.io/mwhha64ay/Brickchain/black-trans-logo.png"
+                alt="BrickChain"
+                width={40}
+                height={40}
+                className="w-10 h-10 shrink-0 invert"
+              />
+              <span className="font-bold text-lg leading-tight text-sidebar-foreground">BrickChain</span>
+            </div>
+            <SidebarTrigger />
+          </div>
+        )}
       </SidebarHeader>
 
       {/* Main Navigation */}
