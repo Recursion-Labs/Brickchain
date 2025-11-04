@@ -21,8 +21,7 @@ fn cli_store_get_list_delete() {
     let pdf = write_fake_pdf(&tmp, "doc.pdf", b"CLI test");
 
     // store
-    let output = Command::cargo_bin("store-cli")
-        .unwrap()
+    let output = Command::new(assert_cmd::cargo::cargo_bin!("store-cli"))
         .args(["--db", db_dir.to_str().unwrap(), "store", pdf.to_str().unwrap()])
         .output()
         .unwrap();
@@ -32,28 +31,28 @@ fn cli_store_get_list_delete() {
     assert_eq!(id.len(), 64);
 
     // get
-    Command::cargo_bin("store-cli").unwrap()
+    Command::new(assert_cmd::cargo::cargo_bin!("store-cli"))
         .args(["--db", db_dir.to_str().unwrap(), "get", id])
         .assert()
         .success()
         .stdout(predicate::str::contains(id));
 
     // list
-    Command::cargo_bin("store-cli").unwrap()
+    Command::new(assert_cmd::cargo::cargo_bin!("store-cli"))
         .args(["--db", db_dir.to_str().unwrap(), "list"]) 
         .assert()
         .success()
         .stdout(predicate::str::contains(id));
 
     // delete
-    Command::cargo_bin("store-cli").unwrap()
+    Command::new(assert_cmd::cargo::cargo_bin!("store-cli"))
         .args(["--db", db_dir.to_str().unwrap(), "delete", id])
         .assert()
         .success()
         .stdout(predicate::str::contains("deleted"));
 
     // list empty
-    Command::cargo_bin("store-cli").unwrap()
+    Command::new(assert_cmd::cargo::cargo_bin!("store-cli"))
         .args(["--db", db_dir.to_str().unwrap(), "list"]) 
         .assert()
         .success();
