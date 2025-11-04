@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface WaitlistEntry {
   id: string;
@@ -19,6 +21,7 @@ export default function WaitlistPage() {
   const [loading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedEntry, setSelectedEntry] = useState<WaitlistEntry | null>(null);
 
   useEffect(() => {
     // TODO: Fetch waitlist data from API
@@ -102,9 +105,72 @@ export default function WaitlistPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <button className="text-xs text-accent hover:underline">
-                          View
-                        </button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <button
+                              className="text-xs text-accent hover:underline"
+                              onClick={() => setSelectedEntry(entry)}
+                            >
+                              View
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md bg-card border border-border">
+                            <DialogHeader>
+                              <DialogTitle className="text-foreground">Waitlist Entry Details</DialogTitle>
+                              <DialogDescription className="text-muted-foreground">
+                                User registration information
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <h4 className="font-medium text-foreground mb-1">Name</h4>
+                                  <p className="text-foreground bg-sidebar/20 p-2 rounded border border-border">
+                                    {entry.name}
+                                  </p>
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-foreground mb-1">Email</h4>
+                                  <p className="text-foreground bg-sidebar/20 p-2 rounded border border-border">
+                                    {entry.email}
+                                  </p>
+                                </div>
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-foreground mb-1">Status</h4>
+                                <Badge
+                                  className={`${
+                                    entry.status === "verified"
+                                      ? "bg-success text-success-foreground"
+                                      : entry.status === "rejected"
+                                      ? "bg-error text-error-foreground"
+                                      : "bg-warning text-warning-foreground"
+                                  }`}
+                                >
+                                  {entry.status}
+                                </Badge>
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-foreground mb-1">Joined Date</h4>
+                                <p className="text-muted-foreground">
+                                  {new Date(entry.createdAt).toLocaleString()}
+                                </p>
+                              </div>
+                              <div className="flex gap-2 pt-4">
+                                <Button
+                                  variant="outline"
+                                  className="border border-border text-foreground hover:bg-sidebar/50"
+                                  onClick={() => setSelectedEntry(null)}
+                                >
+                                  Close
+                                </Button>
+                                <Button className="bg-accent hover:bg-accent/90 text-white">
+                                  {entry.status === "pending" ? "Verify" : entry.status === "verified" ? "Reject" : "Approve"}
+                                </Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </TableCell>
                     </TableRow>
                   ))}

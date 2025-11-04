@@ -109,9 +109,50 @@ export default function MessagesPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <button className="text-xs text-accent hover:underline">
-                          View
-                        </button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <button
+                              className="text-xs text-accent hover:underline"
+                              onClick={() => setSelectedMessage(msg)}
+                            >
+                              View
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl bg-card border border-border">
+                            <DialogHeader>
+                              <DialogTitle className="text-foreground">Message Details</DialogTitle>
+                              <DialogDescription className="text-muted-foreground">
+                                From: {msg.name} ({msg.email}) • {new Date(msg.createdAt).toLocaleString()}
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div>
+                                <h4 className="font-medium text-foreground mb-2">Subject</h4>
+                                <p className="text-foreground bg-sidebar/20 p-3 rounded border border-border">
+                                  {msg.subject}
+                                </p>
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-foreground mb-2">Message</h4>
+                                <div className="text-foreground bg-sidebar/20 p-3 rounded border border-border whitespace-pre-wrap">
+                                  {msg.message}
+                                </div>
+                              </div>
+                              <div className="flex gap-2 pt-4">
+                                <Button
+                                  variant="outline"
+                                  className="border border-border text-foreground hover:bg-sidebar/50"
+                                  onClick={() => setSelectedMessage(null)}
+                                >
+                                  Close
+                                </Button>
+                                <Button className="bg-accent hover:bg-accent/90 text-white">
+                                  Mark as {msg.status === "read" ? "Replied" : "Read"}
+                                </Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </TableCell>
                     </TableRow>
                   ))}
