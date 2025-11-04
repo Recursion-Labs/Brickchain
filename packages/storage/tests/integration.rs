@@ -18,7 +18,7 @@ fn write_fake_pdf(dir: &TempDir, name: &str, body: &[u8]) -> PathBuf {
 #[test]
 fn store_get_list_delete_flow() {
     let tmp = TempDir::new().unwrap();
-    let pdf = write_fake_pdf(&tmp, "test.pdf", b"Hello BrickCHAIN");
+    let pdf = write_fake_pdf(&tmp, "test.pdf", b"Hello BrickChain");
 
     let db_root = tmp.path().join("db");
     let db = DocStore::open(&db_root).expect("open db");
