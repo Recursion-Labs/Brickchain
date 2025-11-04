@@ -17,11 +17,75 @@ interface WaitlistEntry {
 }
 
 export default function WaitlistPage() {
-  const [waitlistData] = useState<WaitlistEntry[]>([]);
+  const [waitlistData, setWaitlistData] = useState<WaitlistEntry[]>([]);
   const [loading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedEntry, setSelectedEntry] = useState<WaitlistEntry | null>(null);
+
+  // Dummy data for testing
+  const dummyWaitlist: WaitlistEntry[] = [
+    {
+      id: "1",
+      email: "alex.chen@gmail.com",
+      name: "Alex Chen",
+      createdAt: "2025-11-03T08:15:00Z",
+      status: "pending"
+    },
+    {
+      id: "2",
+      email: "emma.davis@outlook.com",
+      name: "Emma Davis",
+      createdAt: "2025-11-02T14:30:00Z",
+      status: "verified"
+    },
+    {
+      id: "3",
+      email: "robert.wilson@yahoo.com",
+      name: "Robert Wilson",
+      createdAt: "2025-11-01T10:45:00Z",
+      status: "pending"
+    },
+    {
+      id: "4",
+      email: "sophia.martinez@techstartup.com",
+      name: "Sophia Martinez",
+      createdAt: "2025-10-31T16:20:00Z",
+      status: "verified"
+    },
+    {
+      id: "5",
+      email: "james.brown@investor.com",
+      name: "James Brown",
+      createdAt: "2025-10-30T12:10:00Z",
+      status: "rejected"
+    },
+    {
+      id: "6",
+      email: "olivia.taylor@realestate.com",
+      name: "Olivia Taylor",
+      createdAt: "2025-10-29T09:55:00Z",
+      status: "pending"
+    },
+    {
+      id: "7",
+      email: "william.garcia@blockchain.io",
+      name: "William Garcia",
+      createdAt: "2025-10-28T15:40:00Z",
+      status: "verified"
+    },
+    {
+      id: "8",
+      email: "ava.anderson@startup.co",
+      name: "Ava Anderson",
+      createdAt: "2025-10-27T11:25:00Z",
+      status: "pending"
+    }
+  ];
+
+  const loadDummyData = () => {
+    setWaitlistData(dummyWaitlist);
+  };
 
   useEffect(() => {
     // TODO: Fetch waitlist data from API
@@ -37,7 +101,7 @@ export default function WaitlistPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 flex-wrap">
+      <div className="flex gap-4 flex-wrap items-center">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px] bg-input border border-border text-foreground focus:border-ring">
             <SelectValue placeholder="All Status" />
@@ -56,6 +120,12 @@ export default function WaitlistPage() {
           placeholder="Search by email or name..."
           className="flex-1 min-w-64 px-4 py-2 rounded bg-input border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:border-ring"
         />
+        <Button
+          onClick={loadDummyData}
+          className="bg-accent hover:bg-accent/90 text-white px-4 py-2"
+        >
+          Load Dummy Data
+        </Button>
       </div>
 
       {/* Waitlist Table */}

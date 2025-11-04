@@ -19,11 +19,64 @@ interface ContactMessage {
 }
 
 export default function MessagesPage() {
-  const [messages] = useState<ContactMessage[]>([]);
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [loading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
+
+  // Dummy data for testing
+  const dummyMessages: ContactMessage[] = [
+    {
+      id: "1",
+      email: "john.doe@example.com",
+      name: "John Doe",
+      subject: "Interested in BrickChain Platform",
+      message: "Hi, I came across BrickChain and I'm very interested in how you're revolutionizing property trading with blockchain technology. Could you tell me more about how the tokenization process works and what kind of properties are currently available?",
+      createdAt: "2025-11-03T10:30:00Z",
+      status: "unread"
+    },
+    {
+      id: "2",
+      email: "sarah.smith@techcorp.com",
+      name: "Sarah Smith",
+      subject: "Partnership Inquiry",
+      message: "Hello BrickChain team,\n\nI'm reaching out from TechCorp, a real estate investment firm. We're interested in exploring partnership opportunities with your platform. Our company manages a portfolio of $50M+ in commercial properties and we see great potential in your zero-knowledge proof technology.\n\nWould you be available for a call next week to discuss potential collaboration?\n\nBest regards,\nSarah Smith\nVP of Investments\nTechCorp",
+      createdAt: "2025-11-02T14:15:00Z",
+      status: "read"
+    },
+    {
+      id: "3",
+      email: "mike.johnson@gmail.com",
+      name: "Mike Johnson",
+      subject: "Technical Question About Privacy",
+      message: "Hi there,\n\nI have a question about the privacy features of BrickChain. How exactly do the zero-knowledge proofs work to ensure that property ownership remains private while still allowing for trading? Is there any way for third parties to see transaction details?\n\nThanks,\nMike",
+      createdAt: "2025-11-01T09:45:00Z",
+      status: "replied"
+    },
+    {
+      id: "4",
+      email: "lisa.wang@startup.io",
+      name: "Lisa Wang",
+      subject: "Waitlist Question",
+      message: "Hello,\n\nI signed up for the BrickChain waitlist a few weeks ago. Could you give me an update on when the platform will be launching? I'm very excited about the concept and would like to be among the first users.\n\nThank you,\nLisa",
+      createdAt: "2025-10-30T16:20:00Z",
+      status: "read"
+    },
+    {
+      id: "5",
+      email: "david.brown@investor.com",
+      name: "David Brown",
+      subject: "Investment Opportunity",
+      message: "Dear BrickChain Team,\n\nI'm an angel investor with experience in blockchain and real estate technologies. I've been following your project and I'm impressed by the innovative approach to property tokenization.\n\nI'd like to discuss potential investment opportunities. Please let me know if you're open to investor meetings.\n\nBest,\nDavid Brown",
+      createdAt: "2025-10-29T11:10:00Z",
+      status: "unread"
+    }
+  ];
+
+  const loadDummyData = () => {
+    setMessages(dummyMessages);
+  };
 
   useEffect(() => {
     // TODO: Fetch messages from API
@@ -39,7 +92,7 @@ export default function MessagesPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 flex-wrap">
+      <div className="flex gap-4 flex-wrap items-center">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px] bg-input border border-border text-foreground focus:border-ring">
             <SelectValue placeholder="All Status" />
@@ -58,6 +111,12 @@ export default function MessagesPage() {
           placeholder="Search by email or name..."
           className="flex-1 min-w-64 px-4 py-2 rounded bg-input border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:border-ring"
         />
+        <Button
+          onClick={loadDummyData}
+          className="bg-accent hover:bg-accent/90 text-white px-4 py-2"
+        >
+          Load Dummy Data
+        </Button>
       </div>
 
       {/* Messages Table */}
