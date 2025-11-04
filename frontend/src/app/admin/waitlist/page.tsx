@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface WaitlistEntry {
   id: string;
@@ -16,6 +17,8 @@ interface WaitlistEntry {
 export default function WaitlistPage() {
   const [waitlistData] = useState<WaitlistEntry[]>([]);
   const [loading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
     // TODO: Fetch waitlist data from API
@@ -32,14 +35,21 @@ export default function WaitlistPage() {
 
       {/* Filters */}
       <div className="flex gap-4 flex-wrap">
-        <select className="px-4 py-2 rounded bg-input border border-border text-foreground focus:outline-none focus:border-ring">
-          <option>All Status</option>
-          <option>Pending</option>
-          <option>Verified</option>
-          <option>Rejected</option>
-        </select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[180px] bg-input border border-border text-foreground focus:border-ring">
+            <SelectValue placeholder="All Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="verified">Verified</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
+          </SelectContent>
+        </Select>
         <input
           type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by email or name..."
           className="flex-1 min-w-64 px-4 py-2 rounded bg-input border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:border-ring"
         />
