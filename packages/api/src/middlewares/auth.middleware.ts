@@ -1,14 +1,12 @@
 import { db } from "@/config/database";
 import envVars from "@/config/envVars";
 import { Request, Response, NextFunction } from "express";
-import { User } from "generated/prisma/client";
+import { User as user } from "generated/prisma/client";
 import jwt from "jsonwebtoken";
 
 declare global {
 	namespace Express {
-		interface Request {
-			user?: User;
-		}
+		interface User extends user {}
 	}
 }
 
