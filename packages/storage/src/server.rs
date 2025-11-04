@@ -4,7 +4,7 @@ use axum::{
     extract::{Path, Query, State, Multipart},
     http::{StatusCode, header},
     response::{IntoResponse, Response, Json},
-    routing::{get, post, delete},
+    routing::{get, post},
     Router,
 };
 use serde::{Deserialize, Serialize};
@@ -29,6 +29,7 @@ struct StoreResponse {
     sha256: String,
     cid: Option<String>,
     size_bytes: u64,
+    block_hash: Option<String>,
     message: String,
 }
 
@@ -63,28 +64,26 @@ struct ErrorResponse {
 }
 
 /// Query parameters for store endpoint
+/// Note: IPFS pinning and blockchain publishing are now MANDATORY for full decentralization
 #[derive(Deserialize)]
 struct StoreQuery {
-    #[serde(default)]
-    pin_ipfs: bool,
-    #[serde(default)]
-    publish: bool,
+    // Removed optional flags - always pin to IPFS and publish to blockchain
 }
 
 /// Health check endpoint
 async fn health_check() -> impl IntoResponse {
     Json(serde_json::json!({
         "status": "healthy",
-        "service": "BrickCHAIN PDF Storage API",
+        "service": "PDF Storage API",
         "version": env!("CARGO_PKG_VERSION")
     }))
 }
 
-/// Store a PDF document
-/// POST /api/store?pin_ipfs=true&publish=true
+/// Store a PDF document with MANDATORY IPFS pinning and blockchain publishing
+/// POST /api/store (always pins to IPFS and publishes to blockchain)
 async fn store_pdf(
     State(state): State<AppState>,
-    Query(params): Query<StoreQuery>,
+    Query(_params): Query<StoreQuery>,
     mut multipart: Multipart,
 ) -> Result<Json<StoreResponse>, AppError> {
     // Extract the file from multipart form data
@@ -109,25 +108,14 @@ async fn store_pdf(
     
     let temp_path = temp_path.ok_or_else(|| anyhow::anyhow!("No file provided"))?;
     
-    // Store the PDF
-    #[cfg(feature = "ipfs")]
-    let meta = if params.pin_ipfs {
-        state.db.store_pdf_with_ipfs(&temp_path, state.ipfs_url.as_deref())?
-    } else {
-        state.db.store_pdf(&temp_path, None)?
-    };
+    // ALWAYS store with IPFS pinning (mandatory for decentralization)
+    let meta = state.db.store_pdf_with_ipfs(&temp_path, state.ipfs_url.as_deref())?;
     
-    #[cfg(not(feature = "ipfs"))]
-    let meta = state.db.store_pdf(&temp_path, None)?;
-    
-    // Publish to blockchain if requested
-    #[cfg(feature = "chain")]
-    if params.publish {
-        use tokio::runtime::Runtime;
-        use store::chain::publish_remark;
-        let rt = Runtime::new()?;
-        rt.block_on(publish_remark(&state.node_url, &state.seed, &meta))?;
-    }
+    // ALWAYS publish to blockchain (mandatory for tamper-proof registry)
+    use tokio::runtime::Runtime;
+    use store::chain::publish_remark;
+    let rt = Runtime::new()?;
+    let block_hash = rt.block_on(publish_remark(&state.node_url, &state.seed, &meta))?;
     
     // Clean up temp file
     let _ = std::fs::remove_file(temp_path);
@@ -138,7 +126,8 @@ async fn store_pdf(
         sha256: meta.id_hex.clone(),
         cid: meta.cid.clone(),
         size_bytes: meta.size_bytes,
-        message: "PDF stored successfully".to_string(),
+        block_hash: Some(block_hash),
+        message: "PDF stored successfully on IPFS and on-chain".to_string(),
     }))
 }
 
@@ -170,7 +159,7 @@ async fn download_pdf(
     let meta = state.db.get_by_hex(&id)?
         .ok_or_else(|| anyhow::anyhow!("Document not found"))?;
     
-    let pdf_path = state.db.root().join("pdfs").join(format!("{}.pdf", id));
+    let pdf_path = state.db.root().join("pdfs").join(format!("{id}.pdf"));
     let data = std::fs::read(&pdf_path)?;
     
     Ok((
@@ -248,12 +237,9 @@ async fn api_docs() -> impl IntoResponse {
             "store": {
                 "method": "POST",
                 "path": "/api/store",
-                "query_params": {
-                    "pin_ipfs": "Pin to IPFS",
-                    "publish": "Publish to chain"
-                },
+                "query_params": "None - IPFS pinning and on-chain publishing",
                 "body": "multipart/form-data with 'file' field",
-                "description": "Store a PDF document"
+                "description": "Store a PDF document (automatically pins to IPFS and publishes to blockchain)"
             },
             "get_metadata": {
                 "method": "GET",
@@ -285,31 +271,81 @@ async fn api_docs() -> impl IntoResponse {
 }
 
 // Error handling
-struct AppError (anyhow::Error);
+struct AppError(anyhow::Error);
+
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ErrorResponse {
-            success: false,
-            error: self.0.to_string(),
-        }),
-    ).into_response()
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                success: false,
+                error: self.0.to_string(),
+            }),
+        ).into_response()
     }
 }
 
-/// Build the app router
+impl<E> From<E> for AppError
+where
+    E: Into<anyhow::Error>,
+{
+    fn from(err: E) -> Self {
+        Self(err.into())
+    }
+}
+
+/// Build the application router
 fn app(state: AppState) -> Router {
     Router::new()
         .route("/health", get(health_check))
+        .route("/", get(api_docs))
         .route("/api/store", post(store_pdf))
-        .route("/api/docs/:id", get(get_metadata))
-        .route("/api/docs/:id/download", get(download_pdf))
         .route("/api/docs", get(list_docs))
-        .route("/api/docs/:id", delete(delete_doc))
+        .route("/api/docs/:id", get(get_metadata).delete(delete_doc))
+        .route("/api/docs/:id/download", get(download_pdf))
         .route("/api/docs/:id/export", get(export_onchain))
-        .route("/api/docs/docs", get(api_docs))
-        .with_state(state)
         .layer(CorsLayer::permissive())
-        .layer(cors)
+        .with_state(state)
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    // Parse CLI arguments
+    let args: Vec<String> = std::env::args().collect();
+    let db_path = args.get(1)
+        .map(|s| s.as_str())
+        .unwrap_or("./.pdfdb");
+    let port: u16 = args.get(2)
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(3000);
+    
+    println!("Decentralized PDF Storage API");
+    println!("Database: {db_path}");
+    
+    // Initialize database
+    let db = DocStore::open(db_path)
+        .context("Failed to open database")?;
+    println!("Database initialized");
+    
+    let state = AppState {
+        db: Arc::new(db),
+        ipfs_url: std::env::var("IPFS_URL").ok(),
+        node_url: std::env::var("NODE_URL").unwrap_or_else(|_| "ws://localhost:9944".to_string()),
+        seed: std::env::var("SEED").unwrap_or_else(|_| "//Alice".to_string()),
+    };
+    
+    // Build application
+    let app = app(state);
+    
+    // Start server
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    println!("Server listening on http://0.0.0.0:{port}");
+    println!("API Documentation: http://localhost:{port}/");
+    println!("Health Check: http://localhost:{port}/health");
+    println!();
+    
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    axum::serve(listener, app).await?;
+    
+    Ok(())
 }
