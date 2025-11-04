@@ -67,11 +67,11 @@ export default function NFTGallery({ activeTab = "galleries" }: NFTGalleryProps)
   return (
     <div className="w-full">
       {/* Banner Section */}
-      <div className="relative h-64 bg-linear-to-r from-purple-600 via-purple-500 to-purple-600 rounded-lg overflow-hidden mb-0">
+      <div className="relative h-64 bg-linear-to-r from-accent via-accent to-accent rounded-lg overflow-hidden mb-0">
         <div className="absolute inset-0 opacity-60">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-          <div className="absolute -bottom-8 left-20 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+          <div className="absolute top-0 left-0 w-96 h-96 bg-accent rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-accent rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-20 w-96 h-96 bg-accent rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
         </div>
         <button className="absolute top-4 right-4 z-10 bg-foreground/80 hover:bg-foreground text-background p-2 rounded-lg transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,12 +88,11 @@ export default function NFTGallery({ activeTab = "galleries" }: NFTGalleryProps)
             <div className="relative z-20">
               <div className="w-40 h-40 rounded-2xl bg-secondary border-4 border-card overflow-hidden">
                 <div
-                  className="w-full h-full"
+                  className="w-full h-full bg-linear-to-br from-accent to-accent/70"
                   style={{
                     backgroundImage: "url(/profile-avatar.jpg)",
                     backgroundSize: "cover",
                     backgroundPosition: "center",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                   }}
                 />
               </div>
@@ -277,7 +276,7 @@ export default function NFTGallery({ activeTab = "galleries" }: NFTGalleryProps)
                 <motion.div
                   initial={{ opacity: 0 }}
                   whileHover={{ opacity: 1 }}
-                  className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center gap-3"
+                  className="absolute inset-0 bg-background/70 backdrop-blur-sm flex items-center justify-center gap-3"
                 >
                   <button className="bg-foreground text-background p-3 rounded-full hover:opacity-90 transition-opacity">
                     <Heart className="w-5 h-5" />
