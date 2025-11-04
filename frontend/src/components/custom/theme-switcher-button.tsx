@@ -9,6 +9,12 @@ import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ThemeSwitcherButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -39,30 +45,38 @@ export function ThemeSwitcherButton({
   };
 
   const isDark = theme === "dark";
+  const tooltipText = isDark ? "Switch to light theme" : "Switch to dark theme";
 
   return (
-    <Button
-      variant="outline"
-      size="icon"
-      onClick={toggleTheme}
-      className={cn("relative overflow-hidden", className)}
-      {...props}
-    >
-      <SunIcon
-        className={`w-4 h-4 transition-all duration-300 ${
-          isDark
-            ? "rotate-90 scale-0 opacity-0"
-            : "rotate-0 scale-100 opacity-100"
-        }`}
-      />
-      <MoonIcon
-        className={`absolute w-4 h-4 transition-all duration-300 ${
-          isDark
-            ? "rotate-0 scale-100 opacity-100"
-            : "-rotate-90 scale-0 opacity-0"
-        }`}
-      />
-      <span className="sr-only">Toggle theme</span>
-    </Button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleTheme}
+            className={cn("relative overflow-hidden", className)}
+            {...props}
+          >
+            <SunIcon
+              className={`w-4 h-4 transition-all duration-300 ${
+                isDark
+                  ? "rotate-90 scale-0 opacity-0"
+                  : "rotate-0 scale-100 opacity-100"
+              }`}
+            />
+            <MoonIcon
+              className={`absolute w-4 h-4 transition-all duration-300 ${
+                isDark
+                  ? "rotate-0 scale-100 opacity-100"
+                  : "-rotate-90 scale-0 opacity-0"
+              }`}
+            />
+            <span className="sr-only">Toggle theme</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{tooltipText}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
