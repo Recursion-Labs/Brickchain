@@ -8,14 +8,18 @@ import { Footer } from "@/components/landing/Footer";
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <div className="dark">
+        <Header />
+      </div>
       <Hero />
       <div className="container mx-auto px-4">
         {/* <Features /> */}
         <HowItWorks />
       </div>
       <FAQs />
-      <Footer />
+      <div className="dark">
+        <Footer />
+      </div>
     </div>
   );
 }

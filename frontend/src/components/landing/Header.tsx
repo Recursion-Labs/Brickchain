@@ -106,7 +106,7 @@ const Header = ({
   },
 }: Navbar1Props) => {
   return (
-    <section className="sticky top-0 z-50 bg-black border-b border-gray-800">
+    <section className="sticky top-0 z-50 bg-background border-b border-border">
       <div className="max-w-7xl mx-auto py-4 px-4">
         {/* Desktop Menu */}
         <nav className="hidden items-center justify-between lg:flex">
@@ -118,7 +118,7 @@ const Header = ({
                 className="max-h-12"
                 alt={logo.alt}
               />
-              <span className="ml-2 text-xl font-bold tracking-tighter text-white">
+              <span className="ml-2 text-xl font-bold tracking-tighter text-foreground">
                 {logo.title}
               </span>
             </a>
@@ -135,14 +135,14 @@ const Header = ({
               asChild
               variant="ghost"
               size="sm"
-              className="text-white hover:bg-gray-800"
+              className="text-foreground hover:bg-secondary/80"
             >
               <a href={auth.login.url}>{auth.login.title}</a>
             </Button>
             <Button
               asChild
               size="sm"
-              className="bg-white text-black hover:bg-gray-200"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <a href={auth.signup.url}>{auth.signup.title}</a>
             </Button>
@@ -159,7 +159,7 @@ const Header = ({
                 className="max-h-12"
                 alt={logo.alt}
               />
-              <span className="ml-2 text-lg font-semibold text-white">
+              <span className="ml-2 text-lg font-semibold text-foreground">
                 {logo.title}
               </span>
             </a>
@@ -168,12 +168,12 @@ const Header = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-white hover:bg-gray-800"
+                  className="text-foreground hover:bg-secondary/80"
                 >
                   <Menu className="size-4" />
                 </Button>
               </SheetTrigger>
-              <SheetContent className="overflow-y-auto bg-black text-white border-gray-800">
+              <SheetContent className="overflow-y-auto bg-background text-foreground border-border">
                 <SheetHeader>
                   <SheetTitle>
                     <a href={logo.url} className="flex items-center gap-2">
@@ -182,7 +182,7 @@ const Header = ({
                         className="max-h-12"
                         alt={logo.alt}
                       />
-                      <span className="ml-2 text-lg font-semibold text-white">
+                      <span className="ml-2 text-lg font-semibold text-foreground">
                         {logo.title}
                       </span>
                     </a>
@@ -201,13 +201,13 @@ const Header = ({
                     <Button
                       asChild
                       variant="ghost"
-                      className="text-white hover:bg-gray-800 justify-start"
+                      className="text-foreground hover:bg-secondary/80 justify-start"
                     >
                       <a href={auth.login.url}>{auth.login.title}</a>
                     </Button>
                     <Button
                       asChild
-                      className="bg-white text-black hover:bg-gray-200 justify-start"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 justify-start"
                     >
                       <a href={auth.signup.url}>{auth.signup.title}</a>
                     </Button>
@@ -226,8 +226,8 @@ const renderMenuItem = (item: MenuItem) => {
   if (item.items) {
     return (
         <NavigationMenuItem key={item.title}>
-          <NavigationMenuTrigger className="text-white hover:text-white bg-black hover:bg-gray-800">{item.title}</NavigationMenuTrigger>
-          <NavigationMenuContent className="bg-black text-white border-gray-800 ">
+          <NavigationMenuTrigger className="text-foreground hover:text-foreground bg-background hover:bg-secondary/80">{item.title}</NavigationMenuTrigger>
+          <NavigationMenuContent className="bg-background text-foreground border-border ">
           {item.items.map((subItem) => (
             <NavigationMenuLink asChild key={subItem.title} className="w-80">
               <SubMenuLink item={subItem} />
@@ -242,7 +242,7 @@ const renderMenuItem = (item: MenuItem) => {
     <NavigationMenuItem key={item.title}>
       <NavigationMenuLink
         href={item.url}
-        className="bg-black hover:bg-gray-800 text-white hover:text-white group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors"
+        className="bg-background hover:bg-secondary/80 text-foreground hover:text-foreground group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors"
       >
         {item.title}
       </NavigationMenuLink>
@@ -254,7 +254,7 @@ const renderMobileMenuItem = (item: MenuItem) => {
   if (item.items) {
     return (
       <AccordionItem key={item.title} value={item.title} className="border-b-0">
-        <AccordionTrigger className="text-md py-0 font-semibold hover:no-underline text-white">
+        <AccordionTrigger className="text-md py-0 font-semibold hover:no-underline text-foreground">
           {item.title}
         </AccordionTrigger>
         <AccordionContent className="mt-2">
@@ -267,7 +267,7 @@ const renderMobileMenuItem = (item: MenuItem) => {
   }
 
   return (
-    <a key={item.title} href={item.url} className="text-md font-semibold text-white">
+    <a key={item.title} href={item.url} className="text-md font-semibold text-foreground">
       {item.title}
     </a>
   );
@@ -276,14 +276,14 @@ const renderMobileMenuItem = (item: MenuItem) => {
 const SubMenuLink = ({ item }: { item: MenuItem }) => {
   return (
     <a
-      className="hover:bg-gray-800 text-white flex min-w-80 select-none flex-row gap-4 rounded-md p-3 leading-none no-underline outline-none transition-colors"
+      className="hover:bg-secondary/80 text-foreground flex min-w-80 select-none flex-row gap-4 rounded-md p-3 leading-none no-underline outline-none transition-colors"
       href={item.url}
     >
-      <div className="text-white">{item.icon}</div>
+      <div className="text-foreground">{item.icon}</div>
       <div>
-        <div className="text-sm font-semibold text-white">{item.title}</div>
+        <div className="text-sm font-semibold text-foreground">{item.title}</div>
         {item.description && (
-          <p className="text-gray-300 text-sm leading-snug">
+          <p className="text-muted-foreground text-sm leading-snug">
             {item.description}
           </p>
         )}
