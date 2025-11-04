@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
         hostname: "ik.imagekit.io",
         pathname: "/mwhha64ay/Brickchain/**",
       },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
     ],
   },
 };
