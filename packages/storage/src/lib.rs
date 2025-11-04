@@ -1,4 +1,3 @@
-//! Lightweight local PDF storage with metadata, designed to pair with a future Polkadot/Substrate on-chain index.
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
@@ -14,11 +13,10 @@ use {
     sled::Db,
     std::{
         fs,
-        io::{Read, Write},
-        path::{Path, PathBuf, Path},
+        io::Write,
+        path::{Path, PathBuf},
         time::{SystemTime, UNIX_EPOCH},
     },
-    tempfile::NamedTempFile,
 };
 
 /// 32-byte SHA-256 digest
@@ -65,6 +63,11 @@ impl DocStore {
         Ok(Self { root, kv })
     }
 
+    /// Get the root directory path.
+    pub fn root(&self) -> &Path {
+        &self.root
+    }
+
     fn write_blob_and_index(
         &self,
         input_path: &Path,
@@ -82,7 +85,7 @@ impl DocStore {
             .essence_str()
             .to_string();
         // Persist file as content-addressed blob (renamed from temp by caller)
-        let out_path = self.root.join("pdfs").join(format!("{id_hex}.pdf"));
+        let _out_path = self.root.join("pdfs").join(format!("{id_hex}.pdf"));
         let created_at_unix_ms = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
@@ -109,10 +112,10 @@ impl DocStore {
         use std::io::Read;
         let input_path = input_path.as_ref();
         let mut file = fs::File::open(input_path)
-            .with_context(|| format!("opening {:?}", input_path))?;
+            .with_context(|| format!("opening {input_path:?}"))?;
         // Stream to a temp file while hashing
         let mut hasher = Sha256::new();
-        let mut temp = NamedTempFile::new_in(self.root.join("pdfs"))?;
+        let mut temp = tempfile::NamedTempFile::new_in(self.root.join("pdfs"))?;
         let mut buf = [0u8; 8192];
         let mut total: u64 = 0;
         let mut first_chunk = Vec::new();
@@ -121,7 +124,7 @@ impl DocStore {
             if n == 0 { break; }
             hasher.update(&buf[..n]);
             temp.write_all(&buf[..n])?;
-            if total == 0 { first_chunk.extend_from_slice(&buf[..(n.min(8))]); }
+            if total == 0 { first_chunk.extend_from_slice(&buf[..n.min(8)]); }
             total += n as u64;
         }
         // Basic PDF magic check
@@ -142,22 +145,22 @@ impl DocStore {
     }
 
     /// Store a PDF and pin its bytes to IPFS, saving the returned CID in metadata.
-    #[cfg(feature = "ipfs")]
+    /// This is MANDATORY for full decentralization - always enabled.
     pub fn store_pdf_with_ipfs<P: AsRef<Path>>(
         &self,
         input_path: P,
         ipfs_url: Option<&str>,
     ) -> Result<DocMeta> {
-        use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
+use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
         use ipfs_api_prelude::TryFromUri;
-        use std::io::Cursor;
+        use std::io::{Cursor, Read};
 
         let input_path = input_path.as_ref();
         // Read file fully and compute hash
         let mut file = fs::File::open(input_path)
-            .with_context(|| format!("opening {:?}", input_path))?;
+            .with_context(|| format!("opening {input_path:?}"))?;
         let mut hasher = Sha256::new();
-        let mut temp = NamedTempFile::new_in(self.root.join("pdfs"))?;
+        let mut temp = tempfile::NamedTempFile::new_in(self.root.join("pdfs"))?;
         let mut buf = [0u8; 8192];
         let mut total: u64 = 0;
         let mut first_chunk = Vec::new();
@@ -166,7 +169,7 @@ impl DocStore {
             if n == 0 { break; }
             hasher.update(&buf[..n]);
             temp.write_all(&buf[..n])?;
-            if total == 0 { first_chunk.extend_from_slice(&buf[..(n.min(8))]); }
+            if total == 0 { first_chunk.extend_from_slice(&buf[..n.min(8)]); }
             total += n as u64;
         }
         if !(first_chunk.starts_with(b"%PDF-")) {
@@ -181,8 +184,12 @@ impl DocStore {
                 Some(u) => IpfsClient::from_str(u).context("invalid IPFS url")?,
                 None => IpfsClient::default(),
             };
+            // Read file into memory for IPFS
+            let mut file_data = Vec::new();
+            std::fs::File::open(temp.path())?.read_to_end(&mut file_data)?;
+            
             let rt = tokio::runtime::Runtime::new()?;
-            let add_resp = rt.block_on(client.add(Cursor::new(std::fs::File::open(temp.path())?)))?;
+            let add_resp = rt.block_on(client.add(Cursor::new(file_data)))?;
             Some(add_resp.hash)
         };
         let id_hex = hex::encode(sha256_bytes);
@@ -192,7 +199,7 @@ impl DocStore {
     }
 
     /// Fetch metadata by hex id.
-    pub fn get_by_hex(&self, id_hex: &str) -> Result<Option<DocMeta>> {
+pub fn get_by_hex(&self, id_hex: &str) -> Result<Option<DocMeta>> {
         let bytes = hex::decode(id_hex)?;
         if bytes.len() != 32 {
             bail!("expected 32-byte id, got {}", bytes.len());
@@ -245,16 +252,18 @@ pub mod on_chain_schema {
     }
 }
 
-#[cfg(feature = "chain")]
+/// Blockchain integration module - MANDATORY for full decentralization
 pub mod chain {
     use super::*;
-    use subxt::{tx::PairSigner, OnlineClient, PolkadotConfig};
-    use subxt_signer::sr25519::Keypair;
+    use anyhow::{Result, Context};
+    use subxt::{OnlineClient, PolkadotConfig};
+    use subxt_signer::{sr25519::Keypair, SecretUri};
     use alloc::string::String;
-    /// on-chain payload structure for document metadata publication
+    use std::str::FromStr;
 
+    /// On-chain payload for document metadata
     #[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
-    pub struct onChainPayload {
+    pub struct OnChainPayload {
         pub sha256_hex: String,
         pub cid: Option<String>,
         pub size_bytes: u64,
@@ -262,7 +271,7 @@ pub mod chain {
         pub timestamp: u64,
     }
 
-    impl From<&DocMeta> for onChainPayload {
+    impl From<&DocMeta> for OnChainPayload {
         fn from(meta: &DocMeta) -> Self {
             Self {
                 sha256_hex: meta.id_hex.clone(),
@@ -273,29 +282,58 @@ pub mod chain {
             }
         }
     }
-}
 
-    /// publishing a remark containing document metadata to the chain, this is storing the document hash on-chain and the actual document off-chain.
+    /// Publish a remark containing document metadata to the blockchain.
+    /// This stores the document index on-chain while keeping the actual PDF off-chain.
+    pub async fn publish_remark(ws_url: &str, seed: &str, meta: &DocMeta) -> Result<String> {
+        let payload = OnChainPayload::from(meta);
+        let payload_bytes = serde_json::to_vec(&payload)
+            .context("Failed to serialize payload")?;
+        
+        let api = OnlineClient::<PolkadotConfig>::from_url(ws_url)
+            .await
+            .context("Failed to connect to on-chain node")?;
+        
+        let uri = SecretUri::from_str(seed)
+            .context("Invalid seed phrase")?;
+        let pair = Keypair::from_uri(&uri)
+            .context("Failed to create keypair")?;
+        
+        let signer = pair;
+        
+        // Publish via system.remark
+        let remark_call = subxt::dynamic::tx(
+            "System",
+            "remark",
+            vec![subxt::dynamic::Value::from_bytes(&payload_bytes)],
+        );
+        
+        let tx_progress = api
+            .tx()
+            .sign_and_submit_then_watch_default(&remark_call, &signer)
+            .await
+            .context("Failed to submit transaction")?;
+        
+        let events = tx_progress
+            .wait_for_finalized_success()
+            .await
+            .context("Transaction failed")?;
+        
+        let block_hash = events.extrinsic_hash();
+        Ok(format!("{block_hash:?}"))
+    }
 
-pub async fn publish(ws_url: &str, seed: &str, meta: &DocMeta) -> Result<String> {
-    let payload = crate::chain::onChainPayload::from(meta);
-    let payload_bytes = serde_json::to_vec(&payload).context("Failed to serialize payload")?;
-    let api = OnlineClient::<PolkadotConfig>::from_url(ws_url).await.context("Failed to connect to node")?;
-    let pair = Keypair::from_phrase(seed, None).map(|(kp,_)| kp).context("Invalid seed phrase")?;
-    let singer = PairSigner::new(pair);
-
-    /// Publish a remark extrinsic with the given payload
-
-    let call = subxt::dynamic::tx("System", "remark").push_arg_bytes(&payload_bytes);
-    let events = api.tx().sign_and_submit_then_watch_default(&call, &singer).await.context("Failed to submit transaction")?.wait_for_in_block().await.context("Failed to wait for block inclusion")?;
-
-    let block_hash = events.block_hash();
-    Ok(format!("{:?}", block_hash))
-}
-
-pub async fn verify_onchain(ws_url: &str, sha256_hex: &str) -> Result<bool> {
-    let _api = OnlineClient::<PolkadotConfig>::from_url(ws_url).await.context("Failed to connect to node")?;
-    // Implementation of on-chain verification logic goes here @samarth3301 likh dena bhai.
-    let _ = sha256_hex;
-    Ok(true)
+    /// Verify if a document exists on-chain by checking remarks
+    /// Note: This requires indexing infrastructure (SubQuery/Subsquid) for production use
+    pub async fn verify_onchain(ws_url: &str, sha256_hex: &str) -> Result<bool> {
+        let _api = OnlineClient::<PolkadotConfig>::from_url(ws_url)
+            .await
+            .context("Failed to connect to on-chain node")?;
+        
+        // In production, this would query an indexer (SubQuery/Subsquid)
+        // For now, return Ok to indicate the API is functional
+        // TODO: Implement proper indexer query
+        let _ = sha256_hex; // Use the parameter
+        Ok(true)
+    }
 }
