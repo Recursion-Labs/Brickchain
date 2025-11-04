@@ -1,10 +1,10 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use store::DocStore;
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "store-cli", version, about = "Store PDFs locally (optional IPFS pin) with metadata; ready for on-chain indexing")] 
+#[command(name = "store-cli", version, about = "Decentralized PDF storage - pins to IPFS and publishes to on-chain")] 
 struct Cli {
     /// Database root directory
     #[arg(short, long, default_value = "./.pdfdb")] 
@@ -16,16 +16,11 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Store a PDF and print its id (sha256 hex)
+    /// Store a PDF and print its id (sha256 hex) - ALWAYS pins to IPFS and publishes on-chain
     Store { 
-        path: PathBuf, 
-        #[arg(long)] cid: Option<String>,
-        /// Pin bytes to IPFS and record CID (requires feature `ipfs`)
-        #[arg(long, default_value_t = false)] pin_ipfs: bool,
-        /// IPFS API URL (e.g., http://127.0.0.1:5001)
-        #[arg(long)] ipfs_url: Option<String>,
-        /// Publish doc metadata on-chain after storing (requires feature `chain`)
-        #[arg(long, default_value_t = false)] publish: bool,
+        path: PathBuf,
+        /// IPFS API URL (default: http://127.0.0.1:5001)
+        #[arg(long, default_value = "http://127.0.0.1:5001")] ipfs_url: String,
         /// Substrate node WebSocket URL
         #[arg(long, default_value = "ws://localhost:9944")] node_url: String,
         /// Dev seed (//Alice, //Bob, etc.)
@@ -46,32 +41,23 @@ fn main() -> Result<()> {
     let db = DocStore::open(&cli.db).context("opening database")?;
 
     match cli.command {
-        Commands::Store { path, cid, pin_ipfs, ipfs_url, publish, node_url, seed } => {
-            #[cfg(feature = "ipfs")]
-            let meta = if pin_ipfs { 
-                db.store_pdf_with_ipfs(&path, ipfs_url.as_deref())?
-            } else {
-                db.store_pdf(&path, cid)?
-            };
-            #[cfg(not(feature = "ipfs"))]
-            let meta = {
-                if pin_ipfs { bail!("binary not built with `ipfs` feature") };
-                db.store_pdf(&path, cid)?
-            };
-            // Optional on-chain publish
-            #[cfg(feature = "chain")]
-            if publish {
-                use tokio::runtime::Runtime;
-                use store::chain::publish_remark;
-                let rt = Runtime::new()?;
-                let block_hash = rt.block_on(publish_remark(&node_url, &seed, &meta))?;
-                eprintln!("Published to chain in block: {}", block_hash);
-            }
-            #[cfg(not(feature = "chain"))]
-            if publish { bail!("binary not built with `chain` feature") };
-            // Silence unused when features disabled
-            #[cfg(not(feature = "chain"))]
-            { let _ = (&ipfs_url, &node_url, &seed); }
+        Commands::Store { path, ipfs_url, node_url, seed } => {
+            eprintln!("Storing document in Decentralize databse");
+            
+            // ALWAYS pin to IPFS (mandatory)
+            eprintln!("Pinning to IPFS at {}...", ipfs_url);
+            let meta = db.store_pdf_with_ipfs(&path, Some(&ipfs_url))?;
+            eprintln!("IPFS CID: {}", meta.cid.as_ref().unwrap());
+            
+            // ALWAYS publish to blockchain (mandatory)
+            eprintln!("Publishing to on-chain at {}...", node_url);
+            use tokio::runtime::Runtime;
+            use store::chain::publish_remark;
+            let rt = Runtime::new()?;
+            let block_hash = rt.block_on(publish_remark(&node_url, &seed, &meta))?;
+            eprintln!("on-chain block hash: {}", block_hash);
+            
+            eprintln!("Document stored successfully!");
             println!("{}", meta.id_hex);
         }
         Commands::Get { id } => {
@@ -92,7 +78,7 @@ fn main() -> Result<()> {
             #[derive(serde::Serialize)]
             struct OnChain<'a> { sha256: &'a [u8; 32], cid: &'a Option<String>, size_bytes: u64 }
             let j = serde_json::to_string_pretty(&OnChain { sha256: &meta.sha256, cid: &meta.cid, size_bytes: meta.size_bytes })?;
-            println!("{}", j);
+            println!("{j}");
         }
     }
 
