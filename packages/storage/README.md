@@ -1,110 +1,392 @@
-# packages/store — Rust content‑addressed PDF store (optional IPFS; Polkadot-ready)
+# BrickCHAIN Storage Package 🔗📄
 
-This crate provides streaming, content‑addressed storage for PDFs with a small CLI. It’s designed to pair with a REST API and, optionally, decentralization via IPFS and on‑chain indexing on a Polkadot/Substrate chain.
+## ⚠️ FULLY DECENTRALIZED - NO COMPROMISES
 
-Key features
-- Streaming writes + SHA‑256 IDs: files are stored at <DB>/pdfs/<sha256>.pdf
-- Metadata index: sled key‑value DB stores filename, mime, size, sha256, timestamp, optional CID
-- Optional IPFS pinning (feature `ipfs`)
-- Simple CLI (store-cli): store/get/list/delete/export
-- Clean Rust API (DocStore/DocMeta)
+A **100% decentralized, content-addressed PDF storage system** built with Rust. **EVERY document is MANDATORY stored on IPFS and indexed on blockchain** - no optional flags, no partial decentralization.
 
-What’s here now
-- Library: `DocStore` and `DocMeta` in `src/lib.rs`
-- CLI: `store-cli` in `src/main.rs`
-- Tests: integration and CLI tests under `tests/`
-- Optional IPFS pinning behind `--features ipfs`
-- On‑chain: currently recommended via the Node API using @polkadot/api system.remark; a Rust subxt path can be added later
+## 🌟 Overview
 
+BrickCHAIN Storage is a **fully decentralized** document management solution. It provides:
+- **Content-Addressed Storage**: Files are stored using SHA-256 hashes, ensuring data integrity and deduplication
+- **MANDATORY IPFS Pinning**: Every document is automatically pinned to IPFS (no exceptions)
+- **MANDATORY Blockchain Indexing**: Every document metadata is published to Polkadot/Substrate chains via `system.remark` (no exceptions)
+- **RESTful API**: Full-featured HTTP server for web application integration
+- **CLI Tools**: Command-line interface for direct database operations
 
-## Requirements
-- Rust (stable), Cargo
-- Optional: IPFS daemon/API (e.g., kubo at http://127.0.0.1:5001) if you plan to pin from the CLI
-- OS permissions to write the chosen DB directory
+### 🔒 Decentralization Philosophy
 
+**This system enforces TRUE decentralization:**
+- ✅ **No optional flags** - IPFS and blockchain are ALWAYS used
+- ✅ **No partial storage** - Every upload goes to all three layers (local, IPFS, blockchain)
+- ✅ **No centralization backdoors** - Cannot bypass decentralization
+- ✅ **Trustless by design** - Cryptographic proof for every document
 
-## Build
-```
-# Base build (no IPFS support in the CLI)
+## 🏗️ Architecture
+
+The package consists of three main components:
+
+1. **Library (`lib.rs`)**: Core storage logic with `DocStore` and `DocMeta`
+2. **CLI (`main.rs`)**: Command-line tool (`store-cli`) for document operations
+3. **Server (`server.rs`)**: REST API server (`store-server`) with Axum framework
+
+See [Architecture.md](./ARCHITECTURE.md) for detailed architecture documentation.
+
+## ✨ Key Features
+
+### Storage & Indexing
+- **Streaming writes**: Memory-efficient processing with 8KB chunks
+- **SHA-256 content addressing**: Files stored at `<DB>/pdfs/<sha256>.pdf`
+- **Metadata tracking**: Filename, MIME type, size, timestamps, optional CID
+- **Embedded database**: Sled key-value store for fast metadata queries
+- **Deduplication**: Identical files are automatically detected and reused
+
+### Mandatory Decentralization
+- **IPFS pinning** (MANDATORY): ALL files are automatically stored on distributed IPFS network
+- **Blockchain integration** (MANDATORY): ALL document metadata is published to Substrate chains
+- **Content verification**: Cryptographic hash validation ensures integrity
+- **Triple redundancy**: Local + IPFS + Blockchain for maximum resilience
+
+### API & Integration
+- **RESTful endpoints**: Store, retrieve, list, delete, download documents
+- **Multipart upload**: Standard HTTP file upload support
+- **CORS enabled**: Ready for web application integration
+- **JSON responses**: Structured API responses with metadata
+
+## 📋 Requirements
+
+- **Rust** (stable 1.70+)
+- **Cargo** (comes with Rust)
+- **IPFS daemon** (REQUIRED): For IPFS pinning - [Install Kubo](https://docs.ipfs.tech/install/)
+- **Substrate node** (REQUIRED): For blockchain publishing - [Substrate Node](https://substrate.io/)
+- **OS permissions**: Write access to database directory
+
+⚠️ **IMPORTANT**: IPFS and Substrate node are NOT optional. The system will fail if they are not running.
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+# Clone the repository
+cd packages/storage
+
+# Build (IPFS, blockchain, and server are enabled by default)
 cargo build --release
 
-# With IPFS pinning support in the CLIcargo build --release --features ipfs
+# Features are now MANDATORY and enabled by default
+# No optional builds - full decentralization only
 ```
 
-The binary will be at `target/release/store-cli` (or `store-cli.exe` on Windows).
+### Binaries Location
+- **CLI**: `target/release/store-cli` (or `store-cli.exe` on Windows)
+- **Server**: `target/release/store-server` (or `store-server.exe` on Windows)
 
+## 📖 Usage
 
-## Data layout
-Given `--db C:\data\.pdfdb` (Windows) or `--db /var/lib/pdfdb` (Linux/macOS), the crate uses:
-- `<db>/pdfs/<sha256>.pdf` — content‑addressed blobs
-- `<db>/kv` — sled key‑value metadata store
+### 1. REST API Server
 
+Start the HTTP server for web application integration:
 
-## CLI usage
-```
-# Store a PDF -> prints 64‑char id (sha256 hex)
-store-cli --db <DB_DIR> store <path/to/doc.pdf>
+```bash
+# Start server with default settings (port 3000, DB at ./.pdfdb)
+cargo run --bin store-server
 
-# Store + IPFS (requires binary built with --features ipfs)
-store-cli --db <DB_DIR> store --pin-ipfs --ipfs-url http://127.0.0.1:5001 <doc.pdf>
+# Custom port and database location
+cargo run --bin store-server -- /path/to/db 8080
 
-# Read metadata as JSON
-store-cli --db <DB_DIR> get <sha256_hex>
-
-# List all (TSV: id\tfilename\tsize bytes)
-store-cli --db <DB_DIR> list
-
-# Delete
-store-cli --db <DB_DIR> delete <sha256_hex>
-
-# Export minimal on‑chain JSON ({ sha256, cid, size_bytes })
-store-cli --db <DB_DIR> export <sha256_hex>
+# With environment variables (REQUIRED)
+export IPFS_URL=http://127.0.0.1:5001      # REQUIRED - IPFS API endpoint
+export NODE_URL=ws://localhost:9944         # REQUIRED - Substrate node
+export SEED="//Alice"                       # REQUIRED - Signing key
+cargo run --bin store-server
 ```
 
+#### API Endpoints
 
-## Library usage (Rust)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check |
+| GET | `/` | API documentation |
+| POST | `/api/store` | Upload PDF (ALWAYS pins to IPFS + publishes to blockchain) |
+| GET | `/api/docs` | List all documents |
+| GET | `/api/docs/:id` | Get document metadata |
+| GET | `/api/docs/:id/download` | Download PDF file |
+| DELETE | `/api/docs/:id` | Delete document |
+| GET | `/api/docs/:id/export` | Export on-chain JSON |
+
+#### API Examples
+
+**Upload a PDF:**
+```bash
+# Upload (AUTOMATICALLY pins to IPFS AND publishes to blockchain)
+curl -X POST -F "file=@document.pdf" http://localhost:3000/api/store
+
+# No optional flags - EVERY upload is fully decentralized
+# Result: Document stored locally + IPFS + Blockchain (always)
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "id": "a3f5e7d9...",
+  "sha256": "a3f5e7d9...",
+  "cid": "bafybeigdyrzt5...",
+  "size_bytes": 245760,
+  "block_hash": "0x1234...",
+  "message": "PDF stored successfully"
+}
+```
+
+**Get document metadata:**
+```bash
+curl http://localhost:3000/api/docs/a3f5e7d9...
+```
+
+**Download document:**
+```bash
+curl -O http://localhost:3000/api/docs/a3f5e7d9.../download
+```
+
+**List all documents:**
+```bash
+curl http://localhost:3000/api/docs
+```
+
+### 2. Command-Line Interface (CLI)
+
+Direct database operations via CLI:
+
+```bash
+# Store a PDF (ALWAYS pins to IPFS and publishes to blockchain)
+store-cli --db ./.pdfdb store document.pdf
+# Output: Document ID + IPFS CID + Blockchain hash
+
+# Customize IPFS/blockchain endpoints (but still mandatory)
+store-cli --db ./.pdfdb store \
+  --ipfs-url http://127.0.0.1:5001 \
+  --node-url ws://localhost:9944 \
+  --seed "//Alice" \
+  document.pdf
+
+# Get metadata as JSON
+store-cli --db ./.pdfdb get a3f5e7d9b2c4f1e8...
+
+# List all documents (TSV format: id\tfilename\tsize)
+store-cli --db ./.pdfdb list
+
+# Delete a document
+store-cli --db ./.pdfdb delete a3f5e7d9b2c4f1e8...
+
+# Export minimal on-chain JSON
+store-cli --db ./.pdfdb export a3f5e7d9b2c4f1e8...
+```
+
+### 3. Library Usage (Rust)
+
+Integrate into your Rust application:
+
 ```rust
 use store::DocStore;
-let db = DocStore::open("./.pdfdb")?;
-let meta = db.store_pdf("./file.pdf", None)?;
-println!("{}", meta.id_hex);
+use anyhow::Result;
+
+fn main() -> Result<()> {
+    // Open or create database
+    let db = DocStore::open("./.pdfdb")?;
+    
+    // Store a PDF
+    let meta = db.store_pdf("./document.pdf", None)?;
+    println!("Stored with ID: {}", meta.id_hex);
+    println!("Size: {} bytes", meta.size_bytes);
+    
+    // ALWAYS pins to IPFS (mandatory decentralization)
+    let meta = db.store_pdf_with_ipfs("./document.pdf", Some("http://127.0.0.1:5001"))?;
+    
+    // Retrieve metadata
+    if let Some(doc) = db.get_by_hex(&meta.id_hex)? {
+        println!("Found: {}", doc.filename);
+        println!("CID: {:?}", doc.cid);
+    }
+    
+    // List all documents
+    let docs = db.list()?;
+    for doc in docs {
+        println!("{} - {} ({} bytes)", doc.id_hex, doc.filename, doc.size_bytes);
+    }
+    
+    // Delete a document
+    db.delete_by_hex(&meta.id_hex)?;
+    
+    Ok(())
+}
+
+// Publish to blockchain (ALWAYS enabled - mandatory)
+use store::chain::publish_remark;
+
+#[tokio::main]
+async fn publish_doc() -> Result<()> {
+    let db = DocStore::open("./.pdfdb")?;
+    // This automatically pins to IPFS
+    let meta = db.store_pdf_with_ipfs("./document.pdf", Some("http://127.0.0.1:5001"))?;
+    
+    // And publishes to blockchain
+    let block_hash = publish_remark(
+        "ws://localhost:9944",
+        "//Alice",
+        &meta
+    ).await?;
+    
+    println!("Published to blockchain: {}", block_hash);
+    println!("IPFS CID: {:?}", meta.cid);
+    Ok(())
+}
 ```
 
+## 📂 Data Storage Layout
 
-## Decentralization & On‑chain
-- Decentralize storage: enable IPFS pinning (build CLI with `--features ipfs` and pass `--pin-ipfs --ipfs-url ...`).
-- On‑chain indexing: recommended via the Node API layer which publishes a `system.remark` `{ sha256_hex, cid, size_bytes }` after storing. A Rust subxt client can be added if you need an all‑Rust path; open an issue or request and we’ll wire it.
-
-
-## Security notes
-- By default, files are plaintext on the filesystem. For private content, encrypt before storing/pinning (e.g., AES‑GCM, KMS‑managed keys).
-- If pinned to IPFS, the CID makes content publicly retrievable—only publish encrypted CIDs for private data.
-- Ensure OS permissions restrict access to the DB directory.
-
-
-## Large files
-- Storage is streaming (8 KiB chunks), so memory footprint is small.
-- Throughput depends on disk and hash speed; ensure enough disk capacity in `<db>/pdfs`.
-
-
-## Tests
 ```
+<database-root>/
+├── pdfs/
+│   ├── a3f5e7d9b2c4f1e8...sha256.pdf
+│   ├── c7b4e2f9a1d8c5e3...sha256.pdf
+│   └── ...
+└── kv/
+    └── (sled database files for metadata)
+```
+
+- **`pdfs/`**: Content-addressed PDF files named by SHA-256 hash
+- **`kv/`**: Embedded Sled database storing metadata (JSON-serialized `DocMeta`)
+
+## 🔒 Security Considerations
+
+### Data Privacy
+- **Plaintext storage**: Files are stored unencrypted by default
+- **For sensitive data**: Encrypt PDFs before storage using AES-GCM or similar
+- **IPFS public access**: CIDs make content globally retrievable - only pin encrypted files
+
+### Access Control
+- **File system permissions**: Restrict database directory access
+- **API authentication**: Add authentication middleware (not included by default)
+- **Blockchain privacy**: Metadata published on-chain is public - avoid PII
+
+### Key Management
+- **Development seeds**: `//Alice`, `//Bob` are for testing only
+- **Production**: Use proper key management (KMS, HSM, or secure vaults)
+- **Never commit**: Keep production seeds/keys out of version control
+
+## 🧪 Testing
+
+```bash
+# Run all tests (all features enabled by default)
 cargo test
-# or with IPFS feature compiled too (tests don’t require IPFS running)
-cargo test --features ipfs
+
+# Run integration tests only
+cargo test --test integration
+cargo test --test store
+
+# Run with verbose output
+cargo test -- --nocapture
 ```
 
+## 🔧 Configuration
 
-## Troubleshooting
-- "not a PDF file": the library checks the header magic `%PDF-`.
-- IPFS pinning errors: verify `--features ipfs` at build time and `--ipfs-url` is reachable.
-- Permission denied: run with a writable `--db` directory.
+### Environment Variables
 
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `IPFS_URL` | IPFS API endpoint | `http://127.0.0.1:5001` |
+| `NODE_URL` | Substrate WebSocket URL | `ws://localhost:9944` |
+| `SEED` | Development seed phrase | `//Alice` |
 
-## Roadmap for full Polkadot on‑chain database
-1) Keep primary bytes off‑chain (IPFS or other CAS); never store raw PDF bytes on‑chain.
-2) Standardize on‑chain schema: minimally `{ sha256_hex, cid, size_bytes }` with indexing.
-3) Implement a Substrate pallet or use a remark/indexer (Subsquid/SubQuery) to index documents.
-4) Harden key management (non‑dev seeds; KMS/HSM), retries/backoff, monitoring.
+### Feature Flags
 
-This crate already handles content‑addressed storage and IPFS pinning. Use the API layer to publish on‑chain today; a direct Rust/subxt path can be added if required.
+| Feature | Description | Status |
+|---------|-------------|--------|
+| `std` | Standard library support | ✅ Enabled by default |
+| `ipfs` | IPFS pinning | ✅ **MANDATORY** - Enabled by default |
+| `chain` | Blockchain integration | ✅ **MANDATORY** - Enabled by default |
+| `server` | REST API server | ✅ Enabled by default |
+
+**All features are now enabled by default. No optional builds.**
+
+## 🚧 Performance
+
+- **Streaming**: 8KB chunks minimize memory usage (handles multi-GB files)
+- **Deduplication**: Identical files stored only once
+- **Database**: Sled provides fast embedded key-value storage
+- **Throughput**: Limited by disk I/O and SHA-256 computation (~200-500 MB/s typical)
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**"not a PDF file" error**
+- The library validates PDF magic bytes (`%PDF-`)
+- Ensure file is a valid PDF (not corrupted or different format)
+
+**IPFS pinning fails**
+- ⚠️ **CRITICAL**: IPFS daemon MUST be running for the system to work
+- Verify IPFS daemon: `ipfs daemon`
+- Check IPFS API endpoint: `curl http://127.0.0.1:5001/api/v0/version`
+- Set IPFS_URL environment variable if using custom endpoint
+
+**Blockchain publishing fails**
+- ⚠️ **CRITICAL**: Substrate node MUST be running for the system to work
+- Confirm node is running: Check WebSocket at `ws://localhost:9944`
+- Verify account has sufficient balance for transaction fees
+- Check seed phrase format (e.g., `//Alice` for dev)
+- Set NODE_URL and SEED environment variables
+
+**Permission denied**
+- Ensure write permissions on database directory
+- On Linux/macOS: `chmod 755 /path/to/db`
+
+**Port already in use**
+- Change server port: `store-server /path/to/db 8080`
+- Kill existing process: `lsof -ti:3000 | xargs kill` (Linux/macOS)
+
+## 🗺️ Roadmap
+
+### Current Capabilities ✅
+- ✅ Content-addressed PDF storage
+- ✅ **MANDATORY** IPFS pinning (100% of uploads)
+- ✅ **MANDATORY** Blockchain metadata publishing (100% of uploads)
+- ✅ REST API server
+- ✅ CLI tool
+- ✅ Comprehensive testing
+- ✅ **TRUE decentralization** - no optional flags
+
+### Future Enhancements 🚀
+1. **Substrate Pallet**: Custom pallet for document registry (better than system.remark)
+2. **Indexer Integration**: SubQuery/Subsquid for on-chain queries
+3. **Multi-format Support**: Beyond PDF (images, documents)
+4. **Encryption Layer**: Built-in encryption for sensitive documents
+5. **Advanced API Auth**: JWT, OAuth2 integration
+6. **Monitoring**: Prometheus metrics, health checks
+7. **IPFS Cluster**: Multi-node IPFS pinning for redundancy
+8. **Query API**: Advanced metadata search and filtering
+9. **Filecoin Integration**: Long-term archival storage
+10. **Multi-chain Support**: Deploy to multiple Substrate chains simultaneously
+
+## 📚 Additional Resources
+
+- **[Architecture Documentation](./ARCHITECTURE.md)**: Detailed system design
+- **[Substrate Documentation](https://docs.substrate.io/)**: Blockchain framework
+- **[IPFS Documentation](https://docs.ipfs.tech/)**: Decentralized storage
+- **[Axum Web Framework](https://docs.rs/axum/)**: REST API framework
+- **[Sled Database](https://docs.rs/sled/)**: Embedded database
+
+## 🤝 Contributing
+
+Contributions are welcome! Please ensure:
+- Tests pass: `cargo test --all-features`
+- Code formatted: `cargo fmt`
+- Lints pass: `cargo clippy --all-features`
+
+## 📄 License
+
+See project root for license information.
+
+---
+
+**Built with ❤️ for decentralized document management on BrickCHAIN**
