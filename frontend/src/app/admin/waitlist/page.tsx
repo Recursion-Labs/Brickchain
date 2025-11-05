@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 interface WaitlistEntry {
   id: string;
@@ -26,6 +27,7 @@ interface WaitlistApiResponse {
 }
 
 export default function WaitlistPage() {
+  const { user, isAuthenticated } = useAuth();
   const [waitlistData, setWaitlistData] = useState<WaitlistEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -58,8 +60,35 @@ export default function WaitlistPage() {
   };
 
   useEffect(() => {
-    fetchWaitlistData();
-  }, []);
+    if (isAuthenticated && user && user.role.toLowerCase() === 'admin') {
+      fetchWaitlistData();
+    } else {
+      setLoading(false);
+    }
+  }, [isAuthenticated, user]);
+
+  // Check if user is authenticated and has admin role
+  if (!isAuthenticated || !user || user.role.toLowerCase() !== 'admin') {
+    return (
+      <div className="w-full p-8 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-foreground mb-4">Access Denied</h2>
+          <p className="text-muted-foreground mb-4">
+            {!isAuthenticated 
+              ? "Please log in to access the admin dashboard." 
+              : "You don't have permission to access the admin dashboard. Admin role required."
+            }
+          </p>
+          <a 
+            href={!isAuthenticated ? "/auth/login" : "/dashboard"}
+            className="bg-accent hover:bg-accent/90 text-white px-4 py-2 rounded"
+          >
+            {!isAuthenticated ? "Go to Login" : "Go to Dashboard"}
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   // Filter data based on status and search
   const filteredData = waitlistData.filter((entry) => {

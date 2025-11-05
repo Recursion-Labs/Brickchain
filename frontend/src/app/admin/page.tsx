@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { BarChart3, Users, MessageSquare, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiClient } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 interface DashboardStats {
   totalWaitlist: number;
@@ -25,6 +26,7 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
+  const { user, isAuthenticated } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     totalWaitlist: 0,
     totalContacts: 0,
@@ -40,7 +42,7 @@ export default function AdminDashboard() {
         setLoading(true);
 
         // Fetch stats from multiple endpoints
-        const [waitlistStats, contactStats, waitlistResponses, contactResponses] = await Promise.all([
+        const [waitlistStats, , , contactResponses] = await Promise.all([
           apiClient.getWaitlistStats(),
           apiClient.getContactStats(),
           apiClient.getWaitlistResponses(),
@@ -55,7 +57,7 @@ export default function AdminDashboard() {
         const contactData = contactResponses.data || [];
         const totalContacts = Array.isArray(contactData) ? contactData.length : 0;
         const unreadContacts = Array.isArray(contactData)
-          ? contactData.filter((msg: any) => msg.status === 'unread').length
+          ? contactData.filter((msg: { status: string }) => msg.status === 'unread').length
           : 0;
 
         // Get recent entries (last 5)
@@ -82,6 +84,29 @@ export default function AdminDashboard() {
 
     fetchDashboardData();
   }, []);
+
+  // Check if user is authenticated and has admin role
+  if (!isAuthenticated || !user || user.role.toLowerCase() !== 'admin') {
+    return (
+      <div className="w-full p-8 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-foreground mb-4">Access Denied</h2>
+          <p className="text-muted-foreground mb-4">
+            {!isAuthenticated 
+              ? "Please log in to access the admin dashboard." 
+              : "You don't have permission to access the admin dashboard. Admin role required."
+            }
+          </p>
+          <a 
+            href={!isAuthenticated ? "/auth/login" : "/dashboard"}
+            className="bg-accent hover:bg-accent/90 text-white px-4 py-2 rounded"
+          >
+            {!isAuthenticated ? "Go to Login" : "Go to Dashboard"}
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full p-8 space-y-8">
@@ -167,7 +192,7 @@ export default function AdminDashboard() {
                   <p>No waitlist data yet</p>
                 </div>
               ) : (
-                stats.recentWaitlist.map((entry: any) => (
+                stats.recentWaitlist.map((entry) => (
                   <div key={entry.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-sidebar/20">
                     <div>
                       <p className="font-medium text-foreground">{entry.email}</p>
@@ -202,7 +227,7 @@ export default function AdminDashboard() {
                   <p>No messages yet</p>
                 </div>
               ) : (
-                stats.recentContacts.map((message: any) => (
+                stats.recentContacts.map((message) => (
                   <div key={message.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-sidebar/20">
                     <div className="flex-1">
                       <p className="font-medium text-foreground">{message.name}</p>
