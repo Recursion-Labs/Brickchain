@@ -21,13 +21,11 @@ const googleCallback = [
 			const jti = uuidv4();
 			const { accessToken, refreshToken } = await generateTokens(user, jti);
 
-			res.status(200).json({
-				message: "Google login successful",
-				user,
-				accessToken,
-				refreshToken,
-			});
-			return;
+			// Redirect to frontend callback page with tokens as query parameters
+			const frontendCallbackUrl = process.env.FRONTEND_CALLBACK_URL || "http://localhost:3000/auth/google/callback";
+			const redirectUrl = `${frontendCallbackUrl}?accessToken=${encodeURIComponent(accessToken)}&refreshToken=${encodeURIComponent(refreshToken)}&user=${encodeURIComponent(JSON.stringify(user))}`;
+
+			res.redirect(redirectUrl);
 		} catch (error: unknown) {
 			throw new APIError(500, "Google authentication failed");
 		}
