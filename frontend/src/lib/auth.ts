@@ -1,5 +1,6 @@
 // Auth utilities for managing user authentication state
 import { useState } from 'react';
+import Cookies from 'js-cookie';
 export interface User {
   id: string;
   email: string;
@@ -25,15 +26,15 @@ export class AuthManager {
 
   // Store authentication data
   static setAuthData(user: User, tokens: AuthTokens): void {
-    localStorage.setItem(this.ACCESS_TOKEN_KEY, tokens.accessToken);
-    localStorage.setItem(this.REFRESH_TOKEN_KEY, tokens.refreshToken);
-    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    Cookies.set(this.ACCESS_TOKEN_KEY, tokens.accessToken, { secure: true, sameSite: 'strict' });
+    Cookies.set(this.REFRESH_TOKEN_KEY, tokens.refreshToken, { secure: true, sameSite: 'strict' });
+    Cookies.set(this.USER_KEY, JSON.stringify(user), { secure: true, sameSite: 'strict' });
   }
 
   // Get stored user data
   static getUser(): User | null {
     try {
-      const userStr = localStorage.getItem(this.USER_KEY);
+      const userStr = Cookies.get(this.USER_KEY);
       return userStr ? JSON.parse(userStr) : null;
     } catch {
       return null;
@@ -42,12 +43,12 @@ export class AuthManager {
 
   // Get access token
   static getAccessToken(): string | null {
-    return localStorage.getItem(this.ACCESS_TOKEN_KEY);
+    return Cookies.get(this.ACCESS_TOKEN_KEY) || null;
   }
 
   // Get refresh token
   static getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+    return Cookies.get(this.REFRESH_TOKEN_KEY) || null;
   }
 
   // Check if user is authenticated
@@ -57,9 +58,9 @@ export class AuthManager {
 
   // Clear all authentication data (logout)
   static clearAuthData(): void {
-    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-    localStorage.removeItem(this.USER_KEY);
+    Cookies.remove(this.ACCESS_TOKEN_KEY);
+    Cookies.remove(this.REFRESH_TOKEN_KEY);
+    Cookies.remove(this.USER_KEY);
   }
 
   // Get authorization header for API requests

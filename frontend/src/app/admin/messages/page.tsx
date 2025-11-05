@@ -28,6 +28,11 @@ interface ContactApiResponse {
   status?: string;
 }
 
+interface ApiResponseWrapper {
+  status: string;
+  data: ContactApiResponse[];
+}
+
 export default function MessagesPage() {
   const [messagesData, setMessagesData] = useState<ContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,11 +43,16 @@ export default function MessagesPage() {
     try {
       setLoading(true);
       const response = await apiClient.getContactResponses();
+      console.log('API Response:', response);
 
       if (response.success && response.data) {
+        // Handle nested data structure from API
+        const apiData = response.data as unknown as ApiResponseWrapper;
+        const messagesArray = apiData.data || apiData;
+        
         // Transform the data to match our interface
-        const transformedData = Array.isArray(response.data)
-          ? response.data.map((item: ContactApiResponse) => ({
+        const transformedData = Array.isArray(messagesArray)
+          ? messagesArray.map((item: ContactApiResponse) => ({
               id: item.id,
               name: item.name,
               email: item.email,
@@ -53,6 +63,8 @@ export default function MessagesPage() {
           : [];
 
         setMessagesData(transformedData);
+      } else {
+        console.log('Response not successful or no data:', response);
       }
     } catch (error) {
       console.error('Failed to fetch messages data:', error);
