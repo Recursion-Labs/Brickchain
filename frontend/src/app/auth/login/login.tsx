@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import OTPVerify from "@/components/custom/otp-verify";
+import { AuthManager } from "@/lib/auth";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -15,9 +16,7 @@ export default function Login() {
   const [showOTP, setShowOTP] = useState(false);
 
   const handleGoogleLogin = () => {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-    // Redirect to Google OAuth endpoint
-    window.location.href = `${apiBaseUrl}/v1/auth/google`;
+    AuthManager.initiateGoogleLogin();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -78,8 +77,7 @@ export default function Login() {
       });
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
-        localStorage.setItem("accessToken", data.tokens.accessToken);
-        localStorage.setItem("refreshToken", data.tokens.refreshToken);
+        AuthManager.setAuthData(data.user, data.tokens);
         toast.success("Signed in successfully!", { id: loadingToast });
         setTimeout(() => {
           window.location.href = "/dashboard";
