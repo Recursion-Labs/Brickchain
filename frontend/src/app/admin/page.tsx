@@ -6,23 +6,38 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { apiClient } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
+interface WaitlistApiResponse {
+  status: string;
+  data: WaitlistEntry[];
+}
+
+interface ContactApiResponse {
+  status: string;
+  data: ContactMessage[];
+}
+
+interface WaitlistEntry {
+  id: string;
+  email: string;
+  name?: string;
+  createdAt: string;
+}
+
+interface ContactMessage {
+  id: string;
+  email: string;
+  name: string;
+  subject: string;
+  createdAt: string;
+  status?: string;
+}
+
 interface DashboardStats {
   totalWaitlist: number;
   totalContacts: number;
   unreadContacts: number;
-  recentWaitlist: Array<{
-    id: string;
-    email: string;
-    name?: string;
-    createdAt: string;
-  }>;
-  recentContacts: Array<{
-    id: string;
-    email: string;
-    name: string;
-    subject: string;
-    createdAt: string;
-  }>;
+  recentWaitlist: WaitlistEntry[];
+  recentContacts: ContactMessage[];
 }
 
 export default function AdminDashboard() {
@@ -42,7 +57,7 @@ export default function AdminDashboard() {
         setLoading(true);
 
         // Fetch stats from multiple endpoints
-        const [waitlistStats, , , contactResponses] = await Promise.all([
+        const [, , waitlistResponses, contactResponses] = await Promise.all([
           apiClient.getWaitlistStats(),
           apiClient.getContactStats(),
           apiClient.getWaitlistResponses(),
@@ -50,14 +65,16 @@ export default function AdminDashboard() {
         ]);
 
         // Process waitlist data
-        const waitlistData = waitlistStats.data || [];
+        const waitlistApiData = waitlistResponses.data as unknown as WaitlistApiResponse;
+        const waitlistData = waitlistApiData?.data || [];
         const totalWaitlist = Array.isArray(waitlistData) ? waitlistData.length : 0;
 
         // Process contact data
-        const contactData = contactResponses.data || [];
+        const contactApiData = contactResponses.data as unknown as ContactApiResponse;
+        const contactData = contactApiData?.data || [];
         const totalContacts = Array.isArray(contactData) ? contactData.length : 0;
         const unreadContacts = Array.isArray(contactData)
-          ? contactData.filter((msg: { status: string }) => msg.status === 'unread').length
+          ? contactData.filter((msg: ContactMessage) => msg.status === 'unread').length
           : 0;
 
         // Get recent entries (last 5)
@@ -192,7 +209,7 @@ export default function AdminDashboard() {
                   <p>No waitlist data yet</p>
                 </div>
               ) : (
-                stats.recentWaitlist.map((entry) => (
+                stats.recentWaitlist.map((entry: WaitlistEntry) => (
                   <div key={entry.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-sidebar/20">
                     <div>
                       <p className="font-medium text-foreground">{entry.email}</p>
@@ -227,7 +244,7 @@ export default function AdminDashboard() {
                   <p>No messages yet</p>
                 </div>
               ) : (
-                stats.recentContacts.map((message) => (
+                stats.recentContacts.map((message: ContactMessage) => (
                   <div key={message.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-sidebar/20">
                     <div className="flex-1">
                       <p className="font-medium text-foreground">{message.name}</p>

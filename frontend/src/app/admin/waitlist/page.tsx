@@ -26,6 +26,11 @@ interface WaitlistApiResponse {
   status?: string;
 }
 
+interface ApiResponseWrapper {
+  status: string;
+  data: WaitlistApiResponse[];
+}
+
 export default function WaitlistPage() {
   const { user, isAuthenticated } = useAuth();
   const [waitlistData, setWaitlistData] = useState<WaitlistEntry[]>([]);
@@ -39,9 +44,13 @@ export default function WaitlistPage() {
       const response = await apiClient.getWaitlistResponses();
 
       if (response.success && response.data) {
+        // Handle nested data structure from API
+        const apiData = response.data as unknown as ApiResponseWrapper;
+        const waitlistArray = apiData.data || apiData;
+        
         // Transform the data to match our interface
-        const transformedData = Array.isArray(response.data)
-          ? response.data.map((item: WaitlistApiResponse) => ({
+        const transformedData = Array.isArray(waitlistArray)
+          ? waitlistArray.map((item: WaitlistApiResponse) => ({
               id: item.id,
               email: item.email,
               name: item.name || undefined,
