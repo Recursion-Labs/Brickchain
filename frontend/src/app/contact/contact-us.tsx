@@ -41,49 +41,31 @@ export default function ContactUsPage() {
     setFormSuccess(null);
     setIsSubmitting(true);
 
-    const envApiBase = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "");
-    const fallbackBase =
-      typeof window !== "undefined" && window.location.origin
-        ? window.location.origin
-        : "http://localhost:3000";
-    const apiBaseUrl = envApiBase && envApiBase.length ? envApiBase : fallbackBase;
-    const endpoint = `${apiBaseUrl}/v1/public/contact`;
-
-    const payload = {
-      name: `${trimmedFirstName} ${trimmedLastName}`.trim(),
-      subject: trimmedSubject,
-      email: trimmedEmail,
-      message: trimmedMessage,
-    };
-
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+      const { apiClient } = await import("@/lib/api");
+      const response = await apiClient.submitContactMessage({
+        name: `${trimmedFirstName} ${trimmedLastName}`.trim(),
+        email: trimmedEmail,
+        subject: trimmedSubject,
+        message: trimmedMessage,
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Unable to send your message right now.");
+      if (response.success) {
+        setFormSuccess("Thanks for reaching out! We'll get back to you soon.");
+
+        // Clear form
+        setFirstName("");
+        setLastName("");
+        setSubject("");
+        setEmail("");
+        setMessage("");
+        setAgreeToPolicy(false);
+      } else {
+        setFormError(response.message || "Unable to send your message right now.");
       }
-
-      setFormSuccess("Thanks for reaching out! We\'ll get back to you soon.");
-
-      // Clear form
-      setFirstName("");
-      setLastName("");
-      setSubject("");
-      setEmail("");
-      setMessage("");
-      setAgreeToPolicy(false);
     } catch (err) {
       console.error("Failed to submit contact form", err);
-      setFormError(
-        err instanceof Error ? err.message : "Something went wrong while sending your message. Please try again.",
-      );
+      setFormError("Something went wrong while sending your message. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
