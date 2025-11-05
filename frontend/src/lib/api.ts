@@ -20,9 +20,14 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
 
+    // Import AuthManager dynamically to avoid circular imports
+    const { AuthManager } = await import('@/lib/auth');
+    const authHeader = AuthManager.getAuthHeader();
+
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
+        ...authHeader,
         ...options.headers,
       },
       ...options,
