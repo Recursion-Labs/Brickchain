@@ -7,90 +7,69 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { apiClient } from "@/lib/api";
 
 interface WaitlistEntry {
   id: string;
   email: string;
-  name: string;
+  name?: string;
   createdAt: string;
   status: "pending" | "verified" | "rejected";
 }
 
+interface WaitlistApiResponse {
+  id: string;
+  email: string;
+  name?: string;
+  createdAt: string;
+  status?: string;
+}
+
 export default function WaitlistPage() {
   const [waitlistData, setWaitlistData] = useState<WaitlistEntry[]>([]);
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [selectedEntry, setSelectedEntry] = useState<WaitlistEntry | null>(null);
 
-  // Dummy data for testing
-  const dummyWaitlist: WaitlistEntry[] = [
-    {
-      id: "1",
-      email: "alex.chen@gmail.com",
-      name: "Alex Chen",
-      createdAt: "2025-11-03T08:15:00Z",
-      status: "pending"
-    },
-    {
-      id: "2",
-      email: "emma.davis@outlook.com",
-      name: "Emma Davis",
-      createdAt: "2025-11-02T14:30:00Z",
-      status: "verified"
-    },
-    {
-      id: "3",
-      email: "robert.wilson@yahoo.com",
-      name: "Robert Wilson",
-      createdAt: "2025-11-01T10:45:00Z",
-      status: "pending"
-    },
-    {
-      id: "4",
-      email: "sophia.martinez@techstartup.com",
-      name: "Sophia Martinez",
-      createdAt: "2025-10-31T16:20:00Z",
-      status: "verified"
-    },
-    {
-      id: "5",
-      email: "james.brown@investor.com",
-      name: "James Brown",
-      createdAt: "2025-10-30T12:10:00Z",
-      status: "rejected"
-    },
-    {
-      id: "6",
-      email: "olivia.taylor@realestate.com",
-      name: "Olivia Taylor",
-      createdAt: "2025-10-29T09:55:00Z",
-      status: "pending"
-    },
-    {
-      id: "7",
-      email: "william.garcia@blockchain.io",
-      name: "William Garcia",
-      createdAt: "2025-10-28T15:40:00Z",
-      status: "verified"
-    },
-    {
-      id: "8",
-      email: "ava.anderson@startup.co",
-      name: "Ava Anderson",
-      createdAt: "2025-10-27T11:25:00Z",
-      status: "pending"
+  const fetchWaitlistData = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.getWaitlistResponses();
+
+      if (response.success && response.data) {
+        // Transform the data to match our interface
+        const transformedData = Array.isArray(response.data)
+          ? response.data.map((item: WaitlistApiResponse) => ({
+              id: item.id,
+              email: item.email,
+              name: item.name || undefined,
+              createdAt: item.createdAt,
+              status: (item.status?.toLowerCase() || 'pending') as "pending" | "verified" | "rejected"
+            }))
+          : [];
+
+        setWaitlistData(transformedData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch waitlist data:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
-
-  const loadDummyData = () => {
-    setWaitlistData(dummyWaitlist);
   };
 
   useEffect(() => {
-    // TODO: Fetch waitlist data from API
-    // setWaitlistData(data);
+    fetchWaitlistData();
   }, []);
+
+  // Filter data based on status and search
+  const filteredData = waitlistData.filter((entry) => {
+    const matchesStatus = statusFilter === "all" || entry.status === statusFilter;
+    const matchesSearch =
+      entry.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (entry.name && entry.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    return matchesStatus && matchesSearch;
+  });
 
   return (
     <div className="w-full p-8 space-y-8">
@@ -121,10 +100,10 @@ export default function WaitlistPage() {
           className="flex-1 min-w-64 px-4 py-2 rounded bg-input border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:border-ring"
         />
         <Button
-          onClick={loadDummyData}
+          onClick={fetchWaitlistData}
           className="bg-accent hover:bg-accent/90 text-white px-4 py-2"
         >
-          Load Dummy Data
+          Refresh Data
         </Button>
       </div>
 
@@ -139,9 +118,11 @@ export default function WaitlistPage() {
             <div className="flex items-center justify-center py-12">
               <p className="text-muted-foreground">Loading...</p>
             </div>
-          ) : waitlistData.length === 0 ? (
+          ) : filteredData.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <p className="text-muted-foreground">No waitlist entries yet</p>
+              <p className="text-muted-foreground">
+                {waitlistData.length === 0 ? "No waitlist entries yet" : "No entries match your filters"}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -156,10 +137,10 @@ export default function WaitlistPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {waitlistData.map((entry) => (
+                  {filteredData.map((entry) => (
                     <TableRow key={entry.id} className="border-border hover:bg-sidebar/30">
                       <TableCell className="text-foreground">{entry.email}</TableCell>
-                      <TableCell className="text-foreground">{entry.name}</TableCell>
+                      <TableCell className="text-foreground">{entry.name || "N/A"}</TableCell>
                       <TableCell className="text-muted-foreground">{new Date(entry.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <Badge
@@ -179,7 +160,6 @@ export default function WaitlistPage() {
                           <DialogTrigger asChild>
                             <button
                               className="text-xs text-accent hover:underline"
-                              onClick={() => setSelectedEntry(entry)}
                             >
                               View
                             </button>
@@ -196,7 +176,7 @@ export default function WaitlistPage() {
                                 <div>
                                   <h4 className="font-medium text-foreground mb-1">Name</h4>
                                   <p className="text-foreground bg-sidebar/20 p-2 rounded border border-border">
-                                    {entry.name}
+                                    {entry.name || "Not provided"}
                                   </p>
                                 </div>
                                 <div>
@@ -230,7 +210,6 @@ export default function WaitlistPage() {
                                 <Button
                                   variant="outline"
                                   className="border border-border text-foreground hover:bg-sidebar/50"
-                                  onClick={() => setSelectedEntry(null)}
                                 >
                                   Close
                                 </Button>

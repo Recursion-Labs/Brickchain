@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
 
 interface ApiResponse<T = Record<string, unknown>> {
   success: boolean;
@@ -48,11 +48,45 @@ class ApiClient {
     }
   }
 
+  // Public endpoints
   async joinWaitlist(email: string): Promise<ApiResponse> {
     return this.request('/v1/public/waitlist', {
       method: 'POST',
       body: JSON.stringify({ email }),
     });
+  }
+
+  async submitContactMessage(data: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+  }): Promise<ApiResponse> {
+    return this.request('/v1/public/contact', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Admin endpoints
+  async getWaitlistResponses(): Promise<ApiResponse> {
+    return this.request('/v1/admin/waitlist/responses');
+  }
+
+  async getContactResponses(): Promise<ApiResponse> {
+    return this.request('/v1/admin/contact/responses');
+  }
+
+  async getDashboardStats(): Promise<ApiResponse> {
+    return this.request('/v1/admin/stats');
+  }
+
+  async getWaitlistStats(): Promise<ApiResponse> {
+    return this.request('/v1/admin/stats/waitlist');
+  }
+
+  async getContactStats(): Promise<ApiResponse> {
+    return this.request('/v1/admin/stats/contact');
   }
 }
 

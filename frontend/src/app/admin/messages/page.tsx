@@ -1,87 +1,80 @@
 "use client";
 
 import { useState, useEffect } from "react";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { apiClient } from "@/lib/api";
 
 interface ContactMessage {
   id: string;
-  email: string;
   name: string;
-  subject: string;
+  email: string;
   message: string;
   createdAt: string;
   status: "unread" | "read" | "replied";
 }
 
+interface ContactApiResponse {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  createdAt: string;
+  status?: string;
+}
+
 export default function MessagesPage() {
-  const [messages, setMessages] = useState<ContactMessage[]>([]);
-  const [loading] = useState(false);
+  const [messagesData, setMessagesData] = useState<ContactMessage[]>([]);
+  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
 
-  // Dummy data for testing
-  const dummyMessages: ContactMessage[] = [
-    {
-      id: "1",
-      email: "john.doe@example.com",
-      name: "John Doe",
-      subject: "Interested in BrickChain Platform",
-      message: "Hi, I came across BrickChain and I'm very interested in how you're revolutionizing property trading with blockchain technology. Could you tell me more about how the tokenization process works and what kind of properties are currently available?",
-      createdAt: "2025-11-03T10:30:00Z",
-      status: "unread"
-    },
-    {
-      id: "2",
-      email: "sarah.smith@techcorp.com",
-      name: "Sarah Smith",
-      subject: "Partnership Inquiry",
-      message: "Hello BrickChain team,\n\nI'm reaching out from TechCorp, a real estate investment firm. We're interested in exploring partnership opportunities with your platform. Our company manages a portfolio of $50M+ in commercial properties and we see great potential in your zero-knowledge proof technology.\n\nWould you be available for a call next week to discuss potential collaboration?\n\nBest regards,\nSarah Smith\nVP of Investments\nTechCorp",
-      createdAt: "2025-11-02T14:15:00Z",
-      status: "read"
-    },
-    {
-      id: "3",
-      email: "mike.johnson@gmail.com",
-      name: "Mike Johnson",
-      subject: "Technical Question About Privacy",
-      message: "Hi there,\n\nI have a question about the privacy features of BrickChain. How exactly do the zero-knowledge proofs work to ensure that property ownership remains private while still allowing for trading? Is there any way for third parties to see transaction details?\n\nThanks,\nMike",
-      createdAt: "2025-11-01T09:45:00Z",
-      status: "replied"
-    },
-    {
-      id: "4",
-      email: "lisa.wang@startup.io",
-      name: "Lisa Wang",
-      subject: "Waitlist Question",
-      message: "Hello,\n\nI signed up for the BrickChain waitlist a few weeks ago. Could you give me an update on when the platform will be launching? I'm very excited about the concept and would like to be among the first users.\n\nThank you,\nLisa",
-      createdAt: "2025-10-30T16:20:00Z",
-      status: "read"
-    },
-    {
-      id: "5",
-      email: "david.brown@investor.com",
-      name: "David Brown",
-      subject: "Investment Opportunity",
-      message: "Dear BrickChain Team,\n\nI'm an angel investor with experience in blockchain and real estate technologies. I've been following your project and I'm impressed by the innovative approach to property tokenization.\n\nI'd like to discuss potential investment opportunities. Please let me know if you're open to investor meetings.\n\nBest,\nDavid Brown",
-      createdAt: "2025-10-29T11:10:00Z",
-      status: "unread"
+  const fetchMessagesData = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.getContactResponses();
+
+      if (response.success && response.data) {
+        // Transform the data to match our interface
+        const transformedData = Array.isArray(response.data)
+          ? response.data.map((item: ContactApiResponse) => ({
+              id: item.id,
+              name: item.name,
+              email: item.email,
+              message: item.message,
+              createdAt: item.createdAt,
+              status: (item.status?.toLowerCase() || 'unread') as "unread" | "read" | "replied"
+            }))
+          : [];
+
+        setMessagesData(transformedData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch messages data:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
-
-  const loadDummyData = () => {
-    setMessages(dummyMessages);
   };
 
   useEffect(() => {
-    // TODO: Fetch messages from API
-    // setMessages(data);
+    fetchMessagesData();
   }, []);
+
+  // Filter data based on status and search
+  const filteredData = messagesData.filter((message) => {
+    const matchesStatus = statusFilter === "all" || message.status === statusFilter;
+    const matchesSearch =
+      message.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      message.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      message.message.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return matchesStatus && matchesSearch;
+  });
 
   return (
     <div className="w-full p-8 space-y-8">
@@ -112,10 +105,10 @@ export default function MessagesPage() {
           className="flex-1 min-w-64 px-4 py-2 rounded bg-input border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:border-ring"
         />
         <Button
-          onClick={loadDummyData}
+          onClick={fetchMessagesData}
           className="bg-accent hover:bg-accent/90 text-white px-4 py-2"
         >
-          Load Dummy Data
+          Refresh Data
         </Button>
       </div>
 
@@ -130,41 +123,45 @@ export default function MessagesPage() {
             <div className="flex items-center justify-center py-12">
               <p className="text-muted-foreground">Loading...</p>
             </div>
-          ) : messages.length === 0 ? (
+          ) : filteredData.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <p className="text-muted-foreground">No messages yet</p>
+              <p className="text-muted-foreground">
+                {messagesData.length === 0 ? "No messages yet" : "No messages match your filters"}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="border-border">
-                    <TableHead className="text-foreground">From</TableHead>
+                    <TableHead className="text-foreground">Name</TableHead>
                     <TableHead className="text-foreground">Email</TableHead>
-                    <TableHead className="text-foreground">Subject</TableHead>
-                    <TableHead className="text-foreground">Date</TableHead>
+                    <TableHead className="text-foreground">Message</TableHead>
+                    <TableHead className="text-foreground">Received</TableHead>
                     <TableHead className="text-foreground">Status</TableHead>
                     <TableHead className="text-foreground text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {messages.map((msg) => (
-                    <TableRow key={msg.id} className="border-border hover:bg-sidebar/30">
-                      <TableCell className="text-foreground">{msg.name}</TableCell>
-                      <TableCell className="text-foreground">{msg.email}</TableCell>
-                      <TableCell className="text-foreground font-medium">{msg.subject}</TableCell>
-                      <TableCell className="text-muted-foreground">{new Date(msg.createdAt).toLocaleDateString()}</TableCell>
+                  {filteredData.map((message) => (
+                    <TableRow key={message.id} className="border-border hover:bg-sidebar/30">
+                      <TableCell className="text-foreground">{message.name}</TableCell>
+                      <TableCell className="text-foreground">{message.email}</TableCell>
+                      <TableCell className="text-muted-foreground max-w-xs truncate">
+                        {message.message}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{new Date(message.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <Badge
                           className={`${
-                            msg.status === "replied"
-                              ? "bg-success text-success-foreground"
-                              : msg.status === "read"
-                              ? "bg-muted text-muted-foreground"
-                              : "bg-warning text-warning-foreground"
+                            message.status === "unread"
+                              ? "bg-error text-error-foreground"
+                              : message.status === "read"
+                              ? "bg-warning text-warning-foreground"
+                              : "bg-success text-success-foreground"
                           }`}
                         >
-                          {msg.status}
+                          {message.status}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -172,7 +169,6 @@ export default function MessagesPage() {
                           <DialogTrigger asChild>
                             <button
                               className="text-xs text-accent hover:underline"
-                              onClick={() => setSelectedMessage(msg)}
                             >
                               View
                             </button>
@@ -181,32 +177,59 @@ export default function MessagesPage() {
                             <DialogHeader>
                               <DialogTitle className="text-foreground">Message Details</DialogTitle>
                               <DialogDescription className="text-muted-foreground">
-                                From: {msg.name} ({msg.email}) • {new Date(msg.createdAt).toLocaleString()}
+                                Contact form submission from {message.name}
                               </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4">
-                              <div>
-                                <h4 className="font-medium text-foreground mb-2">Subject</h4>
-                                <p className="text-foreground bg-sidebar/20 p-3 rounded border border-border">
-                                  {msg.subject}
-                                </p>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <h4 className="font-medium text-foreground mb-1">Name</h4>
+                                  <p className="text-foreground bg-sidebar/20 p-2 rounded border border-border">
+                                    {message.name}
+                                  </p>
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-foreground mb-1">Email</h4>
+                                  <p className="text-foreground bg-sidebar/20 p-2 rounded border border-border">
+                                    {message.email}
+                                  </p>
+                                </div>
                               </div>
                               <div>
-                                <h4 className="font-medium text-foreground mb-2">Message</h4>
-                                <div className="text-foreground bg-sidebar/20 p-3 rounded border border-border whitespace-pre-wrap">
-                                  {msg.message}
+                                <h4 className="font-medium text-foreground mb-1">Message</h4>
+                                <div className="text-foreground bg-sidebar/20 p-4 rounded border border-border whitespace-pre-wrap">
+                                  {message.message}
                                 </div>
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-foreground mb-1">Status</h4>
+                                <Badge
+                                  className={`${
+                                    message.status === "unread"
+                                      ? "bg-error text-error-foreground"
+                                      : message.status === "read"
+                                      ? "bg-warning text-warning-foreground"
+                                      : "bg-success text-success-foreground"
+                                  }`}
+                                >
+                                  {message.status}
+                                </Badge>
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-foreground mb-1">Received Date</h4>
+                                <p className="text-muted-foreground">
+                                  {new Date(message.createdAt).toLocaleString()}
+                                </p>
                               </div>
                               <div className="flex gap-2 pt-4">
                                 <Button
                                   variant="outline"
                                   className="border border-border text-foreground hover:bg-sidebar/50"
-                                  onClick={() => setSelectedMessage(null)}
                                 >
                                   Close
                                 </Button>
                                 <Button className="bg-accent hover:bg-accent/90 text-white">
-                                  Mark as {msg.status === "read" ? "Replied" : "Read"}
+                                  {message.status === "unread" ? "Mark as Read" : message.status === "read" ? "Mark as Replied" : "Mark as Unread"}
                                 </Button>
                               </div>
                             </div>
