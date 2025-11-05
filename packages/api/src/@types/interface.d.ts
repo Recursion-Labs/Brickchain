@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+// Extend Express Request interface for Passport
+declare global {
+	namespace Express {
+		interface Request {
+			user?: any;
+		}
+	}
+}
+
 export const registerSchema = z.object({
 	email: z.string().email(),
 });
