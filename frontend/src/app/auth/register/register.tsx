@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import OTPVerify from "@/components/custom/otp-verify";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AuthManager } from "@/lib/auth";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -19,8 +20,7 @@ export default function Register() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const handleGoogleRegister = () => {
-    // Redirect to Google OAuth endpoint
-    window.location.href = `${apiBaseUrl}/v1/auth/google`;
+    AuthManager.initiateGoogleLogin();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -84,9 +84,8 @@ export default function Register() {
       });
       const data = await response.json();
       if (response.ok) {
-        // Store tokens
-        localStorage.setItem("accessToken", data.tokens.accessToken);
-        localStorage.setItem("refreshToken", data.tokens.refreshToken);
+        // Store tokens using AuthManager
+        AuthManager.setAuthData(data.user, data.tokens);
         toast.success("Account created successfully!", { id: loadingToast });
         // Redirect to dashboard
         setTimeout(() => {
