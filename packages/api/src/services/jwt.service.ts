@@ -3,8 +3,8 @@ import { User } from "generated/prisma/client";
 import jwt from "jsonwebtoken";
 
 export async function generateTokens(user: User, jti: string) {
-	const accessToken = jwt.sign({ id: user.id, jti }, envVars.JWT_SECRET, { expiresIn: "7d" });
-	const refreshToken = jwt.sign({ id: user.id, jti }, envVars.JWT_SECRET, { expiresIn: "30d" });
+	const accessToken = jwt.sign({ id: user.id, role: user.role, jti }, envVars.JWT_SECRET, { expiresIn: "7d" });
+	const refreshToken = jwt.sign({ id: user.id, role: user.role, jti }, envVars.JWT_SECRET, { expiresIn: "30d" });
 	return {
 		accessToken,
 		refreshToken,
