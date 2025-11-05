@@ -37,6 +37,9 @@ const EnvConfigSchema = z.object({
 		.nonnegative()
 		.default(0),
 	JWT_SECRET: z.string().min(1, { message: "JWT_SECRET is required" }),
+	GOOGLE_CLIENT_ID: z.string().min(1, { message: "GOOGLE_CLIENT_ID is required" }),
+	GOOGLE_CLIENT_SECRET: z.string().min(1, { message: "GOOGLE_CLIENT_SECRET is required" }),
+	GOOGLE_CALLBACK_URL: z.string().min(1, { message: "GOOGLE_CALLBACK_URL is required" }),
 	PDF_MAX_MB: z.string().min(1).max(500).default("100"),
 });
 export type EnvConfig = z.infer<typeof EnvConfigSchema>;
@@ -49,6 +52,9 @@ const rawConfig = {
 	REDIS_PORT: process.env.REDIS_PORT,
 	REDIS_DB: process.env.REDIS_DB,
 	JWT_SECRET: process.env.JWT_SECRET,
+	GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+	GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+	GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
 	PDF_MAX_MB: process.env.PDF_MAX_MB,
 };
 
@@ -69,6 +75,6 @@ try {
 	throw new Error("Environment configuration validation failed. Check environment variables.");
 }
 
-export const { PORT, NODE_ENV, RESEND_API_KEY, REDIS_HOST, REDIS_PORT, REDIS_DB, JWT_SECRET, PDF_MAX_MB } = envVars;
+export const { PORT, NODE_ENV, RESEND_API_KEY, REDIS_HOST, REDIS_PORT, REDIS_DB, JWT_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL, PDF_MAX_MB } = envVars;
 
 export default envVars;
