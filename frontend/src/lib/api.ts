@@ -148,6 +148,20 @@ class ApiClient {
   async getContactStats(): Promise<ApiResponse> {
     return this.forms_request('/v1/admin/stats/contact');
   }
+
+  async updateWaitlistStatus(id: string, status: string): Promise<ApiResponse> {
+    return this.forms_request(`/v1/admin/waitlist/responses/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  async updateContactStatus(id: string, status: string): Promise<ApiResponse> {
+    return this.forms_request(`/v1/admin/contact/responses/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL, API_BASE_URL_FORMS);
