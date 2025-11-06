@@ -135,7 +135,7 @@ const settingsItems: NavItem[] = [
 export function AppSidebar() {
   const pathname = usePathname()
   const { state } = useSidebar()
-  const [resourcesOpen, setResourcesOpen] = React.useState(false)
+  const [resourcesOpen, setResourcesOpen] = React.useState(true)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
 
   // Mock user data - replace with actual user data from context/API
@@ -151,7 +151,7 @@ export function AppSidebar() {
     <Sidebar 
       variant="sidebar"
       collapsible="icon"
-      className="border-r border-border bg-sidebar"
+      className="border-r border-border bg-sidebar hidden md:flex"
       style={{
         "--sidebar-width": "16rem",
         "--sidebar-width-icon": "4.5rem",
