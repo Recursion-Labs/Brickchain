@@ -42,6 +42,35 @@ export default function MessagesPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [showReplyForm, setShowReplyForm] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState<string>("");
+
+  const updateContactStatus = async (id: string, newStatus: string) => {
+    try {
+      setUpdatingStatus(id);
+      const response = await apiClient.updateContactStatus(id, newStatus);
+
+      if (response.success) {
+        // Update the local state
+        setMessagesData(prevData =>
+          prevData.map(message =>
+            message.id === id
+              ? { ...message, status: newStatus.toLowerCase() as "unread" | "read" | "replied" }
+              : message
+          )
+        );
+      } else {
+        console.error('Failed to update status:', response.message);
+        alert('Failed to update status: ' + response.message);
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Error updating status. Please try again.');
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
 
   const fetchMessagesData = async () => {
     try {
@@ -151,7 +180,7 @@ export default function MessagesPage() {
         />
         <Button
           onClick={fetchMessagesData}
-          className="bg-accent hover:bg-accent/90 text-white px-4 py-2 dark:bg-accent dark:hover:bg-accent/90"
+          className="bg-accent hover:bg-accent/90 text-white px-4 py-2"
         >
           Refresh Data
         </Button>
@@ -216,84 +245,167 @@ export default function MessagesPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="border border-border text-foreground hover:bg-sidebar/50"
-                            >
-                              View
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl bg-card border border-border">
-                            <DialogHeader>
-                              <DialogTitle className="text-foreground">Message Details</DialogTitle>
-                              <DialogDescription className="text-muted-foreground">
-                                Contact form submission from {message.name}
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-2 gap-4">
+                        <div className="flex gap-2 justify-end">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border border-border text-foreground hover:bg-sidebar/50"
+                              >
+                                View
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl bg-card border border-border">
+                              <DialogHeader>
+                                <DialogTitle className="text-foreground">Message Details</DialogTitle>
+                                <DialogDescription className="text-muted-foreground">
+                                  Contact form submission from {message.name}
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <h4 className="font-medium text-foreground mb-1">Name</h4>
+                                    <p className="text-foreground bg-sidebar/20 p-2 rounded border border-border">
+                                      {message.name}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <h4 className="font-medium text-foreground mb-1">Email</h4>
+                                    <p className="text-foreground bg-sidebar/20 p-2 rounded border border-border">
+                                      {message.email}
+                                    </p>
+                                  </div>
+                                </div>
                                 <div>
-                                  <h4 className="font-medium text-foreground mb-1">Name</h4>
+                                  <h4 className="font-medium text-foreground mb-1">Subject</h4>
                                   <p className="text-foreground bg-sidebar/20 p-2 rounded border border-border">
-                                    {message.name}
+                                    {message.subject}
                                   </p>
                                 </div>
                                 <div>
-                                  <h4 className="font-medium text-foreground mb-1">Email</h4>
-                                  <p className="text-foreground bg-sidebar/20 p-2 rounded border border-border">
-                                    {message.email}
+                                  <h4 className="font-medium text-foreground mb-1">Message</h4>
+                                  <div className="text-foreground bg-sidebar/20 p-4 rounded border border-border whitespace-pre-wrap">
+                                    {message.message}
+                                  </div>
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-foreground mb-1">Status</h4>
+                                  <Badge
+                                    className={`${
+                                      message.status === "unread"
+                                        ? "bg-error text-error-foreground"
+                                        : message.status === "read"
+                                        ? "bg-warning text-warning-foreground"
+                                        : "bg-success text-success-foreground"
+                                    }`}
+                                  >
+                                    {message.status}
+                                  </Badge>
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-foreground mb-1">Received Date</h4>
+                                  <p className="text-muted-foreground">
+                                    {new Date(message.createdAt).toLocaleString()}
                                   </p>
                                 </div>
-                              </div>
-                              <div>
-                                <h4 className="font-medium text-foreground mb-1">Subject</h4>
-                                <p className="text-foreground bg-sidebar/20 p-2 rounded border border-border">
-                                  {message.subject}
-                                </p>
-                              </div>
-                              <div>
-                                <h4 className="font-medium text-foreground mb-1">Message</h4>
-                                <div className="text-foreground bg-sidebar/20 p-4 rounded border border-border whitespace-pre-wrap">
-                                  {message.message}
+
+                                {/* Reply Section */}
+                                <div className="border-t border-border pt-4 mt-4">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <h4 className="font-medium text-foreground">Reply to {message.name}</h4>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (showReplyForm === message.id) {
+                                          setShowReplyForm(null);
+                                          setReplyText("");
+                                        } else {
+                                          setShowReplyForm(message.id);
+                                          setReplyText(`Dear ${message.name},\n\nThank you for your message regarding "${message.subject}".\n\n`);
+                                        }
+                                      }}
+                                      className="border border-border text-foreground hover:bg-sidebar/50"
+                                    >
+                                      {showReplyForm === message.id ? "Cancel Reply" : "Reply"}
+                                    </Button>
+                                  </div>
+
+                                  {showReplyForm === message.id && (
+                                    <div className="space-y-3">
+                                      <textarea
+                                        value={replyText}
+                                        onChange={(e) => setReplyText(e.target.value)}
+                                        placeholder="Type your reply here..."
+                                        className="w-full h-32 p-3 rounded border border-border bg-input text-foreground placeholder-muted-foreground focus:outline-none focus:border-ring resize-none"
+                                      />
+                                      <div className="flex gap-2 justify-end">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            setShowReplyForm(null);
+                                            setReplyText("");
+                                          }}
+                                          className="border border-border text-foreground hover:bg-sidebar/50"
+                                        >
+                                          Cancel
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          onClick={() => {
+                                            // TODO: Implement send reply functionality
+                                            alert(`Reply would be sent to ${message.email}:\n\n${replyText}`);
+                                            setShowReplyForm(null);
+                                            setReplyText("");
+                                            // After sending, mark as replied
+                                            updateContactStatus(message.id, "replied");
+                                          }}
+                                          className="bg-accent hover:bg-accent/90 text-white"
+                                          disabled={!replyText.trim()}
+                                        >
+                                          Send Reply
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="flex gap-2 pt-4">
+                                  <Button
+                                    variant="outline"
+                                    className="border border-border text-foreground hover:bg-sidebar/50"
+                                  >
+                                    Close
+                                  </Button>
+                                  <Button
+                                    onClick={() => {
+                                      const newStatus = message.status === "unread" ? "read" : message.status === "read" ? "replied" : "unread";
+                                      updateContactStatus(message.id, newStatus);
+                                    }}
+                                    disabled={updatingStatus === message.id}
+                                    className="bg-accent hover:bg-accent/90 text-white disabled:opacity-50"
+                                  >
+                                    {updatingStatus === message.id ? "Updating..." : (message.status === "unread" ? "Mark as Read" : message.status === "read" ? "Mark as Replied" : "Mark as Unread")}
+                                  </Button>
                                 </div>
                               </div>
-                              <div>
-                                <h4 className="font-medium text-foreground mb-1">Status</h4>
-                                <Badge
-                                  className={`${
-                                    message.status === "unread"
-                                      ? "bg-error text-error-foreground"
-                                      : message.status === "read"
-                                      ? "bg-warning text-warning-foreground"
-                                      : "bg-success text-success-foreground"
-                                  }`}
-                                >
-                                  {message.status}
-                                </Badge>
-                              </div>
-                              <div>
-                                <h4 className="font-medium text-foreground mb-1">Received Date</h4>
-                                <p className="text-muted-foreground">
-                                  {new Date(message.createdAt).toLocaleString()}
-                                </p>
-                              </div>
-                              <div className="flex gap-2 pt-4">
-                                <Button
-                                  variant="outline"
-                                  className="border border-border text-foreground hover:bg-sidebar/50"
-                                >
-                                  Close
-                                </Button>
-                                <Button className="bg-accent hover:bg-accent/90 text-white">
-                                  {message.status === "unread" ? "Mark as Read" : message.status === "read" ? "Mark as Replied" : "Mark as Unread"}
-                                </Button>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+                            </DialogContent>
+                          </Dialog>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setShowReplyForm(message.id);
+                              setReplyText(`Dear ${message.name},\n\nThank you for your message regarding "${message.subject}".\n\n`);
+                            }}
+                            className="border border-border text-foreground hover:bg-sidebar/50"
+                          >
+                            Reply
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
