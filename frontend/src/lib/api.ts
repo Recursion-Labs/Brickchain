@@ -1,5 +1,5 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
-const API_BASE_URL_FORMS = process.env.NEXT_PUBLIC_API_BASE_URL_FORMS || 'http://localhost:3000';
+const API_BASE_URL_FORMS = process.env.NEXT_PUBLIC_API_BASE_URL_FORMS || 'http://localhost:8000';
 
 import { AuthManager } from './auth';
 
@@ -65,12 +65,26 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.formsURL}${endpoint}`;
 
+    const isNgrokHost = this.formsURL.includes('ngrok');
+    const enableNgrokBypass = process.env.NEXT_PUBLIC_ENABLE_NGROK_BYPASS === 'true';
+
+    // options.headers can be several types (Headers, string[][], or Record).
+    // Normalize to a plain object for easy merging and conditional header insertion.
+    const headersInit: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...AuthManager.getAuthHeader(),
+      ...(options.headers as Record<string, string>),
+    };
+
+    // Only add the ngrok bypass header when explicitly enabled AND the target
+    // looks like an ngrok tunnel. This avoids unnecessary custom headers which
+    // can trigger CORS preflights or leak to unrelated backends.
+    if (enableNgrokBypass && isNgrokHost) {
+      headersInit['ngrok-skip-browser-warning'] = '1';
+    }
+
     const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...AuthManager.getAuthHeader(),
-        ...options.headers,
-      },
+      headers: headersInit,
       ...options,
     };
 
