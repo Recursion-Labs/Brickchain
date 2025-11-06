@@ -15,6 +15,7 @@ interface ContactMessage {
   id: string;
   name: string;
   email: string;
+  subject: string;
   message: string;
   createdAt: string;
   status: "unread" | "read" | "replied";
@@ -24,6 +25,7 @@ interface ContactApiResponse {
   id: string;
   name: string;
   email: string;
+  subject: string;
   message: string;
   createdAt: string;
   status?: string;
@@ -58,6 +60,7 @@ export default function MessagesPage() {
               id: item.id,
               name: item.name,
               email: item.email,
+              subject: item.subject,
               message: item.message,
               createdAt: item.createdAt,
               status: (item.status?.toLowerCase() || 'unread') as "unread" | "read" | "replied"
@@ -112,6 +115,7 @@ export default function MessagesPage() {
     const matchesSearch =
       message.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       message.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      message.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
       message.message.toLowerCase().includes(searchQuery.toLowerCase());
 
     return matchesStatus && matchesSearch;
@@ -162,7 +166,11 @@ export default function MessagesPage() {
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <p className="text-muted-foreground">Loading...</p>
+              <div className="w-full space-y-2">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-8 bg-muted rounded animate-pulse" />
+                ))}
+              </div>
             </div>
           ) : filteredData.length === 0 ? (
             <div className="flex items-center justify-center py-12">
@@ -177,6 +185,7 @@ export default function MessagesPage() {
                   <TableRow className="border-border">
                     <TableHead className="text-foreground">Name</TableHead>
                     <TableHead className="text-foreground">Email</TableHead>
+                    <TableHead className="text-foreground">Subject</TableHead>
                     <TableHead className="text-foreground">Message</TableHead>
                     <TableHead className="text-foreground">Received</TableHead>
                     <TableHead className="text-foreground">Status</TableHead>
@@ -188,6 +197,7 @@ export default function MessagesPage() {
                     <TableRow key={message.id} className="border-border hover:bg-sidebar/30">
                       <TableCell className="text-foreground">{message.name}</TableCell>
                       <TableCell className="text-foreground">{message.email}</TableCell>
+                      <TableCell className="text-foreground max-w-xs truncate">{message.subject}</TableCell>
                       <TableCell className="text-muted-foreground max-w-xs truncate">
                         {message.message}
                       </TableCell>
@@ -235,6 +245,12 @@ export default function MessagesPage() {
                                     {message.email}
                                   </p>
                                 </div>
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-foreground mb-1">Subject</h4>
+                                <p className="text-foreground bg-sidebar/20 p-2 rounded border border-border">
+                                  {message.subject}
+                                </p>
                               </div>
                               <div>
                                 <h4 className="font-medium text-foreground mb-1">Message</h4>

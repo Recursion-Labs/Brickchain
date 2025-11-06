@@ -139,7 +139,7 @@ export default function WaitlistPage() {
         />
         <Button
           onClick={fetchWaitlistData}
-          className="bg-accent hover:bg-accent/90 text-white px-4 py-2"
+          className="bg-accent hover:bg-accent/90 text-white px-4 py-2 dark:bg-accent dark:hover:bg-accent/90"
         >
           Refresh Data
         </Button>
@@ -154,7 +154,11 @@ export default function WaitlistPage() {
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <p className="text-muted-foreground">Loading...</p>
+              <div className="w-full space-y-2">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-8 bg-muted rounded animate-pulse" />
+                ))}
+              </div>
             </div>
           ) : filteredData.length === 0 ? (
             <div className="flex items-center justify-center py-12">
@@ -168,7 +172,6 @@ export default function WaitlistPage() {
                 <TableHeader>
                   <TableRow className="border-border">
                     <TableHead className="text-foreground">Email</TableHead>
-                    <TableHead className="text-foreground">Name</TableHead>
                     <TableHead className="text-foreground">Joined</TableHead>
                     <TableHead className="text-foreground">Status</TableHead>
                     <TableHead className="text-foreground text-right">Actions</TableHead>
@@ -178,7 +181,6 @@ export default function WaitlistPage() {
                   {filteredData.map((entry) => (
                     <TableRow key={entry.id} className="border-border hover:bg-sidebar/30">
                       <TableCell className="text-foreground">{entry.email}</TableCell>
-                      <TableCell className="text-foreground">{entry.name || "N/A"}</TableCell>
                       <TableCell className="text-muted-foreground">{new Date(entry.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <Badge
@@ -196,11 +198,13 @@ export default function WaitlistPage() {
                       <TableCell className="text-right">
                         <Dialog>
                           <DialogTrigger asChild>
-                            <button
-                              className="text-xs text-accent hover:underline"
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border border-border text-foreground hover:bg-sidebar/50"
                             >
                               View
-                            </button>
+                            </Button>
                           </DialogTrigger>
                           <DialogContent className="max-w-md bg-card border border-border">
                             <DialogHeader>
@@ -210,19 +214,11 @@ export default function WaitlistPage() {
                               </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <h4 className="font-medium text-foreground mb-1">Name</h4>
-                                  <p className="text-foreground bg-sidebar/20 p-2 rounded border border-border">
-                                    {entry.name || "Not provided"}
-                                  </p>
-                                </div>
-                                <div>
-                                  <h4 className="font-medium text-foreground mb-1">Email</h4>
-                                  <p className="text-foreground bg-sidebar/20 p-2 rounded border border-border">
-                                    {entry.email}
-                                  </p>
-                                </div>
+                              <div>
+                                <h4 className="font-medium text-foreground mb-1">Email</h4>
+                                <p className="text-foreground bg-sidebar/20 p-2 rounded border border-border">
+                                  {entry.email}
+                                </p>
                               </div>
                               <div>
                                 <h4 className="font-medium text-foreground mb-1">Status</h4>
