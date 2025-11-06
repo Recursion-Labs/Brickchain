@@ -37,6 +37,33 @@ export default function WaitlistPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+
+  const updateWaitlistStatus = async (id: string, newStatus: string) => {
+    try {
+      setUpdatingStatus(id);
+      const response = await apiClient.updateWaitlistStatus(id, newStatus);
+
+      if (response.success) {
+        // Update the local state
+        setWaitlistData(prevData =>
+          prevData.map(entry =>
+            entry.id === id
+              ? { ...entry, status: newStatus.toLowerCase() as "pending" | "verified" | "rejected" }
+              : entry
+          )
+        );
+      } else {
+        console.error('Failed to update status:', response.message);
+        alert('Failed to update status: ' + response.message);
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Error updating status. Please try again.');
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
 
   const fetchWaitlistData = async () => {
     try {
@@ -139,7 +166,7 @@ export default function WaitlistPage() {
         />
         <Button
           onClick={fetchWaitlistData}
-          className="bg-accent hover:bg-accent/90 text-white px-4 py-2 dark:bg-accent dark:hover:bg-accent/90"
+          className="bg-accent hover:bg-accent/90 text-white px-4 py-2"
         >
           Refresh Data
         </Button>
@@ -247,8 +274,15 @@ export default function WaitlistPage() {
                                 >
                                   Close
                                 </Button>
-                                <Button className="bg-accent hover:bg-accent/90 text-white">
-                                  {entry.status === "pending" ? "Verify" : entry.status === "verified" ? "Reject" : "Approve"}
+                                <Button
+                                  onClick={() => {
+                                    const newStatus = entry.status === "pending" ? "verified" : entry.status === "verified" ? "rejected" : "pending";
+                                    updateWaitlistStatus(entry.id, newStatus);
+                                  }}
+                                  disabled={updatingStatus === entry.id}
+                                  className="bg-accent hover:bg-accent/90 text-white disabled:opacity-50"
+                                >
+                                  {updatingStatus === entry.id ? "Updating..." : (entry.status === "pending" ? "Verify" : entry.status === "verified" ? "Reject" : "Approve")}
                                 </Button>
                               </div>
                             </div>
