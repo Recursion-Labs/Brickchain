@@ -25,40 +25,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-      <html lang="en" suppressHydrationWarning className="overflow-hidden">
+      <html lang="en" suppressHydrationWarning>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-hidden`}
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <ToastProvider />
-          {/* Remove common extension-injected attributes (e.g. Grammarly) before React hydration
-              This prevents hydration mismatch caused by browser extensions that modify the DOM
-              before React compares server HTML to client HTML. */}
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `(() => {
-                try {
-                  // Remove attributes commonly injected by browser extensions on <html> and <body>
-                  const html = document && document.documentElement;
-                  const body = document && document.body;
-                  const remove = (el: any, attr: string) => {
-                    try { el && el.removeAttribute && el.removeAttribute(attr); } catch (e) { /* ignore */ }
-                  };
-
-                  // Known problematic attributes seen in hydration mismatch errors
-                  const attrs = [
-                    'data-new-gr-c-s-check-loaded',
-                    'data-gr-ext-installed',
-                    'suppresshydrationwarning',
-                    'data-qb-installed',
-                    'cz-shortcut-listen'
-                  ];
-
-                  attrs.forEach(a => { remove(html, a); remove(body, a); });
-                } catch (e) { /* ignore */ }
-              })();`,
-            }}
-          />
-
           {children}
         </body>
       </html>

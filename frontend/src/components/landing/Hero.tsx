@@ -6,7 +6,7 @@ import { TiltCard } from "@/components/custom/tilt-card";
 
 const Hero = () => {
   return (
-  <div id="hero" className="min-h-screen lg:min-h-[calc(100vh-64px)] flex items-center overflow-hidden p-2 sm:p-4 lg:p-6 xl:p-8">
+  <div id="hero" className="min-h-screen lg:min-h-[calc(100vh-64px)] flex items-center p-2 sm:p-4 lg:p-6 xl:p-8">
       <div className="mx-auto max-w-7xl h-full">
   <div className="grid h-full grid-cols-1 gap-12 sm:gap-16 lg:grid-cols-[45%_55%] lg:gap-20 items-center lg:items-stretch">
           <div className="order-2 flex flex-col items-center lg:items-start justify-center text-center lg:text-left lg:order-1 px-4">
