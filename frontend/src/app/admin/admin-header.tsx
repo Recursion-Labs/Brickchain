@@ -1,8 +1,9 @@
 "use client";
 
-import { Bell, Settings } from "lucide-react";
+import { Bell, Settings, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcherButton } from "@/components/custom/theme-switcher-button";
+import { useSidebar } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,9 +13,21 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function AdminHeader() {
+  const { toggleSidebar } = useSidebar();
+
   return (
     <header className="w-full border-b border-border bg-sidebar">
-      <div className="flex items-center justify-between h-16 px-8 gap-6">
+      <div className="flex items-center justify-between h-16 px-4 md:px-8 gap-6">
+        {/* Mobile Menu Trigger */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          className="md:hidden text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/20"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+
         {/* Left Section */}
         <div className="flex-1">
           <h1 className="text-xl font-bold text-foreground">Admin Dashboard</h1>
