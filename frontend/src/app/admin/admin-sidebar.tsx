@@ -126,7 +126,10 @@ export function AdminSidebar() {
             )}>
               {adminItems.map((item) => {
                 const Icon = item.icon
-                const isActive = pathname === item.url || pathname.startsWith(item.url + "/")
+                // Only highlight dashboard for exact /admin, not for /admin/*
+                const isActive = item.url === "/admin"
+                  ? pathname === "/admin"
+                  : pathname === item.url || pathname.startsWith(item.url + "/")
                 return (
                   <SidebarMenuItem key={item.url} className={cn(
                     isCollapsed && "w-full flex justify-center"
