@@ -12,7 +12,7 @@ export default function AdminLayout({
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <SidebarProvider defaultOpen={true}>
         <AdminSidebar />
-        <SidebarInset className="flex flex-col h-screen">
+        <SidebarInset className="flex flex-col h-screen w-full">
           <AdminHeader />
           <main className="flex-1 overflow-auto">
             {children}

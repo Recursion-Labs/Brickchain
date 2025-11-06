@@ -146,12 +146,12 @@ export default function MessagesPage() {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search by email or name..."
+          placeholder="Search by email, name, subject, or message..."
           className="flex-1 min-w-64 px-4 py-2 rounded bg-input border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:border-ring"
         />
         <Button
           onClick={fetchMessagesData}
-          className="bg-accent hover:bg-accent/90 text-white px-4 py-2"
+          className="bg-accent hover:bg-accent/90 text-white px-4 py-2 dark:bg-accent dark:hover:bg-accent/90"
         >
           Refresh Data
         </Button>
@@ -218,11 +218,13 @@ export default function MessagesPage() {
                       <TableCell className="text-right">
                         <Dialog>
                           <DialogTrigger asChild>
-                            <button
-                              className="text-xs text-accent hover:underline"
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border border-border text-foreground hover:bg-sidebar/50"
                             >
                               View
-                            </button>
+                            </Button>
                           </DialogTrigger>
                           <DialogContent className="max-w-2xl bg-card border border-border">
                             <DialogHeader>

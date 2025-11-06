@@ -70,7 +70,7 @@ const settingsItems: NavItem[] = [
 export function AdminSidebar() {
   const pathname = usePathname()
   const { state } = useSidebar()
-  const [settingsOpen, setSettingsOpen] = React.useState(false)
+  const [settingsOpen, setSettingsOpen] = React.useState(true)
 
   const isCollapsed = state === "collapsed"
 
@@ -78,7 +78,7 @@ export function AdminSidebar() {
     <Sidebar 
       variant="sidebar"
       collapsible="icon"
-      className="border-r border-border bg-sidebar"
+      className="border-r border-border bg-sidebar hidden md:flex"
       style={{
         "--sidebar-width": "16rem",
         "--sidebar-width-icon": "4.5rem",
