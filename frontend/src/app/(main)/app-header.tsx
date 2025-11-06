@@ -1,9 +1,10 @@
 "use client";
 
-import { Search, Bell, Settings, ChevronDown } from "lucide-react";
+import { Search, Bell, Settings, ChevronDown, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcherButton } from "@/components/custom/theme-switcher-button";
+import { useSidebar } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,9 +14,21 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function AppHeader() {
+  const { toggleSidebar } = useSidebar();
+
   return (
     <header className="w-full border-b border-border bg-sidebar">
-      <div className="flex items-center justify-between h-16 px-8 gap-6">
+      <div className="flex items-center justify-between h-16 px-4 md:px-8 gap-4 md:gap-6">
+        {/* Mobile Menu Trigger */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          className="md:hidden text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/20"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+
         {/* Left Section - Search */}
         <div className="flex-1 max-w-md">
           <div className="relative">
@@ -28,7 +41,7 @@ export function AppHeader() {
         </div>
 
         {/* Right Section - Wallet & Profile */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
           {/* Wallet Info */}
           <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-sidebar-accent/10 rounded-lg border border-sidebar-accent/20">
             <div className="flex flex-col gap-0.5">

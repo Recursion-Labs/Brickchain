@@ -12,7 +12,7 @@ export default function MainLayout({
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <SidebarProvider defaultOpen={true}>
         <AppSidebar />
-        <SidebarInset className="flex flex-col h-screen">
+        <SidebarInset className="flex flex-col h-screen w-full">
           <AppHeader />
           <main className="flex-1 overflow-auto">
             {children}
