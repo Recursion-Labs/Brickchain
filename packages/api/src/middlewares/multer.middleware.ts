@@ -17,10 +17,26 @@ const fileFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCall
 	}
 };
 
-const upload = multer({
+const pdfUpload = multer({
 	dest: uploadDir,
 	limits: { fileSize: maxMb * 1024 * 1024 },
 	fileFilter,
 });
 
-export default upload;
+// Image upload middleware
+const imageFileFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
+	const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+	if (allowedMimes.includes(file.mimetype)) {
+		cb(null, true);
+	} else {
+		cb(new Error("Only image files (JPEG, PNG, GIF, WebP) are allowed"));
+	}
+};
+
+const imageUpload = multer({
+	storage: multer.memoryStorage(), // Store in memory for Cloudinary
+	limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit for images
+	fileFilter: imageFileFilter,
+});
+
+export { pdfUpload as default, imageUpload };
