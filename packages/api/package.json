@@ -29,6 +29,7 @@
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.17",
     "clamscan": "^2.1.3",
+    "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "cross-env": "^7.0.3",
     "dotenv": "^17.2.3",
