@@ -1,0 +1,35 @@
+pragma language_version >= 0.16 && <= 0.18;
+
+import CompactStandardLibrary;
+
+export ledger {
+  totalShares: Map<u64, u64>;
+  balances: Map<(u64, Address), u64>;
+}
+
+export circuit initializeShares(pid: u64, owner: Address, total: u64): [] {
+  require(total > 0u64, "Invalid total");
+  totalShares[pid] = total;
+  balances[(pid, owner)] = total;
+  publish("SHARES_INITIALIZED", pid, owner, total);
+}
+
+export circuit transferShares(
+  pid: u64,
+  from: Address,
+  to: Address,
+  amount: u64,
+  authProof: Opaque<"bool">
+): [] {
+  let auth = disclose(authProof);
+  require(auth == "true" || auth == "1", "Unauthorized");
+  require(amount > 0u64, "Invalid amount");
+
+  let senderBal = balances[(pid, from)];
+  require(senderBal >= amount, "Insufficient shares");
+
+  balances[(pid, from)] = senderBal - amount;
+  balances[(pid, to)] = balances[(pid, to)] + amount;
+
+  publish("SHARES_TRANSFERRED", pid, from, to, amount);
+}

@@ -1,0 +1,72 @@
+pragma language_version >= 0.16 && <= 0.18;
+
+import CompactStandardLibrary;
+import "./lib/types.compact";
+
+export ledger {
+  listings: Map<u64, Listing>;
+  nextListingId: u64 = 1;
+  escrow: Map<Address, u128>;
+}
+
+export circuit createListing(
+  pid: u64,
+  seller: Address,
+  shareAmount: u64,
+  pricePerShare: u128,
+  isFullSale: bool,
+  expiresAt: u64,
+  authProof: Opaque<"bool">
+): [u64] {
+  require(shareAmount > 0u64, "shareAmount > 0");
+  require(pricePerShare > 0u128, "pricePerShare > 0");
+
+  let ok = disclose(authProof);
+  require(ok == "true" || ok == "1", "auth failed");
+
+  let lid = nextListingId;
+  nextListingId += 1;
+
+  let listing: Listing = {
+    seller: seller,
+    pid: pid,
+    shareAmount: shareAmount,
+    pricePerShare: pricePerShare,
+    isFullSale: isFullSale,
+    expiresAt: expiresAt
+  };
+
+  listings[lid] = listing;
+  publish("LISTING_CREATED", lid, seller, pid, shareAmount, pricePerShare, isFullSale);
+  return [lid];
+}
+
+export circuit buyListing(
+  lid: u64,
+  buyer: Address,
+  paymentAmount: u128,
+  authProof: Opaque<"bool">
+): [] {
+  require(listings[lid].seller != zero_address, "Listing not found");
+
+  let listing = listings[lid];
+  let ok = disclose(authProof);
+  require(ok == "true" || ok == "1", "auth failed");
+
+  let expected: u128 = (u128(listing.shareAmount) * listing.pricePerShare);
+  require(paymentAmount == expected, "Invalid payment");
+
+  escrow[listing.seller] = escrow[listing.seller] + paymentAmount;
+
+  // Listing removal
+  listings[lid] = (
+    seller: zero_address,
+    pid: 0u64,
+    shareAmount: 0u64,
+    pricePerShare: 0u128,
+    isFullSale: false,
+    expiresAt: 0u64
+  );
+
+  publish("LISTING_SOLD", lid, listing.seller, buyer, listing.pid, listing.shareAmount, paymentAmount);
+}
