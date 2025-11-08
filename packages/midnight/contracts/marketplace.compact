@@ -7,6 +7,17 @@ export ledger {
   listings: Map<u64, Listing>;
   nextListingId: u64 = 1;
   escrow: Map<Address, u128>;
+  marketplaceFee: u128 = 250u128; // 2.5% fee (basis points)
+  adminAddress: Address = zero_address;
+  isPaused: bool = false;
+  totalVolume: u128 = 0u128;
+  totalListings: u64 = 0u64;
+}
+
+export circuit initializeMarketplace(admin: Address): [] {
+  require(adminAddress == zero_address, "Already initialized");
+  adminAddress = admin;
+  publish("MARKETPLACE_INITIALIZED", admin);
 }
 
 export circuit createListing(
@@ -18,14 +29,17 @@ export circuit createListing(
   expiresAt: u64,
   authProof: Opaque<"bool">
 ): [u64] {
+  require(!isPaused, "Marketplace is paused");
   require(shareAmount > 0u64, "shareAmount > 0");
   require(pricePerShare > 0u128, "pricePerShare > 0");
+  require(expiresAt > 0u64, "Invalid expiration");
 
   let ok = disclose(authProof);
   require(ok == "true" || ok == "1", "auth failed");
 
   let lid = nextListingId;
   nextListingId += 1;
+  totalListings += 1u64;
 
   let listing: Listing = {
     seller: seller,
@@ -33,7 +47,9 @@ export circuit createListing(
     shareAmount: shareAmount,
     pricePerShare: pricePerShare,
     isFullSale: isFullSale,
-    expiresAt: expiresAt
+    expiresAt: expiresAt,
+    isActive: true,
+    createdAt: 0u64 //current timestamp
   };
 
   listings[lid] = listing;
@@ -47,26 +63,105 @@ export circuit buyListing(
   paymentAmount: u128,
   authProof: Opaque<"bool">
 ): [] {
+  require(!isPaused, "Marketplace is paused");
   require(listings[lid].seller != zero_address, "Listing not found");
+  require(listings[lid].isActive, "Listing not active");
 
   let listing = listings[lid];
   let ok = disclose(authProof);
   require(ok == "true" || ok == "1", "auth failed");
 
-  let expected: u128 = (u128(listing.shareAmount) * listing.pricePerShare);
-  require(paymentAmount == expected, "Invalid payment");
+  let totalPrice: u128 = (u128(listing.shareAmount) * listing.pricePerShare);
+  require(paymentAmount >= totalPrice, "Insufficient payment");
 
-  escrow[listing.seller] = escrow[listing.seller] + paymentAmount;
+  // Calculate marketplace fee
+  let fee: u128 = (totalPrice * marketplaceFee) / 10000u128;
+  let sellerAmount: u128 = totalPrice - fee;
 
-  // Listing removal
+  escrow[listing.seller] = escrow[listing.seller] + sellerAmount;
+  escrow[adminAddress] = escrow[adminAddress] + fee;
+
+  // Update marketplace stats
+  totalVolume += totalPrice;
+
+  // Mark listing as inactive
   listings[lid] = (
-    seller: zero_address,
-    pid: 0u64,
-    shareAmount: 0u64,
-    pricePerShare: 0u128,
-    isFullSale: false,
-    expiresAt: 0u64
+    seller: listing.seller,
+    pid: listing.pid,
+    shareAmount: listing.shareAmount,
+    pricePerShare: listing.pricePerShare,
+    isFullSale: listing.isFullSale,
+    expiresAt: listing.expiresAt,
+    isActive: false,
+    createdAt: listing.createdAt
   );
 
-  publish("LISTING_SOLD", lid, listing.seller, buyer, listing.pid, listing.shareAmount, paymentAmount);
+  publish("LISTING_SOLD", lid, listing.seller, buyer, listing.pid, listing.shareAmount, totalPrice, fee);
+}
+
+export circuit cancelListing(
+  lid: u64,
+  authProof: Opaque<"bool">
+): [] {
+  require(listings[lid].seller != zero_address, "Listing not found");
+  require(listings[lid].isActive, "Listing not active");
+
+  let ok = disclose(authProof);
+  require(ok == "true" || ok == "1", "auth failed");
+
+  let listing = listings[lid];
+  
+  // Mark listing as inactive
+  listings[lid] = (
+    seller: listing.seller,
+    pid: listing.pid,
+    shareAmount: listing.shareAmount,
+    pricePerShare: listing.pricePerShare,
+    isFullSale: listing.isFullSale,
+    expiresAt: listing.expiresAt,
+    isActive: false,
+    createdAt: listing.createdAt
+  );
+
+  publish("LISTING_CANCELLED", lid, listing.seller);
+}
+
+export circuit withdrawEscrow(
+  amount: u128,
+  authProof: Opaque<"bool">
+): [] {
+  let ok = disclose(authProof);
+  require(ok == "true" || ok == "1", "auth failed");
+
+  //In a real implementation we will need the caller's address but for now wa are using a placeholder approach
+  publish("ESCROW_WITHDRAWAL_REQUESTED", amount);
+}
+
+export circuit setMarketplaceFee(
+  newFee: u128,
+  authProof: Opaque<"bool">
+): [] {
+  require(newFee <= 1000u128, "Fee too high"); // Max 10%
+
+  let ok = disclose(authProof);
+  require(ok == "true" || ok == "1", "Admin only");
+
+  marketplaceFee = newFee;
+  publish("MARKETPLACE_FEE_UPDATED", newFee);
+}
+
+export circuit pauseMarketplace(authProof: Opaque<"bool">): [] {
+  let ok = disclose(authProof);
+  require(ok == "true" || ok == "1", "Admin only");
+
+  isPaused = true;
+  publish("MARKETPLACE_PAUSED");
+}
+
+export circuit unpauseMarketplace(authProof: Opaque<"bool">): [] {
+  let ok = disclose(authProof);
+  require(ok == "true" || ok == "1", "Admin only");
+
+  isPaused = false;
+  publish("MARKETPLACE_UNPAUSED");
 }
