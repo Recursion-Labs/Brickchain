@@ -111,23 +111,33 @@ async function main() {
     console.log(`Balance: ${balance}`);
 
     // Load compiled contract files
-    console.log("Loading contract...");
-    const contractPath = path.join(process.cwd(), "contracts");
-    const contractModulePath = path.join(
-      contractPath,
-      "managed",
-      "hello-world",
-      "contract",
-      "index.cjs"
-    );
+    console.log("Loading contracts...");
+    const contractPath = path.join(process.cwd(), "build");
+    
+    const contracts = {
+      propertyRegistry: null,
+      fractionalToken: null,
+      marketplace: null,
+      verification: null
+    };
 
-    if (!fs.existsSync(contractModulePath)) {
-      console.error("Contract not found! Run: npm run compile");
-      process.exit(1);
+    // Check if contracts are compiled
+    const contractFiles = [
+      "property_registry.compact",
+      "fractional_token.compact", 
+      "marketplace.compact",
+      "verification.compact"
+    ];
+
+    for (const file of contractFiles) {
+      const contractModulePath = path.join(contractPath, file.replace('.compact', ''), 'contract', 'index.cjs');
+      if (!fs.existsSync(contractModulePath)) {
+        console.error(`Contract ${file} not found! Run: npm run compile`);
+        process.exit(1);
+      }
     }
 
-    const HelloWorldModule = await import(contractModulePath);
-    const contractInstance = new HelloWorldModule.Contract({});
+    console.log("All contracts found and ready for deployment");
 
     // Create wallet provider for transactions
     const walletState = await Rx.firstValueFrom(wallet.state());
