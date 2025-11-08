@@ -6,7 +6,11 @@ export type PropertyDetails = {
   cid: string,
   fileName: string,
   uploader: Address,
-  uploadedAt: u64
+  uploadedAt: u64,
+  propertyType: string,
+  location: string,
+  valuation: u128,
+  isActive: bool
 };
 
 export type Listing = {
@@ -15,5 +19,23 @@ export type Listing = {
   shareAmount: u64,
   pricePerShare: u128,
   isFullSale: bool,
-  expiresAt: u64
+  expiresAt: u64,
+  isActive: bool,
+  createdAt: u64
+};
+
+export type PropertyMetadata = {
+  totalShares: u64,
+  currentOwners: u64,
+  lastTransferAt: u64,
+  isTokenized: bool,
+  registrationFee: u128
+};
+
+export type OwnershipProof = {
+  owner: Address,
+  pid: u64,
+  shareAmount: u64,
+  proofHash: string,
+  generatedAt: u64
 };
