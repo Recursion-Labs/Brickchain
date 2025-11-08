@@ -1,0 +1,19 @@
+pragma language_version >= 0.16 && <= 0.18;
+
+import CompactStandardLibrary;
+
+export type PropertyDetails = {
+  cid: string,
+  fileName: string,
+  uploader: Address,
+  uploadedAt: u64
+};
+
+export type Listing = {
+  seller: Address,
+  pid: u64,
+  shareAmount: u64,
+  pricePerShare: u128,
+  isFullSale: bool,
+  expiresAt: u64
+};

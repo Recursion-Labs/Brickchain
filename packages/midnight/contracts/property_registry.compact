@@ -1,0 +1,32 @@
+pragma language_version >= 0.16 && <= 0.18;
+
+import CompactStandardLibrary;
+import "./lib/types.compact";
+
+export ledger {
+  owners: Map<u64, Address>;
+  propertyCID: Map<u64, string>;
+  nextPropertyId: u64 = 1;
+}
+
+export circuit registerProperty(
+  propertyDetails: Opaque<"string">,
+  owner: Address,
+  totalShares: u64,
+  publishPublicCID: bool
+): [u64] {
+  require(totalShares > 0u64, "Total shares must be > 0");
+
+  let revealed = disclose(propertyDetails);
+  let pid = nextPropertyId;
+  nextPropertyId += 1;
+
+  owners[pid] = owner;
+
+  if (publishPublicCID) {
+    propertyCID[pid] = revealed;
+  }
+
+  publish("PROPERTY_REGISTERED", pid, owner, revealed);
+  return [pid];
+}

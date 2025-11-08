@@ -1,3 +1,4 @@
 {
-    "livePreview.defaultPreviewPath": "/packages/api/src/templates/otp.html"
+    "livePreview.defaultPreviewPath": "/packages/api/src/templates/otp.html",
+    "typescript.tsdk": "node_modules/typescript/lib"
 }
