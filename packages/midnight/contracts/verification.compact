@@ -1,0 +1,136 @@
+pragma language_version >= 0.16 && <= 0.18;
+
+import CompactStandardLibrary;
+import "./lib/types.compact";
+
+export ledger {
+  verificationRequests: Map<u64, VerificationRequest>;
+  verifiedProofs: Map<string, bool>;
+  nextRequestId: u64 = 1;
+  adminAddress: Address = zero_address;
+  verificationFee: u128 = 500u128;
+}
+
+export type VerificationRequest = {
+  requester: Address,
+  pid: u64,
+  proofType: string,
+  proofHash: string,
+  isVerified: bool,
+  verifiedAt: u64,
+  createdAt: u64
+};
+
+export circuit initializeVerification(admin: Address): [] {
+  require(adminAddress == zero_address, "Already initialized");
+  adminAddress = admin;
+  publish("VERIFICATION_INITIALIZED", admin);
+}
+
+export circuit requestVerification(
+  pid: u64,
+  requester: Address,
+  proofType: string,
+  proofHash: string,
+  authProof: Opaque<"bool">
+): [u64] {
+  require(pid > 0u64, "Invalid property ID");
+  
+  let auth = disclose(authProof);
+  require(auth == "true" || auth == "1", "Unauthorized");
+
+  let requestId = nextRequestId;
+  nextRequestId += 1;
+
+  let request: VerificationRequest = {
+    requester: requester,
+    pid: pid,
+    proofType: proofType,
+    proofHash: proofHash,
+    isVerified: false,
+    verifiedAt: 0u64,
+    createdAt: 0u64 //current timestamp
+  };
+
+  verificationRequests[requestId] = request;
+  publish("VERIFICATION_REQUESTED", requestId, requester, pid, proofType, proofHash);
+  return [requestId];
+}
+
+export circuit verifyProof(
+  requestId: u64,
+  isValid: bool,
+  authProof: Opaque<"bool">
+): [] {
+  require(verificationRequests[requestId].requester != zero_address, "Request not found");
+
+  let auth = disclose(authProof);
+  require(auth == "true" || auth == "1", "Admin only");
+
+  let request = verificationRequests[requestId];
+  
+  verificationRequests[requestId] = (
+    requester: request.requester,
+    pid: request.pid,
+    proofType: request.proofType,
+    proofHash: request.proofHash,
+    isVerified: isValid,
+    verifiedAt: 0u64, // current timestamp
+    createdAt: request.createdAt
+  );
+
+  if (isValid) {
+    verifiedProofs[request.proofHash] = true;
+  }
+
+  publish("PROOF_VERIFIED", requestId, request.proofHash, isValid);
+}
+
+export circuit generateOwnershipZKProof(
+  pid: u64,
+  owner: Address,
+  shareAmount: u64,
+  proofData: Opaque<"string">,
+  authProof: Opaque<"bool">
+): [string] {
+  require(shareAmount > 0u64, "Invalid share amount");
+
+  let auth = disclose(authProof);
+  require(auth == "true" || auth == "1", "Unauthorized");
+
+  let data = disclose(proofData);
+  
+  // Here we will need a real implementation, currently this would generate ZK proof but for now I am simulating it
+  let proofHash = "zk_proof_" + string(pid) + "_" + string(shareAmount);
+
+  publish("ZK_PROOF_GENERATED", pid, owner, shareAmount, proofHash);
+  return [proofHash];
+}
+
+export circuit verifyOwnershipZKProof(
+  proofHash: string,
+  expectedOwner: Address,
+  expectedPid: u64,
+  expectedShares: u64,
+  authProof: Opaque<"bool">
+): [bool] {
+  let auth = disclose(authProof);
+  require(auth == "true" || auth == "1", "Unauthorized");
+
+  // In a real implementation, this would verify the actual ZK proof for now I checking if the proof exists in our verified proofs
+  let isValid = verifiedProofs[proofHash];
+
+  publish("ZK_PROOF_VERIFICATION", proofHash, expectedOwner, expectedPid, expectedShares, isValid);
+  return [isValid];
+}
+
+export circuit setVerificationFee(
+  newFee: u128,
+  authProof: Opaque<"bool">
+): [] {
+  let auth = disclose(authProof);
+  require(auth == "true" || auth == "1", "Admin only");
+
+  verificationFee = newFee;
+  publish("VERIFICATION_FEE_UPDATED", newFee);
+}
