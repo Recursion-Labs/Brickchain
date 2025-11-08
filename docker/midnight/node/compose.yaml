@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  node:
+    image: 'midnightnetwork/midnight-node:0.12.0'
+    container_name: 'counter-node'
+    ports:
+      - "9944:9944"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9944/health" ]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    environment:
+      CFG_PRESET: "dev"
