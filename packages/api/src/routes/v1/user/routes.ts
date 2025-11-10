@@ -6,7 +6,9 @@ import { Router } from "express";
 const router = Router();
 
 router.get("/@me", authenticate, v1.user.profileController.getUserByToken);
-router.post("/profile-picture", authenticate, imageUpload.single('image'), v1.user.profileController.uploadProfilePicture);
-router.post("/banner", authenticate, imageUpload.single('image'), v1.user.profileController.uploadBanner);
+
+// Profile routes
+router.post("/profile/avatar", authenticate, imageUpload.single('image'), v1.user.profileController.uploadProfilePicture);
+router.post("/profile/banner", authenticate, imageUpload.single('image'), v1.user.profileController.uploadBanner);
 
 export default router;
