@@ -40,16 +40,6 @@ interface Navbar1Props {
     title: string;
   };
   menu?: MenuItem[];
-  auth?: {
-    login: {
-      title: string;
-      url: string;
-    };
-    signup: {
-      title: string;
-      url: string;
-    };
-  };
 }
 
 const Header = ({
@@ -100,10 +90,6 @@ const Header = ({
       url: "#",
     },
   ],
-  auth = {
-    login: { title: "Login", url: "#" },
-    signup: { title: "Sign up", url: "#" },
-  },
 }: Navbar1Props) => {
   return (
     <section className="sticky top-0 z-50 bg-background border-b border-border">
@@ -137,14 +123,14 @@ const Header = ({
               size="sm"
               className="text-foreground hover:bg-secondary/80"
             >
-              <a href={auth.login.url}>{auth.login.title}</a>
+              <a href="/waitlist">Join Waitlist</a>
             </Button>
             <Button
               asChild
               size="sm"
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              <a href={auth.signup.url}>{auth.signup.title}</a>
+              <a href="/me">Explore</a>
             </Button>
           </div>
         </nav>
@@ -203,13 +189,13 @@ const Header = ({
                       variant="ghost"
                       className="text-foreground hover:bg-secondary/80 justify-start"
                     >
-                      <a href={auth.login.url}>{auth.login.title}</a>
+                      <a href="/waitlist">Join Waitlist</a>
                     </Button>
                     <Button
                       asChild
                       className="bg-primary text-primary-foreground hover:bg-primary/90 justify-start"
                     >
-                      <a href={auth.signup.url}>{auth.signup.title}</a>
+                      <a href="/me">Explore</a>
                     </Button>
                   </div>
                 </div>
