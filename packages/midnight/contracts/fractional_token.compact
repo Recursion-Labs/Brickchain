@@ -1,13 +1,15 @@
 pragma language_version >= 0.16 && <= 0.18;
 
 import CompactStandardLibrary;
+
 import "./lib/types.compact";
+import "./utils.compact";
 
 export ledger {
   totalShares: Map<u64, u64>;
   balances: Map<(u64, Address), u64>;
   ownershipProofs: Map<(u64, Address), OwnershipProof>;
-  transferHistory: Map<u64, u64>; // pid -> transfer count
+  transferHistory: Map<u64, u64>;
   isPaused: Map<u64, bool>;
   adminAddress: Address = zero_address;
   transferFee: u128 = 1000u128; // Base transfer fee
@@ -20,33 +22,20 @@ export circuit initializeToken(admin: Address): [] {
 }
 
 export circuit initializeShares(
-  pid: u64, 
-  owner: Address, 
+  pid: u64,
+  owner: Address,
   total: u64,
   authProof: Opaque<"bool">
 ): [] {
   require(total > 0u64, "Invalid total");
   require(total <= 1000000u64, "Total shares too high");
   require(totalShares[pid] == 0u64, "Already initialized");
-
   let auth = disclose(authProof);
   require(auth == "true" || auth == "1", "Unauthorized");
-
   totalShares[pid] = total;
   balances[(pid, owner)] = total;
   transferHistory[pid] = 0u64;
   isPaused[pid] = false;
-
-  // Generate initial ownership proof
-  let proof: OwnershipProof = {
-    owner: owner,
-    pid: pid,
-    shareAmount: total,
-    proofHash: "initial_proof",
-    generatedAt: 0u64 //current timestamp
-  };
-  ownershipProofs[(pid, owner)] = proof;
-
   publish("SHARES_INITIALIZED", pid, owner, total);
 }
 
@@ -57,117 +46,71 @@ export circuit transferShares(
   amount: u64,
   authProof: Opaque<"bool">
 ): [] {
-  require(!isPaused[pid], "Transfers paused for this property");
-  require(amount > 0u64, "Invalid amount");
+  require(!isPaused[pid], "Token is paused");
+  require(balances[(pid, from)] >= amount, "Insufficient balance");
   require(from != to, "Cannot transfer to self");
-
   let auth = disclose(authProof);
   require(auth == "true" || auth == "1", "Unauthorized");
-
-  let senderBal = balances[(pid, from)];
-  require(senderBal >= amount, "Insufficient shares");
-
-  // Update balances
-  balances[(pid, from)] = senderBal - amount;
-  balances[(pid, to)] = balances[(pid, to)] + amount;
-
-  // Update transfer history
-  transferHistory[pid] = transferHistory[pid] + 1u64;
-
-  // Update ownership proofs
-  let fromProof: OwnershipProof = {
-    owner: from,
-    pid: pid,
-    shareAmount: senderBal - amount,
-    proofHash: "updated_proof_from",
-    generatedAt: 0u64
-  };
-  ownershipProofs[(pid, from)] = fromProof;
-
-  let toProof: OwnershipProof = {
-    owner: to,
-    pid: pid,
-    shareAmount: balances[(pid, to)],
-    proofHash: "updated_proof_to",
-    generatedAt: 0u64
-  };
-  ownershipProofs[(pid, to)] = toProof;
-
+  balances[(pid, from)] -= amount;
+  balances[(pid, to)] += amount;
+  transferHistory[pid] += 1u64;
+  ownershipProofs[(pid, to)] = generateOwnershipProof(pid, to);
   publish("SHARES_TRANSFERRED", pid, from, to, amount);
+}
+
+// Utility function: stub for ownership proof generation
+export circuit generateOwnershipProof(
+  pid: u64,
+  owner: Address
+): OwnershipProof {
+  // For production, implement ZK proof generation
+  let proof: OwnershipProof = {
+    pid: pid,
+    owner: owner,
+    proofHash: "PLACEHOLDER_HASH"
+  };
+  return proof;
+}
+
+export circuit mintShares(
+  pid: u64,
+  to: Address,
+  amount: u64,
+  authProof: Opaque<"bool">
+): [] {
+  require(!isPaused[pid], "Token is paused");
+  let auth = disclose(authProof);
+  require(auth == "true" || auth == "1", "Unauthorized");
+  totalShares[pid] += amount;
+  balances[(pid, to)] += amount;
+  publish("SHARES_MINTED", pid, to, amount);
 }
 
 export circuit burnShares(
   pid: u64,
-  owner: Address,
+  from: Address,
   amount: u64,
   authProof: Opaque<"bool">
 ): [] {
-  require(amount > 0u64, "Invalid amount");
-
+  require(!isPaused[pid], "Token is paused");
+  require(balances[(pid, from)] >= amount, "Insufficient balance");
   let auth = disclose(authProof);
   require(auth == "true" || auth == "1", "Unauthorized");
-
-  let ownerBal = balances[(pid, owner)];
-  require(ownerBal >= amount, "Insufficient shares");
-
-  balances[(pid, owner)] = ownerBal - amount;
-  totalShares[pid] = totalShares[pid] - amount;
-
-  // Update ownership proof
-  let proof: OwnershipProof = {
-    owner: owner,
-    pid: pid,
-    shareAmount: ownerBal - amount,
-    proofHash: "burned_proof",
-    generatedAt: 0u64
-  };
-  ownershipProofs[(pid, owner)] = proof;
-
-  publish("SHARES_BURNED", pid, owner, amount);
+  balances[(pid, from)] -= amount;
+  totalShares[pid] -= amount;
+  publish("SHARES_BURNED", pid, from, amount);
 }
 
-export circuit pauseTransfers(
-  pid: u64,
-  authProof: Opaque<"bool">
-): [] {
+export circuit pauseToken(pid: u64, authProof: Opaque<"bool">): [] {
   let auth = disclose(authProof);
   require(auth == "true" || auth == "1", "Admin only");
-
   isPaused[pid] = true;
-  publish("TRANSFERS_PAUSED", pid);
+  publish("TOKEN_PAUSED", pid);
 }
 
-export circuit unpauseTransfers(
-  pid: u64,
-  authProof: Opaque<"bool">
-): [] {
+export circuit unpauseToken(pid: u64, authProof: Opaque<"bool">): [] {
   let auth = disclose(authProof);
   require(auth == "true" || auth == "1", "Admin only");
-
   isPaused[pid] = false;
-  publish("TRANSFERS_UNPAUSED", pid);
-}
-
-export circuit generateOwnershipProof(
-  pid: u64,
-  owner: Address,
-  proofHash: string,
-  authProof: Opaque<"bool">
-): [] {
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Unauthorized");
-
-  let balance = balances[(pid, owner)];
-  require(balance > 0u64, "No shares owned");
-
-  let proof: OwnershipProof = {
-    owner: owner,
-    pid: pid,
-    shareAmount: balance,
-    proofHash: proofHash,
-    generatedAt: 0u64 //current timestamp
-  };
-  ownershipProofs[(pid, owner)] = proof;
-
-  publish("OWNERSHIP_PROOF_GENERATED", pid, owner, proofHash);
+  publish("TOKEN_UNPAUSED", pid);
 }

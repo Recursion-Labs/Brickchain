@@ -1,0 +1,35 @@
+pragma language_version >= 0.16 && <= 0.18;
+
+import CompactStandardLibrary;
+import "./utils.compact";
+
+export ledger {
+  userRoles: Map<Address, string>;
+  adminAddress: Address = zero_address;
+  isInitialized: bool = false;
+}
+
+export circuit initializeRoles(admin: Address): [] {
+  require(!isInitialized, "Already initialized");
+  require(admin != zero_address, "Invalid admin address");
+  adminAddress = admin;
+  userRoles[admin] = "ADMIN";
+  isInitialized = true;
+  publish("ROLES_INITIALIZED", admin);
+}
+
+export circuit setRole(user: Address, role: string, caller: Address): [] {
+  require(isInitialized, "Not initialized");
+  require(caller == adminAddress, "Admin only");
+  require(user != zero_address, "Invalid user address");
+  userRoles[user] = role;
+  publish("ROLE_SET", user, role);
+}
+
+export circuit getUserRole(address: Address): [string] {
+  let role = userRoles[address];
+  if (role == "") {
+    return ["USER"];
+  }
+  return [role];
+}
