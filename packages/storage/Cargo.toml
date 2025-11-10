@@ -2,6 +2,7 @@
 name = "store"
 version = "0.1.0"
 edition = "2021"
+default-run = "store-cli"
 
 [features]
 default = ["std", "ipfs", "chain", "server"]
