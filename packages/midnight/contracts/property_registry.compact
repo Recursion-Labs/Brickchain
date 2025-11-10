@@ -1,6 +1,7 @@
 pragma language_version >= 0.16 && <= 0.18;
 
 import CompactStandardLibrary;
+
 import "./lib/types.compact";
 
 export ledger {
@@ -9,7 +10,7 @@ export ledger {
   propertyMetadata: Map<u64, PropertyMetadata>;
   propertyDetails: Map<u64, PropertyDetails>;
   nextPropertyId: u64 = 1;
-  registrationFee: u128 = 1000000u128; // Base registration fee
+  registrationFee: u128 = 1000000u128;
   adminAddress: Address = zero_address;
   isPaused: bool = false;
 }
@@ -30,33 +31,31 @@ export circuit registerProperty(
   require(!isPaused, "Registry is paused");
   require(totalShares > 0u64, "Total shares must be > 0");
   require(totalShares <= 1000000u64, "Total shares too high");
-
   let auth = disclose(authProof);
   require(auth == "true" || auth == "1", "Unauthorized");
-
   let details = disclose(propertyDetailsOpaque);
+
   let pid = nextPropertyId;
   nextPropertyId += 1;
-
   owners[pid] = owner;
   propertyDetails[pid] = details;
 
   let metadata: PropertyMetadata = {
     totalShares: totalShares,
     currentOwners: 1u64,
-    lastTransferAt: 0u64,
+    lastTransferAt: getCurrentTime(),    // <---- FIX: timestamp (implement getCurrentTime() utility)
     isTokenized: false,
     registrationFee: registrationFee
   };
   propertyMetadata[pid] = metadata;
-
   if (publishPublicCID) {
     propertyCID[pid] = details.cid;
   }
-
   publish("PROPERTY_REGISTERED", pid, owner, details.cid, totalShares);
   return [pid];
 }
+
+import "./utils.compact";
 
 export circuit updatePropertyStatus(
   pid: u64,
@@ -64,10 +63,8 @@ export circuit updatePropertyStatus(
   authProof: Opaque<"bool">
 ): [] {
   require(owners[pid] != zero_address, "Property not found");
-  
   let auth = disclose(authProof);
   require(auth == "true" || auth == "1", "Unauthorized");
-
   let details = propertyDetails[pid];
   propertyDetails[pid] = (
     cid: details.cid,
@@ -79,7 +76,14 @@ export circuit updatePropertyStatus(
     valuation: details.valuation,
     isActive: isActive
   );
-
+  let metadata = propertyMetadata[pid];
+  propertyMetadata[pid] = {
+    totalShares: metadata.totalShares,
+    currentOwners: metadata.currentOwners,
+    lastTransferAt: getCurrentTime(),
+    isTokenized: metadata.isTokenized,
+    registrationFee: metadata.registrationFee
+  };
   publish("PROPERTY_STATUS_UPDATED", pid, isActive);
 }
 
@@ -89,7 +93,6 @@ export circuit setRegistrationFee(
 ): [] {
   let auth = disclose(authProof);
   require(auth == "true" || auth == "1", "Admin only");
-  
   registrationFee = newFee;
   publish("REGISTRATION_FEE_UPDATED", newFee);
 }
@@ -97,7 +100,6 @@ export circuit setRegistrationFee(
 export circuit pauseRegistry(authProof: Opaque<"bool">): [] {
   let auth = disclose(authProof);
   require(auth == "true" || auth == "1", "Admin only");
-  
   isPaused = true;
   publish("REGISTRY_PAUSED");
 }
@@ -105,7 +107,6 @@ export circuit pauseRegistry(authProof: Opaque<"bool">): [] {
 export circuit unpauseRegistry(authProof: Opaque<"bool">): [] {
   let auth = disclose(authProof);
   require(auth == "true" || auth == "1", "Admin only");
-  
   isPaused = false;
   publish("REGISTRY_UNPAUSED");
 }
