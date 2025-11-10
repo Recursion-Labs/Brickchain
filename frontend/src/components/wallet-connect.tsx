@@ -217,7 +217,7 @@ function WalletConnectContent() {
           Connect Wallet
         </CardTitle>
         <CardDescription>
-          Choose a wallet to connect to Brickchain
+          Choose a wallet to connect to BrickChain
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
