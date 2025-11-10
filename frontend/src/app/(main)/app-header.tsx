@@ -12,9 +12,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { WalletConnect } from "@/components/wallet-connect";
+import { useWalletState } from "@/components/providers/wallet-provider";
 
 export function AppHeader() {
   const { toggleSidebar } = useSidebar();
+  const { address, isConnected } = useWalletState();
+
+  const formatAddress = (addr: string | null) => {
+    if (!addr) return "Not Connected";
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
 
   return (
     <header className="w-full border-b border-border bg-sidebar">
@@ -42,22 +50,6 @@ export function AppHeader() {
 
         {/* Right Section - Wallet & Profile */}
         <div className="flex items-center gap-2 md:gap-4">
-          {/* Wallet Info */}
-          <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-sidebar-accent/10 rounded-lg border border-sidebar-accent/20">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-xs text-muted-foreground">Balance</span>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-foreground">0.00</span>
-                <span className="text-xs text-muted-foreground">ETH</span>
-              </div>
-            </div>
-            <div className="w-px h-8 bg-sidebar-accent/20"></div>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-xs text-muted-foreground">WETH</span>
-              <span className="text-sm font-medium text-foreground">0.00</span>
-            </div>
-          </div>
-
           {/* Notifications */}
           <Button
             variant="ghost"
@@ -69,6 +61,11 @@ export function AppHeader() {
 
           {/* Theme Switcher */}
           <ThemeSwitcherButton className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/20" />
+
+          {/* Wallet Connect - positioned beside settings */}
+          <div className="hidden sm:block">
+            <WalletConnect compact={true} />
+          </div>
 
           {/* Settings */}
           <Button
@@ -88,9 +85,9 @@ export function AppHeader() {
               >
                 <Avatar className="h-6 w-6">
                   <AvatarImage src="https://github.com/shadcn.png" alt="User" />
-                  <AvatarFallback className="text-xs">BC</AvatarFallback>
+                  <AvatarFallback className="text-xs">{isConnected ? "BC" : "?"}</AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium hidden sm:inline">0x1234...5678</span>
+                <span className="text-sm font-medium hidden sm:inline">{formatAddress(address)}</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
