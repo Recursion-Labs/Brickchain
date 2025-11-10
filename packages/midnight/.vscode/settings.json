@@ -1,3 +1,11 @@
 {
-    "typescript.tsdk": "node_modules/typescript/lib"
+  "json.schemas": [
+    {
+      "fileMatch": ["package.json"],
+      "url": "https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/package.json"
+    }
+  ],
+  "json.schemaDownload.enable": true,
+  "json.validate.enable": true,
+  "json.maxItemsComputed": 5000
 }
