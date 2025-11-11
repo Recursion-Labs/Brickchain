@@ -268,12 +268,12 @@ async fn api_docs() -> impl IntoResponse {
             },
             "get_metadata": {
                 "method": "GET",
-                "path": "/api/docs/:id",
+                "path": "/api/docs/{id}",
                 "description": "Get document metadata by SHA-256 ID"
             },
             "download": {
                 "method": "GET",
-                "path": "/api/docs/:id/download",
+                "path": "/api/docs/{id}/download",
                 "description": "Download PDF file"
             },
             "list": {
@@ -283,12 +283,12 @@ async fn api_docs() -> impl IntoResponse {
             },
             "delete": {
                 "method": "DELETE",
-                "path": "/api/docs/:id",
+                "path": "/api/docs/{id}",
                 "description": "Delete a document by ID"
             },
             "export": {
                 "method": "GET",
-                "path": "/api/docs/:id/export",
+                "path": "/api/docs/{id}/export",
                 "description": "Export on-chain JSON metadata"
             }
         }
@@ -337,9 +337,9 @@ fn app(state: AppState) -> Router {
         .route("/", get(api_docs))
         .route("/api/store", post(store_pdf))
         .route("/api/docs", get(list_docs))
-        .route("/api/docs/:id", get(get_metadata).delete(delete_doc))
-        .route("/api/docs/:id/download", get(download_pdf))
-        .route("/api/docs/:id/export", get(export_onchain))
+        .route("/api/docs/{id}", get(get_metadata).delete(delete_doc))
+        .route("/api/docs/{id}/download", get(download_pdf))
+        .route("/api/docs/{id}/export", get(export_onchain))
         .layer(cors)
         .with_state(state)
 }
