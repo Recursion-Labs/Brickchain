@@ -39,7 +39,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { NavUser } from "../../components/custom/nav-user"
 
 interface NavItem {
   title: string
@@ -63,6 +62,11 @@ const mainItems: NavItem[] = [
     title: "Tokens",
     url: "/tokens",
     icon: Coins,
+  },
+  {
+    title: "Transfer",
+    url: "/transfer",
+    icon: ArrowLeftRight,
   },
   {
     title: "Swap",
@@ -137,13 +141,6 @@ export function AppSidebar() {
   const { state } = useSidebar()
   const [resourcesOpen, setResourcesOpen] = React.useState(true)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
-
-  // Mock user data - replace with actual user data from context/API
-  const user = {
-    name: "John Doe",
-    email: "john@brickchain.com",
-    avatar: "https://github.com/shadcn.png",
-  };
 
   const isCollapsed = state === "collapsed"
 
@@ -321,9 +318,8 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      {/* Footer with User Profile */}
+      {/* Footer - Empty (NavUser removed) */}
       <SidebarFooter className="border-t border-border bg-sidebar">
-        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
   )
