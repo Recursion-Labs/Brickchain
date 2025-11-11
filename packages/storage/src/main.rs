@@ -36,7 +36,8 @@ enum Commands {
     Export { id: String },
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let cli = Cli::parse();
     let db = DocStore::open(&cli.db).context("opening database")?;
 
@@ -46,15 +47,13 @@ fn main() -> Result<()> {
             
             // ALWAYS pin to IPFS (mandatory)
             eprintln!("Pinning to IPFS at {}...", ipfs_url);
-            let meta = db.store_pdf_with_ipfs(&path, Some(&ipfs_url))?;
+            let meta = db.store_pdf_with_ipfs(&path, Some(&ipfs_url)).await?;
             eprintln!("IPFS CID: {}", meta.cid.as_ref().unwrap());
             
             // ALWAYS publish to blockchain (mandatory)
             eprintln!("Publishing to on-chain at {}...", node_url);
-            use tokio::runtime::Runtime;
             use store::chain::publish_remark;
-            let rt = Runtime::new()?;
-            let block_hash = rt.block_on(publish_remark(&node_url, &seed, &meta))?;
+            let block_hash = publish_remark(&node_url, &seed, &meta).await?;
             eprintln!("on-chain block hash: {}", block_hash);
             
             eprintln!("Document stored successfully!");
