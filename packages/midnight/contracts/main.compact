@@ -25,10 +25,10 @@ export circuit initializeSystem(admin: Uint<32>): [] {
     admin_address = disclose(admin);
 
     // Initialize system metrics
-    system_metrics.insert("total_users         " as Bytes<32>, 0 as Uint<64>);
-    system_metrics.insert("total_properties    " as Bytes<32>, 0 as Uint<64>);
-    system_metrics.insert("total_transactions  " as Bytes<32>, 0 as Uint<64>);
-    system_metrics.insert("system_fees_collected" as Bytes<32>, 0 as Uint<64>);
+    system_metrics.insert(0x746f74616c5f757365727300000000000000000000000000 as Bytes<32>, 0 as Uint<64>);
+    system_metrics.insert(0x746f74616c5f70726f706572746965730000000000000000 as Bytes<32>, 0 as Uint<64>);
+    system_metrics.insert(0x746f74616c5f7472616e73616374696f6e73000000000000 as Bytes<32>, 0 as Uint<64>);
+    system_metrics.insert(0x73797374656d5f666565735f636f6c6c6563746564000000 as Bytes<32>, 0 as Uint<64>);
 }
 
 // Emergency pause - only admin can call
@@ -95,9 +95,9 @@ export circuit collectSystemFees(amount: Uint<64>, caller: Uint<32>): [] {
     assert(!emergency_paused, "System is paused");
 
     // Update fee collection metric
-    const current_fees = system_metrics.member("system_fees_collected" as Bytes<32>)
-        ? system_metrics.lookup("system_fees_collected" as Bytes<32>)
+    const current_fees = system_metrics.member(0x73797374656d5f666565735f636f6c6c6563746564000000 as Bytes<32>)
+        ? system_metrics.lookup(0x73797374656d5f666565735f636f6c6c6563746564000000 as Bytes<32>)
         : 0 as Uint<64>;
 
-    system_metrics.insert("system_fees_collected" as Bytes<32>, (current_fees + disclose(amount)) as Uint<64>);
+    system_metrics.insert(0x73797374656d5f666565735f636f6c6c6563746564000000 as Bytes<32>, (current_fees + disclose(amount)) as Uint<64>);
 }
