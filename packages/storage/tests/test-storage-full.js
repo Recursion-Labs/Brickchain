@@ -4,7 +4,7 @@ const fs = require('fs');
 const FormData = require('form-data');
 
 const STORAGE_URL = 'http://localhost:3020';
-const TEST_FILE_PATH = './test-upload.pdf';
+const TEST_FILE_PATH = './tests/data/test-upload.pdf';
 
 async function testConnection() {
   console.log('🧪 Testing storage server connection...\n');

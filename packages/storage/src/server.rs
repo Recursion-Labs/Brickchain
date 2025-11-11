@@ -2,7 +2,7 @@
 use anyhow::{Context, Result};
 use axum::{
     extract::{Path, Query, State, Multipart},
-    http::{StatusCode, header, Method},
+    http::{StatusCode, header, Method, HeaderMap},
     response::{IntoResponse, Response, Json},
     routing::{get, post},
     Router,
@@ -82,27 +82,60 @@ async fn health_check() -> impl IntoResponse {
 /// Store a PDF document with MANDATORY IPFS pinning and blockchain publishing
 /// POST /api/store (always pins to IPFS and publishes to blockchain)
 pub async fn store_pdf(
+    method: axum::http::Method,
+    headers: HeaderMap,
     State(state): State<AppState>,
     Query(_params): Query<StoreQuery>,
     mut multipart: Multipart,
 ) -> impl IntoResponse {
+    // Debug: Log request details
+    eprintln!("Request method: {}", method);
+    if let Some(content_type) = headers.get("content-type") {
+        eprintln!("Content-Type: {:?}", content_type);
+    } else {
+        eprintln!("No Content-Type header found");
+        return (StatusCode::BAD_REQUEST, "Missing Content-Type header. Expected multipart/form-data").into_response();
+    }
+    if let Some(content_length) = headers.get("content-length") {
+        eprintln!("Content-Length: {:?}", content_length);
+    }
+    
     // Extract the file from multipart form data
     let mut temp_path: Option<PathBuf> = None;
     
-    while let Ok(Some(field)) = multipart.next_field().await {
+    while let Some(field) = match multipart.next_field().await {
+        Ok(field) => field,
+        Err(e) => {
+            eprintln!("Multipart boundary parsing error: {}", e);
+            return (StatusCode::BAD_REQUEST, format!("Invalid multipart/form-data request: {}", e)).into_response();
+        }
+    } {
         let name = field.name().unwrap_or("");
+        eprintln!("Processing field: name='{}', filename='{:?}'", name, field.file_name());
+        
         if name == "file" {
             let filename = field.file_name()
                 .unwrap_or("upload.pdf")
                 .to_string();
             
+            eprintln!("Reading data for file: {}", filename);
+            
             // Save to temp file
             let data = match field.bytes().await {
-                Ok(d) => d,
+                Ok(d) => {
+                    eprintln!("Successfully read {} bytes", d.len());
+                    d
+                },
                 Err(e) => {
-                    return (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to read file data: {}", e)).into_response();
+                    eprintln!("Multipart field data parsing error: {}", e);
+                    return (StatusCode::BAD_REQUEST, format!("Failed to read file data: Invalid multipart/form-data format - {}", e)).into_response();
                 }
             };
+            
+            // Validate that we have data
+            if data.is_empty() {
+                return (StatusCode::BAD_REQUEST, "File is empty").into_response();
+            }
             
             let temp_dir = std::env::temp_dir();
             let temp_file = temp_dir.join(filename);
