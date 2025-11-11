@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   ChevronRight,
+  Building,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -46,6 +47,11 @@ const adminItems: NavItem[] = [
     title: "Dashboard",
     url: "/admin",
     icon: LayoutDashboard,
+  },
+  {
+    title: "Properties",
+    url: "/admin/properties",
+    icon: Building,
   },
   {
     title: "Waitlist",

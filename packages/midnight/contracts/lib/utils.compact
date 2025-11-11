@@ -1,0 +1,22 @@
+pragma language_version >= 0.16 && <= 0.18;
+
+module utils {
+
+// Native functions for time and hashing
+// export native getCurrentTime(): u64;
+// export native hashString(input: string): string;
+
+// Role management
+// export native getUserRole(address: Address): string;
+
+// Utility circuits for access control
+export circuit onlyAdmin(caller: Address, adminAddress: Address): [] {
+  require(caller == adminAddress, "Admin only");
+}
+
+export circuit roleCheck(caller: Address, requiredRole: string): [] {
+  // let userRole = getUserRole(caller);
+  // require(userRole == requiredRole, "Missing required role");
+}
+
+}
