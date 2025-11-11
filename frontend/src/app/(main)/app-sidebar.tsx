@@ -17,6 +17,7 @@ import {
   Settings,
   HelpCircle,
   ChevronRight,
+  LayoutDashboard,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -39,6 +40,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { ThemeSwitcherButton } from "@/components/custom/theme-switcher-button"
 
 interface NavItem {
   title: string
@@ -48,6 +50,11 @@ interface NavItem {
 }
 
 const mainItems: NavItem[] = [
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: LayoutDashboard,
+  },
   {
     title: "Discover",
     url: "/discover",
@@ -320,6 +327,12 @@ export function AppSidebar() {
 
       {/* Footer - Empty (NavUser removed) */}
       <SidebarFooter className="border-t border-border bg-sidebar">
+        <div className={cn(
+          "flex items-center justify-center p-2",
+          isCollapsed ? "w-full" : "w-full"
+        )}>
+          <ThemeSwitcherButton className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/20" />
+        </div>
       </SidebarFooter>
     </Sidebar>
   )
