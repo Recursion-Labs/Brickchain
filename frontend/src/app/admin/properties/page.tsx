@@ -5,6 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
+import { toast } from 'react-hot-toast';
 import {
   Building,
   Plus,
@@ -13,7 +18,10 @@ import {
   DollarSign,
   Users,
   FileText,
-  Shield
+  Shield,
+  Loader2,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 import { PropertyRegistration } from '@/components/property-registration';
 
@@ -30,24 +38,165 @@ interface Property {
 
 export default function AdminPropertiesPage() {
   const [activeTab, setActiveTab] = useState('register');
-  const [properties] = useState<Property[]>([
+  const [isMinting, setIsMinting] = useState(false);
+  const [mintingProgress, setMintingProgress] = useState(0);
+
+  // Token minting form state
+  const [selectedPropertyId, setSelectedPropertyId] = useState('');
+  const [tokenSupply, setTokenSupply] = useState('');
+  const [tokenPrice, setTokenPrice] = useState('');
+  const [platformReserve, setPlatformReserve] = useState('10');
+  const [liquidityPool, setLiquidityPool] = useState('20');
+  const [publicSale, setPublicSale] = useState('70');
+
+  const [properties, setProperties] = useState<Property[]>([
     // Mock data - replace with real data from API
     {
       id: 'prop_001',
       title: 'Downtown Office Complex',
-      status: 'tokenized',
+      status: 'registered',
       totalValue: 2500000,
       totalTokens: 1000,
-      tokensMinted: 1000,
+      tokensMinted: 0,
       createdAt: '2024-01-15',
       hash: 'a1b2c3d4...'
+    },
+    {
+      id: 'prop_002',
+      title: 'Residential Apartment Building',
+      status: 'registered',
+      totalValue: 1800000,
+      totalTokens: 800,
+      tokensMinted: 0,
+      createdAt: '2024-01-20',
+      hash: 'b2c3d4e5...'
+    },
+    {
+      id: 'prop_003',
+      title: 'Retail Shopping Center',
+      status: 'registered',
+      totalValue: 3200000,
+      totalTokens: 1600,
+      tokensMinted: 0,
+      createdAt: '2024-02-01',
+      hash: 'c3d4e5f6...'
+    },
+    {
+      id: 'prop_004',
+      title: 'Industrial Warehouse',
+      status: 'tokenized',
+      totalValue: 1200000,
+      totalTokens: 600,
+      tokensMinted: 600,
+      createdAt: '2024-02-10',
+      hash: 'd4e5f6g7...'
     }
   ]);
 
   const handlePropertyRegistered = (propertyId: string) => {
-    // Refresh properties list or navigate to tokenization
-    console.log('Property registered:', propertyId);
-    setActiveTab('manage');
+    // Add the new property to the list (in a real app, this would come from the API)
+    const newProperty: Property = {
+      id: propertyId,
+      title: 'New Property', // This would come from the registration form
+      status: 'registered',
+      totalValue: 1000000, // This would come from the registration form
+      totalTokens: 1000, // This would come from the registration form
+      tokensMinted: 0,
+      createdAt: new Date().toISOString().split('T')[0],
+      hash: propertyId.substring(0, 8) + '...'
+    };
+
+    setProperties(prev => [...prev, newProperty]);
+    toast.success('Property registered successfully! Ready for tokenization.');
+    setActiveTab('tokenize');
+  };
+
+  const validateMintingForm = () => {
+    if (!selectedPropertyId) {
+      toast.error('Please select a property to tokenize');
+      return false;
+    }
+
+    if (!tokenSupply || parseInt(tokenSupply) <= 0) {
+      toast.error('Please enter a valid token supply');
+      return false;
+    }
+
+    if (!tokenPrice || parseFloat(tokenPrice) <= 0) {
+      toast.error('Please enter a valid token price');
+      return false;
+    }
+
+    const totalDistribution = parseInt(platformReserve) + parseInt(liquidityPool) + parseInt(publicSale);
+    if (totalDistribution !== 100) {
+      toast.error('Token distribution percentages must add up to 100%');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleMintTokens = async () => {
+    if (!validateMintingForm()) return;
+
+    setIsMinting(true);
+    setMintingProgress(0);
+
+    try {
+      const selectedProperty = properties.find(p => p.id === selectedPropertyId);
+      if (!selectedProperty) {
+        throw new Error('Property not found');
+      }
+
+      toast.loading('Initializing token minting...', { id: 'minting' });
+
+      // Simulate minting progress
+      setMintingProgress(25);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      toast.loading('Deploying smart contract...', { id: 'minting' });
+      setMintingProgress(50);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      toast.loading('Minting tokens...', { id: 'minting' });
+      setMintingProgress(75);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Update property status
+      setProperties(prev => prev.map(prop =>
+        prop.id === selectedPropertyId
+          ? { ...prop, status: 'tokenized' as const, tokensMinted: parseInt(tokenSupply) }
+          : prop
+      ));
+
+      setMintingProgress(100);
+      toast.success('Tokens minted successfully!', { id: 'minting' });
+
+      // Reset form
+      setSelectedPropertyId('');
+      setTokenSupply('');
+      setTokenPrice('');
+      setPlatformReserve('10');
+      setLiquidityPool('20');
+      setPublicSale('70');
+
+    } catch (error) {
+      console.error('Minting failed:', error);
+      toast.error('Failed to mint tokens. Please try again.', { id: 'minting' });
+    } finally {
+      setIsMinting(false);
+      setMintingProgress(0);
+    }
+  };
+
+  // Auto-fill token supply and price when property is selected
+  const handlePropertySelect = (propertyId: string) => {
+    setSelectedPropertyId(propertyId);
+    const selectedProperty = properties.find(p => p.id === propertyId);
+    if (selectedProperty) {
+      setTokenSupply(selectedProperty.totalTokens.toString());
+      setTokenPrice((selectedProperty.totalValue / selectedProperty.totalTokens).toFixed(2));
+    }
   };
 
   const getStatusColor = (status: Property['status']) => {
@@ -169,75 +318,133 @@ export default function AdminPropertiesPage() {
                 <div className="space-y-6">
                   {/* Property Selection */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Select Property</label>
-                    <select className="w-full p-2 border rounded-md">
-                      <option value="">Choose a registered property...</option>
-                      {properties
-                        .filter(p => p.status === 'registered')
-                        .map(property => (
-                          <option key={property.id} value={property.id}>
-                            {property.title} - ${property.totalValue.toLocaleString()}
-                          </option>
-                        ))}
-                    </select>
+                    <Label htmlFor="property-select">Select Property</Label>
+                    <Select value={selectedPropertyId} onValueChange={handlePropertySelect}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a registered property..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {properties
+                          .filter(p => p.status === 'registered')
+                          .map(property => (
+                            <SelectItem key={property.id} value={property.id}>
+                              {property.title} - ${property.totalValue.toLocaleString()}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Token Configuration */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Total Token Supply</label>
-                      <input
+                      <Label htmlFor="token-supply">Total Token Supply</Label>
+                      <Input
+                        id="token-supply"
                         type="number"
                         placeholder="1000"
-                        className="w-full p-2 border rounded-md"
+                        value={tokenSupply}
+                        onChange={(e) => setTokenSupply(e.target.value)}
+                        min="1"
+                        disabled={isMinting}
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Token Price (USD)</label>
-                      <input
+                      <Label htmlFor="token-price">Token Price (USD)</Label>
+                      <Input
+                        id="token-price"
                         type="number"
                         placeholder="2500"
-                        className="w-full p-2 border rounded-md"
+                        value={tokenPrice}
+                        onChange={(e) => setTokenPrice(e.target.value)}
+                        min="0.01"
+                        step="0.01"
+                        disabled={isMinting}
                       />
                     </div>
                   </div>
 
                   {/* Distribution Settings */}
                   <div className="space-y-4">
-                    <h4 className="font-medium">Token Distribution</h4>
+                    <h4 className="font-medium">Token Distribution (%)</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Platform Reserve (%)</label>
-                        <input
+                        <Label htmlFor="platform-reserve">Platform Reserve</Label>
+                        <Input
+                          id="platform-reserve"
                           type="number"
                           placeholder="10"
-                          className="w-full p-2 border rounded-md"
+                          value={platformReserve}
+                          onChange={(e) => setPlatformReserve(e.target.value)}
+                          min="0"
+                          max="100"
+                          disabled={isMinting}
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Liquidity Pool (%)</label>
-                        <input
+                        <Label htmlFor="liquidity-pool">Liquidity Pool</Label>
+                        <Input
+                          id="liquidity-pool"
                           type="number"
                           placeholder="20"
-                          className="w-full p-2 border rounded-md"
+                          value={liquidityPool}
+                          onChange={(e) => setLiquidityPool(e.target.value)}
+                          min="0"
+                          max="100"
+                          disabled={isMinting}
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Public Sale (%)</label>
-                        <input
+                        <Label htmlFor="public-sale">Public Sale</Label>
+                        <Input
+                          id="public-sale"
                           type="number"
                           placeholder="70"
-                          className="w-full p-2 border rounded-md"
+                          value={publicSale}
+                          onChange={(e) => setPublicSale(e.target.value)}
+                          min="0"
+                          max="100"
+                          disabled={isMinting}
                         />
                       </div>
                     </div>
+                    <div className="text-sm text-muted-foreground">
+                      Total: {parseInt(platformReserve || '0') + parseInt(liquidityPool || '0') + parseInt(publicSale || '0')}% 
+                      {parseInt(platformReserve || '0') + parseInt(liquidityPool || '0') + parseInt(publicSale || '0') !== 100 && (
+                        <span className="text-red-500 ml-2">(Must equal 100%)</span>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Minting Progress */}
+                  {isMinting && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Minting tokens...</span>
+                        <span>{mintingProgress}%</span>
+                      </div>
+                      <Progress value={mintingProgress} className="h-2" />
+                    </div>
+                  )}
 
                   {/* Mint Button */}
                   <div className="flex justify-end">
-                    <Button className="gap-2">
-                      <TrendingUp className="h-4 w-4" />
-                      Mint Tokens
+                    <Button
+                      onClick={handleMintTokens}
+                      disabled={isMinting || !selectedPropertyId}
+                      className="gap-2"
+                    >
+                      {isMinting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Minting Tokens...
+                        </>
+                      ) : (
+                        <>
+                          <TrendingUp className="h-4 w-4" />
+                          Mint Tokens
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -355,7 +562,13 @@ export default function AdminPropertiesPage() {
                             View Details
                           </Button>
                           {property.status === 'registered' && (
-                            <Button size="sm">
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                handlePropertySelect(property.id);
+                                setActiveTab('tokenize');
+                              }}
+                            >
                               <TrendingUp className="h-4 w-4 mr-1" />
                               Mint Tokens
                             </Button>

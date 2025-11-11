@@ -20,6 +20,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { storageService } from '../lib/storage';
 
 interface PropertyFormData {
   title: string;
@@ -35,6 +36,15 @@ interface PropertyFormData {
   documents: File[];
 }
 
+interface UploadedDocument {
+  file: File;
+  documentId: string;
+  cid: string;
+  blockHash?: string;
+  sha256: string;
+  timestamp?: string;
+}
+
 interface PropertyRegistrationProps {
   onSuccess?: (propertyId: string) => void;
 }
@@ -43,7 +53,6 @@ export function PropertyRegistration({ onSuccess }: PropertyRegistrationProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [hashProgress, setHashProgress] = useState(0);
 
   const [formData, setFormData] = useState<PropertyFormData>({
     title: '',
@@ -60,6 +69,7 @@ export function PropertyRegistration({ onSuccess }: PropertyRegistrationProps) {
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof PropertyFormData, string>>>({});
+  const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
 
   const propertyTypes = [
     'Residential',
@@ -73,7 +83,7 @@ export function PropertyRegistration({ onSuccess }: PropertyRegistrationProps) {
   ];
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<PropertyFormData> = {};
+    const newErrors: Partial<Record<keyof PropertyFormData, string>> = {};
 
     if (!formData.title.trim()) newErrors.title = 'Property title is required';
     if (!formData.description.trim()) newErrors.description = 'Description is required';
@@ -84,9 +94,17 @@ export function PropertyRegistration({ onSuccess }: PropertyRegistrationProps) {
     if (!formData.propertyType) newErrors.propertyType = 'Property type is required';
     if (!formData.totalValue || parseFloat(formData.totalValue) <= 0) {
       newErrors.totalValue = 'Valid total value is required';
+    } else if (parseFloat(formData.totalValue) < 1000) {
+      newErrors.totalValue = 'Total value must be at least $1,000';
     }
     if (!formData.totalShares || parseInt(formData.totalShares) <= 0) {
       newErrors.totalShares = 'Valid number of shares is required';
+    } else if (parseInt(formData.totalShares) < 10) {
+      newErrors.totalShares = 'Minimum 10 shares required';
+    } else if (parseInt(formData.totalShares) > 1000000) {
+      newErrors.totalShares = 'Maximum 1,000,000 shares allowed';
+    } else if (formData.totalValue && parseFloat(formData.totalValue) / parseInt(formData.totalShares) < 0.01) {
+      newErrors.totalShares = 'Share value too small - increase total value or decrease shares';
     }
     if (formData.documents.length === 0) {
       newErrors.documents = 'At least one document is required';
@@ -126,30 +144,7 @@ export function PropertyRegistration({ onSuccess }: PropertyRegistrationProps) {
       ...prev,
       documents: prev.documents.filter((_, i) => i !== index)
     }));
-  };
-
-  const hashDocument = async (file: File): Promise<string> => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const arrayBuffer = e.target?.result as ArrayBuffer;
-        const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        resolve(hashHex);
-      };
-      reader.readAsArrayBuffer(file);
-    });
-  };
-
-  const generateZKPProof = async (documentHash: string, propertyData: any): Promise<string> => {
-    // Simulate ZKP proof generation
-    // In real implementation, this would use Midnight's ZKP libraries
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Mock ZKP proof - in reality this would be a complex cryptographic proof
-    const proof = `zkp_${documentHash}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    return proof;
+    setUploadedDocuments(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -162,53 +157,78 @@ export function PropertyRegistration({ onSuccess }: PropertyRegistrationProps) {
 
     setIsSubmitting(true);
     setUploadProgress(0);
-    setHashProgress(0);
 
     try {
-      // Step 1: Hash documents
-      toast.loading('Hashing documents...', { id: 'hashing' });
-      const documentHashes: string[] = [];
+      // Step 1: Upload documents to Rust storage server
+      toast.loading('Uploading documents to IPFS & blockchain...', { id: 'uploading' });
+      const newUploadedDocuments: UploadedDocument[] = [];
 
       for (let i = 0; i < formData.documents.length; i++) {
-        const hash = await hashDocument(formData.documents[i]);
-        documentHashes.push(hash);
-        setHashProgress(((i + 1) / formData.documents.length) * 100);
+        const file = formData.documents[i];
+        try {
+          const response = await storageService.uploadDocument(file, (progress) => {
+            setUploadProgress(((i + progress / 100) / formData.documents.length) * 100);
+          });
+
+          newUploadedDocuments.push({
+            file,
+            documentId: response.id,
+            cid: response.cid,
+            blockHash: response.block_hash,
+            sha256: response.sha256,
+            timestamp: response.timestamp,
+          });
+
+          console.log(`Document ${file.name} uploaded to IPFS & blockchain:`, {
+            id: response.id,
+            cid: response.cid,
+            blockHash: response.block_hash,
+            ipfsUrl: storageService.getIPFSUrl(response.cid),
+          });
+
+          toast.success(`${file.name} uploaded!`);
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+          console.error(`Failed to upload ${file.name}:`, error);
+          toast.error(`Failed to upload ${file.name}: ${errorMsg}`);
+          throw error;
+        }
       }
 
-      toast.success('Documents hashed successfully!', { id: 'hashing' });
+      setUploadedDocuments(newUploadedDocuments);
+      toast.success(`${newUploadedDocuments.length} documents uploaded!`, { id: 'uploading' });
 
-      // Step 2: Generate ZKP proof
-      toast.loading('Generating zero-knowledge proof...', { id: 'zkp' });
-      const masterHash = documentHashes.join('_');
-      const zkpProof = await generateZKPProof(masterHash, formData);
-      toast.success('ZKP proof generated!', { id: 'zkp' });
-
-      // Step 3: Register property on blockchain
-      toast.loading('Registering property on blockchain...', { id: 'register' });
-
-      const propertyData = {
-        ...formData,
-        documentHashes,
-        masterHash,
-        zkpProof,
-        timestamp: Date.now(),
-        status: 'pending_verification'
-      };
-
-      // Mock API call - replace with actual blockchain interaction
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Step 2: Create property record with document metadata
+      toast.loading('Creating property record...', { id: 'creating' });
 
       const propertyId = `prop_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      toast.success('Property registered successfully!', { id: 'register' });
+      // In a real app, you'd save this to your database
+      const propertyData = {
+        id: propertyId,
+        ...formData,
+        documents: newUploadedDocuments.map(doc => ({
+          documentId: doc.documentId,
+          filename: doc.file.name,
+          size: doc.file.size,
+          cid: doc.cid,
+          blockHash: doc.blockHash,
+          sha256: doc.sha256,
+          timestamp: doc.timestamp,
+          ipfsUrl: storageService.getIPFSUrl(doc.cid),
+          downloadUrl: storageService.getDownloadUrl(doc.documentId),
+        })),
+        createdAt: new Date().toISOString(),
+      };
 
-      // Step 4: Navigate to tokenization page
-      toast.success(`Property ${propertyId} registered! Proceeding to tokenization...`);
+      console.log('Property registered:', propertyData);
+      toast.success('Property registered successfully!', { id: 'creating' });
 
+      // Step 3: Navigate to next step
       if (onSuccess) {
         onSuccess(propertyId);
       } else {
-        router.push(`/properties/${propertyId}/tokenize`);
+        router.push(`/admin/properties?tab=manage`);
       }
 
     } catch (error) {
@@ -217,11 +237,10 @@ export function PropertyRegistration({ onSuccess }: PropertyRegistrationProps) {
     } finally {
       setIsSubmitting(false);
       setUploadProgress(0);
-      setHashProgress(0);
     }
   };
 
-  const updateFormData = (field: keyof PropertyFormData, value: any) => {
+  const updateFormData = (field: keyof PropertyFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
@@ -376,6 +395,8 @@ export function PropertyRegistration({ onSuccess }: PropertyRegistrationProps) {
                 <Input
                   id="totalValue"
                   type="number"
+                  min="1000"
+                  step="1000"
                   value={formData.totalValue}
                   onChange={(e) => updateFormData('totalValue', e.target.value)}
                   placeholder="1000000"
@@ -389,6 +410,9 @@ export function PropertyRegistration({ onSuccess }: PropertyRegistrationProps) {
                 <Input
                   id="totalShares"
                   type="number"
+                  min="10"
+                  max="1000000"
+                  step="10"
                   value={formData.totalShares}
                   onChange={(e) => updateFormData('totalShares', e.target.value)}
                   placeholder="1000"
@@ -399,9 +423,38 @@ export function PropertyRegistration({ onSuccess }: PropertyRegistrationProps) {
                   Each share represents {formData.totalValue && formData.totalShares ?
                     `$${(parseFloat(formData.totalValue) / parseInt(formData.totalShares)).toFixed(2)}` :
                     'ownership percentage'}
+                  {formData.totalValue && formData.totalShares && parseFloat(formData.totalValue) / parseInt(formData.totalShares) < 0.01 ?
+                    ' (Very small share value - consider increasing total value or decreasing shares)' : ''}
                 </p>
               </div>
             </div>
+
+            {/* Tokenization Summary */}
+            {formData.totalValue && formData.totalShares && (
+              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Tokenization Summary</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Total Property Value</p>
+                    <p className="font-medium text-blue-900 dark:text-blue-100">
+                      ${parseFloat(formData.totalValue).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Total Token Shares</p>
+                    <p className="font-medium text-blue-900 dark:text-blue-100">
+                      {parseInt(formData.totalShares).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Value per Share</p>
+                    <p className="font-medium text-blue-900 dark:text-blue-100">
+                      ${(parseFloat(formData.totalValue) / parseInt(formData.totalShares)).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -417,12 +470,15 @@ export function PropertyRegistration({ onSuccess }: PropertyRegistrationProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+            <div
+              className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-muted-foreground/50 hover:bg-muted/20 transition-colors"
+              onClick={() => document.getElementById('documents')?.click()}
+            >
               <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <div className="space-y-2">
-                <Label htmlFor="documents" className="text-lg font-medium cursor-pointer">
+                <div className="text-lg font-medium">
                   Click to upload documents
-                </Label>
+                </div>
                 <p className="text-sm text-muted-foreground">
                   PDF, JPG, PNG files up to 10MB each
                 </p>
@@ -444,7 +500,7 @@ export function PropertyRegistration({ onSuccess }: PropertyRegistrationProps) {
             {/* Document List */}
             {formData.documents.length > 0 && (
               <div className="space-y-2">
-                <h4 className="font-medium">Uploaded Documents:</h4>
+                <h4 className="font-medium">Documents to Upload:</h4>
                 {formData.documents.map((file, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex items-center gap-3">
@@ -452,7 +508,7 @@ export function PropertyRegistration({ onSuccess }: PropertyRegistrationProps) {
                       <div>
                         <p className="font-medium text-sm">{file.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                          {storageService.formatFileSize(file.size)}
                         </p>
                       </div>
                     </div>
@@ -462,9 +518,91 @@ export function PropertyRegistration({ onSuccess }: PropertyRegistrationProps) {
                       size="sm"
                       onClick={() => removeDocument(index)}
                       className="text-red-500 hover:text-red-700"
+                      disabled={isSubmitting}
                     >
                       Remove
                     </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Uploaded Documents with IPFS & Blockchain Details */}
+            {uploadedDocuments.length > 0 && (
+              <div className="space-y-3 border-t pt-4">
+                <h4 className="font-medium text-green-600 flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Documents on IPFS & Blockchain
+                </h4>
+                {uploadedDocuments.map((doc, index) => (
+                  <div key={index} className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm text-green-900 dark:text-green-100">{doc.file.name}</p>
+                        <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                          Size: {storageService.formatFileSize(doc.file.size)}
+                        </p>
+                      </div>
+                      <Badge className="bg-green-600 text-white">Uploaded</Badge>
+                    </div>
+
+                    {/* IPFS Details */}
+                    <div className="space-y-2 mt-3 text-xs">
+                      <div className="bg-white dark:bg-slate-900 p-2 rounded">
+                        <p className="text-muted-foreground font-medium mb-1">📌 IPFS Content ID (CID):</p>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 bg-slate-100 dark:bg-slate-800 p-1 rounded font-mono text-xs overflow-auto max-h-16">
+                            {doc.cid}
+                          </code>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              window.open(storageService.getIPFSUrl(doc.cid), '_blank');
+                            }}
+                            title="View on IPFS Gateway"
+                          >
+                            🔗
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Blockchain Details */}
+                      {doc.blockHash && (
+                        <div className="bg-white dark:bg-slate-900 p-2 rounded">
+                          <p className="text-muted-foreground font-medium mb-1">⛓️ Blockchain Proof (Block Hash):</p>
+                          <div className="flex items-center gap-2">
+                            <code className="flex-1 bg-slate-100 dark:bg-slate-800 p-1 rounded font-mono text-xs overflow-auto max-h-16">
+                              {doc.blockHash}
+                            </code>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const explorerUrl = `https://substrate.io/substrate-how-to-guides/`;
+                                window.open(explorerUrl, '_blank');
+                              }}
+                              title="View on Block Explorer"
+                            >
+                              🔍
+                            </Button>
+                          </div>
+                          <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                            ✓ Document published on Substrate blockchain
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Document Hash */}
+                      <div className="bg-white dark:bg-slate-900 p-2 rounded">
+                        <p className="text-muted-foreground font-medium mb-1">🔐 SHA-256 Hash (Document ID):</p>
+                        <code className="block bg-slate-100 dark:bg-slate-800 p-1 rounded font-mono text-xs overflow-auto max-h-16">
+                          {doc.sha256}
+                        </code>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -479,15 +617,7 @@ export function PropertyRegistration({ onSuccess }: PropertyRegistrationProps) {
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span>Document Processing</span>
-                    <span>{Math.round(hashProgress)}%</span>
-                  </div>
-                  <Progress value={hashProgress} className="h-2" />
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span>Blockchain Registration</span>
+                    <span>Uploading to IPFS & Blockchain</span>
                     <span>{Math.round(uploadProgress)}%</span>
                   </div>
                   <Progress value={uploadProgress} className="h-2" />
