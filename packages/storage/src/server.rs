@@ -317,7 +317,7 @@ async fn main() -> Result<()> {
         .unwrap_or("./.pdfdb");
     let port: u16 = args.get(2)
         .and_then(|s| s.parse().ok())
-        .unwrap_or(3000);
+        .unwrap_or(3020);
     
     println!("Decentralized PDF Storage API");
     println!("Database: {db_path}");
