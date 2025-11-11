@@ -146,7 +146,7 @@ impl DocStore {
 
     /// Store a PDF and pin its bytes to IPFS, saving the returned CID in metadata.
     /// This is MANDATORY for full decentralization - always enabled.
-    pub fn store_pdf_with_ipfs<P: AsRef<Path>>(
+    pub async fn store_pdf_with_ipfs<P: AsRef<Path>>(
         &self,
         input_path: P,
         ipfs_url: Option<&str>,
@@ -180,16 +180,21 @@ use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
 
         // Pin to IPFS
         let cid = {
-            let client = match ipfs_url {
-                Some(u) => IpfsClient::from_str(u).context("invalid IPFS url")?,
-                None => IpfsClient::default(),
-            };
             // Read file into memory for IPFS
             let mut file_data = Vec::new();
             std::fs::File::open(temp.path())?.read_to_end(&mut file_data)?;
             
-            let rt = tokio::runtime::Runtime::new()?;
-            let add_resp = rt.block_on(client.add(Cursor::new(file_data)))?;
+            let ipfs_url_owned = ipfs_url.map(|s| s.to_string());
+            let add_resp = tokio::task::spawn_blocking(move || -> Result<_> {
+                let rt = tokio::runtime::Runtime::new().context("failed to create runtime")?;
+                rt.block_on(async {
+                    let client = match ipfs_url_owned.as_deref() {
+                        Some(u) => IpfsClient::from_str(u).context("invalid IPFS url")?,
+                        None => IpfsClient::default(),
+                    };
+                    client.add(Cursor::new(file_data)).await.context("IPFS add failed")
+                })
+            }).await.context("spawn_blocking failed")??;
             Some(add_resp.hash)
         };
         let id_hex = hex::encode(sha256_bytes);
