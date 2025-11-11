@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "compile": "mkdir -p build && compact compile contracts/main.compact",
+    "compile": "for file in contracts/*.compact; do name=$(basename \"$file\" .compact); echo \"Compiling $file to build/$name\"; mkdir -p build/$name && compact compile $file build/$name; done",
     "build": "tsc",
     "deploy": "npm run build && node dist/deploy.js",
     "migrate": "npm run build && node dist/migrate.js",

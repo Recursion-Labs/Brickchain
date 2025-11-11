@@ -1,13 +1,14 @@
 pragma language_version >= 0.16 && <= 0.18;
 
-export type PropertyMetadata = {
+module types {
+export struct PropertyMetadata {
   totalShares: u64,
   currentOwners: u64,
   lastTransferAt: u64,
   isTokenized: bool,
   registrationFee: u128
 };
-export type PropertyDetails = {
+export struct PropertyDetails {
   cid: string,
   fileName: string,
   uploader: Address,
@@ -17,12 +18,12 @@ export type PropertyDetails = {
   valuation: u128,
   isActive: bool
 };
-export type OwnershipProof = {
+export struct OwnershipProof {
   pid: u64,
   owner: Address,
   proofHash: string
 };
-export type Listing = {
+export struct Listing {
   pid: u64,
   seller: Address,
   shareAmount: u64,
@@ -32,14 +33,14 @@ export type Listing = {
   createdAt: u64,
   isActive: bool
 };
-export type Escrow = {
+export struct Escrow {
   listingId: u64,
   buyer: Address,
   amount: u128,
   released: bool,
   escrowedAt: u64
 };
-export type VerificationRequest = {
+export struct VerificationRequest {
   requester: Address,
   pid: u64,
   proofType: string,
@@ -48,9 +49,10 @@ export type VerificationRequest = {
   verifiedAt: u64,
   createdAt: u64
 };
-export type VerifiedProof = {
+export struct VerifiedProof {
   pid: u64,
   proofHash: string,
   verifiedAt: u64,
   verifier: Address
 };
+}

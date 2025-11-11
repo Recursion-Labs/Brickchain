@@ -2,105 +2,185 @@ pragma language_version >= 0.16 && <= 0.18;
 
 import CompactStandardLibrary;
 
-import "./lib/types.compact";
-import "./utils.compact";
-
-export ledger {
-  listings: Map<u64, Listing>;
-  nextListingId: u64 = 1;
-  escrow: Map<u64, Escrow>;
-  marketplaceFee: u128 = 250u128; // 2.5% fee (basis points)
-  adminAddress: Address = zero_address;
-  isPaused: bool = false;
-  totalVolume: u128 = 0u128;
-  totalListings: u64 = 0u64;
+// Listing status
+enum ListingStatus {
+    Active,
+    Sold,
+    Cancelled,
+    Expired
 }
 
-export circuit initializeMarketplace(admin: Address): [] {
-  require(adminAddress == zero_address, "Already initialized");
-  adminAddress = admin;
-  publish("MARKETPLACE_INITIALIZED", admin);
+// Marketplace listings
+export ledger listing_sellers: Map<Bytes<32>, Uint<32>>; // listing_id -> seller
+export ledger listing_property_ids: Map<Bytes<32>, Bytes<32>>; // listing_id -> property_id
+export ledger listing_prices: Map<Bytes<32>, Uint<64>>; // listing_id -> price
+export ledger listing_statuses: Map<Bytes<32>, ListingStatus>; // listing_id -> status
+export ledger listing_timestamps: Map<Bytes<32>, Uint<64>>; // listing_id -> created_at
+export ledger listing_durations: Map<Bytes<32>, Uint<64>>; // listing_id -> duration_seconds
+
+// Marketplace configuration
+export ledger marketplace_initialized: Boolean;
+export ledger marketplace_fee: Uint<64>; // Basis points (e.g., 250 = 2.5%)
+export ledger marketplace_paused: Boolean;
+export ledger admin_address: Uint<32>;
+export ledger collected_fees: Uint<64>;
+
+// Listing counter
+export ledger listing_counter: Counter;
+
+// Constructor
+constructor() {
+    marketplace_initialized = false;
+    marketplace_fee = 250 as Uint<64>; // 2.5% default fee
+    marketplace_paused = false;
+    admin_address = 0 as Uint<32>;
+    collected_fees = 0 as Uint<64>;
 }
 
+// Initialize marketplace
+export circuit initializeMarketplace(admin: Uint<32>): [] {
+    assert(!marketplace_initialized, "Marketplace already initialized");
+    assert(admin != 0 as Uint<32>, "Invalid admin address");
+
+    marketplace_initialized = true;
+    admin_address = disclose(admin);
+}
+
+// Create a new listing
 export circuit createListing(
-  pid: u64,
-  seller: Address,
-  shareAmount: u64,
-  pricePerShare: u128,
-  isFullSale: bool,
-  expiresAt: u64,
-  authProof: Opaque<"bool">
-): [u64] {
-  require(!isPaused, "Marketplace is paused");
-  require(shareAmount > 0u64, "shareAmount > 0");
-  require(pricePerShare > 0u128, "pricePerShare > 0");
-  require(seller != zero_address, "Invalid seller address");
-  let currentTime = getCurrentTime();
-  require(expiresAt > currentTime, "Invalid expiration");
-  let ok = disclose(authProof);
-  require(ok == "true" || ok == "1", "Unauthorized");
-  let listingId = nextListingId;
-  nextListingId += 1;
-  listings[listingId] = {
-    pid: pid,
-    seller: seller,
-    shareAmount: shareAmount,
-    pricePerShare: pricePerShare,
-    isFullSale: isFullSale,
-    expiresAt: expiresAt,
-    createdAt: currentTime,
-    isActive: true
-  };
-  totalListings += 1u64;
-  publish("LISTING_CREATED", listingId, pid, seller, shareAmount, pricePerShare);
-  return [listingId];
-}
-
-export circuit fulfillListing(
-  listingId: u64,
-  buyer: Address,
-  authProof: Opaque<"bool">
+    listing_id: Bytes<32>,
+    property_id: Bytes<32>,
+    price: Uint<64>,
+    duration_seconds: Uint<64>,
+    seller: Uint<32>
 ): [] {
-  require(listings[listingId].isActive, "Listing inactive");
-  require(buyer != zero_address, "Invalid buyer address");
-  require(buyer != listings[listingId].seller, "Cannot buy own listing");
-  let currentTime = getCurrentTime();
-  require(listings[listingId].expiresAt > currentTime, "Listing expired");
-  let ok = disclose(authProof);
-  require(ok == "true" || ok == "1", "Unauthorized");
-  let totalAmount = listings[listingId].shareAmount * listings[listingId].pricePerShare;
-  escrow[listingId] = {
-    listingId: listingId,
-    buyer: buyer,
-    amount: totalAmount,
-    released: false,
-    escrowedAt: currentTime
-  };
-  listings[listingId].isActive = false;
-  totalVolume += totalAmount;
-  publish("LISTING_FULFILLED", listingId, buyer);
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(!marketplace_paused, "Marketplace is paused");
+    assert(!listing_statuses.member(disclose(listing_id)), "Listing already exists");
+    assert(disclose(price) > 0 as Uint<64>, "Price must be positive");
+    assert(disclose(seller) != 0 as Uint<32>, "Invalid seller address");
+
+    const current_time = 1234567890 as Uint<64>; // Would be actual timestamp in real implementation
+
+    listing_sellers.insert(disclose(listing_id), disclose(seller));
+    listing_property_ids.insert(disclose(listing_id), disclose(property_id));
+    listing_prices.insert(disclose(listing_id), disclose(price));
+    listing_statuses.insert(disclose(listing_id), ListingStatus.Active);
+    listing_timestamps.insert(disclose(listing_id), current_time);
+    listing_durations.insert(disclose(listing_id), disclose(duration_seconds));
+
+    listing_counter.increment(1);
 }
 
-export circuit setMarketplaceFee(
-  newFee: u128,
-  authProof: Opaque<"bool">
+// Update listing price
+export circuit updateListing(
+    listing_id: Bytes<32>,
+    new_price: Uint<64>,
+    caller: Uint<32>
 ): [] {
-  let ok = disclose(authProof);
-  require(ok == "true" || ok == "1", "Admin only");
-  marketplaceFee = newFee;
-  publish("MARKETPLACE_FEE_UPDATED", newFee);
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(!marketplace_paused, "Marketplace is paused");
+    assert(listing_statuses.member(disclose(listing_id)), "Listing not found");
+
+    const seller = listing_sellers.lookup(disclose(listing_id));
+    assert(disclose(caller) == seller || disclose(caller) == admin_address, "Not authorized");
+
+    const current_status = listing_statuses.lookup(disclose(listing_id));
+    assert(current_status == ListingStatus.Active, "Listing not active");
+
+    assert(disclose(new_price) > 0 as Uint<64>, "Price must be positive");
+
+    listing_prices.insert(disclose(listing_id), disclose(new_price));
 }
 
-export circuit pauseMarketplace(authProof: Opaque<"bool">): [] {
-  let ok = disclose(authProof);
-  require(ok == "true" || ok == "1", "Admin only");
-  isPaused = true;
-  publish("MARKETPLACE_PAUSED");
+// Cancel listing
+export circuit cancelListing(
+    listing_id: Bytes<32>,
+    caller: Uint<32>
+): [] {
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(!marketplace_paused, "Marketplace is paused");
+    assert(listing_statuses.member(disclose(listing_id)), "Listing not found");
+
+    const seller = listing_sellers.lookup(disclose(listing_id));
+    assert(disclose(caller) == seller || disclose(caller) == admin_address, "Not authorized");
+
+    const current_status = listing_statuses.lookup(disclose(listing_id));
+    assert(current_status == ListingStatus.Active, "Listing not active");
+
+    listing_statuses.insert(disclose(listing_id), ListingStatus.Cancelled);
 }
 
-export circuit unpauseMarketplace(authProof: Opaque<"bool">): [] {
-  let ok = disclose(authProof);
-  require(ok == "true" || ok == "1", "Admin only");
-  isPaused = false;
-  publish("MARKETPLACE_UNPAUSED");
+// Purchase listing
+export circuit purchaseListing(
+    listing_id: Bytes<32>,
+    buyer: Uint<32>
+): [] {
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(!marketplace_paused, "Marketplace is paused");
+    assert(listing_statuses.member(disclose(listing_id)), "Listing not found");
+    assert(disclose(buyer) != 0 as Uint<32>, "Invalid buyer address");
+
+    const current_status = listing_statuses.lookup(disclose(listing_id));
+    assert(current_status == ListingStatus.Active, "Listing not active");
+
+    const price = listing_prices.lookup(disclose(listing_id));
+    // Calculate fee as fixed amount for simplicity
+    const fee_amount = 1000 as Uint<64>; // Fixed fee
+
+    // Update collected fees
+    collected_fees = (collected_fees + fee_amount) as Uint<64>;
+
+    // Mark as sold
+    listing_statuses.insert(disclose(listing_id), ListingStatus.Sold);
+}
+
+// Get listing information
+export circuit getListing(listing_id: Bytes<32>): [Uint<32>, Bytes<32>, Uint<64>, ListingStatus] {
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(listing_statuses.member(disclose(listing_id)), "Listing not found");
+
+    const seller = listing_sellers.lookup(disclose(listing_id));
+    const property_id = listing_property_ids.lookup(disclose(listing_id));
+    const price = listing_prices.lookup(disclose(listing_id));
+    const status = listing_statuses.lookup(disclose(listing_id));
+
+    return [seller, property_id, price, status];
+}
+
+// Set marketplace fee (admin only)
+export circuit setMarketplaceFee(new_fee: Uint<64>, caller: Uint<32>): [] {
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can set fee");
+    assert(disclose(new_fee) <= 1000 as Uint<64>, "Fee cannot exceed 10%");
+
+    marketplace_fee = disclose(new_fee);
+}
+
+// Pause/unpause marketplace (admin only)
+export circuit pauseMarketplace(caller: Uint<32>): [] {
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can pause marketplace");
+    assert(!marketplace_paused, "Marketplace already paused");
+
+    marketplace_paused = true;
+}
+
+export circuit unpauseMarketplace(caller: Uint<32>): [] {
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can unpause marketplace");
+    assert(marketplace_paused, "Marketplace not paused");
+
+    marketplace_paused = false;
+}
+
+// Collect accumulated fees (admin only)
+export circuit collectFees(caller: Uint<32>): Uint<64> {
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can collect fees");
+
+    const fees_to_collect = collected_fees;
+    collected_fees = 0 as Uint<64>;
+
+    return fees_to_collect;
 }

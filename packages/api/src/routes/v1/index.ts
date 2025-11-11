@@ -1,6 +1,8 @@
 import { Router } from "express";
 import authRoutes from "./auth/routes";
 import userRoutes from "./user/routes";
+import adminRoutes from "./admin/index";
+import publicRoutes from "./public/index";
 
 const router = Router();
 
@@ -12,6 +14,14 @@ const default_routes = [
 	{
 		path: "/user",
 		routes: userRoutes,
+	},
+	{
+		path: "/admin",
+		routes: adminRoutes,
+	},
+	{
+		path: "/public",
+		routes: publicRoutes,
 	},
 ];
 default_routes.forEach((route) => {
