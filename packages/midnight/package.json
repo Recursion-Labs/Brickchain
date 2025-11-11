@@ -1,15 +1,23 @@
 {
+  "$schema": "https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/package.json",
   "name": "my-mn-app",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "compile": "mkdir -p build && compact compile contracts/main.compact",
+    "compile": "for file in contracts/*.compact; do name=$(basename \"$file\" .compact); echo \"Compiling $file to build/$name\"; mkdir -p build/$name && compact compile $file build/$name; done",
     "build": "tsc",
-    "deploy": "node dist/deploy.js",
+    "deploy": "npm run build && node dist/deploy.js",
     "migrate": "npm run build && node dist/migrate.js",
+    "interact": "npm run build && node dist/interact.js",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "clean": "rm -rf build dist"
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage",
+    "validate-config": "npm run build && node dist/config.js",
+    "clean": "rm -rf build dist",
+    "dev": "npm run compile && npm run test",
+    "full-deploy": "npm run clean && npm run compile && npm run deploy && npm run migrate",
+    "check": "npm run compile && npm run test && npm run validate-config"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-runtime": "^0.8.1",
@@ -32,6 +40,7 @@
     "@types/ws": "^8.18.1",
     "typescript": "^5.9.3",
     "vitest": "^2.1.8",
-    "@vitest/ui": "^2.1.8"
+    "@vitest/ui": "^2.1.8",
+    "@vitest/coverage-v8": "^2.1.8"
   }
 }

@@ -2,7 +2,8 @@ import catchAsync from "@/handlers/async.handler";
 import { Request, Response } from "express";
 import { User } from "generated/prisma/client";
 import { ImageService } from "@/services/image.service";
-import { db as prisma } from "@/config/database";
+import { db, db as prisma } from "@/config/database";
+import { APIError } from "@/utils/APIerror";
 
 const getUserByToken = catchAsync(async (req: Request, res: Response) => {
 	const user = req.user as User;
@@ -87,8 +88,32 @@ const uploadBanner = catchAsync(async (req: Request, res: Response) => {
 	return
 });
 
+
+const updateProfile = catchAsync(async (req: Request, res: Response) => {
+	const user = req.user as User;
+	const { name, bio } = req.body;
+	try {
+		await db.user.update({
+			where: {
+				id: user.id
+			},
+			data: {
+				name,
+				bio
+			}
+		})
+		res.status(200).json({
+			message: "Profile updated successfully",
+		})
+		return
+	} catch (error) {
+		throw new APIError(500, "Failed to update profile")
+	}
+})
+
 export default {
 	getUserByToken,
 	uploadProfilePicture,
 	uploadBanner,
+	updateProfile
 };

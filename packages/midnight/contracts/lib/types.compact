@@ -1,8 +1,14 @@
 pragma language_version >= 0.16 && <= 0.18;
 
-import CompactStandardLibrary;
-
-export type PropertyDetails = {
+module types {
+export struct PropertyMetadata {
+  totalShares: u64,
+  currentOwners: u64,
+  lastTransferAt: u64,
+  isTokenized: bool,
+  registrationFee: u128
+};
+export struct PropertyDetails {
   cid: string,
   fileName: string,
   uploader: Address,
@@ -12,30 +18,41 @@ export type PropertyDetails = {
   valuation: u128,
   isActive: bool
 };
-
-export type Listing = {
-  seller: Address,
+export struct OwnershipProof {
   pid: u64,
+  owner: Address,
+  proofHash: string
+};
+export struct Listing {
+  pid: u64,
+  seller: Address,
   shareAmount: u64,
   pricePerShare: u128,
   isFullSale: bool,
   expiresAt: u64,
-  isActive: bool,
+  createdAt: u64,
+  isActive: bool
+};
+export struct Escrow {
+  listingId: u64,
+  buyer: Address,
+  amount: u128,
+  released: bool,
+  escrowedAt: u64
+};
+export struct VerificationRequest {
+  requester: Address,
+  pid: u64,
+  proofType: string,
+  proofHash: string,
+  isVerified: bool,
+  verifiedAt: u64,
   createdAt: u64
 };
-
-export type PropertyMetadata = {
-  totalShares: u64,
-  currentOwners: u64,
-  lastTransferAt: u64,
-  isTokenized: bool,
-  registrationFee: u128
-};
-
-export type OwnershipProof = {
-  owner: Address,
+export struct VerifiedProof {
   pid: u64,
-  shareAmount: u64,
   proofHash: string,
-  generatedAt: u64
+  verifiedAt: u64,
+  verifier: Address
 };
+}

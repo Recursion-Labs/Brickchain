@@ -1,173 +1,215 @@
 pragma language_version >= 0.16 && <= 0.18;
 
 import CompactStandardLibrary;
-import "./lib/types.compact";
 
-export ledger {
-  totalShares: Map<u64, u64>;
-  balances: Map<(u64, Address), u64>;
-  ownershipProofs: Map<(u64, Address), OwnershipProof>;
-  transferHistory: Map<u64, u64>; // pid -> transfer count
-  isPaused: Map<u64, bool>;
-  adminAddress: Address = zero_address;
-  transferFee: u128 = 1000u128; // Base transfer fee
+// Token states for advanced features
+enum TokenState {
+    Active,
+    Paused,
+    Frozen
 }
 
-export circuit initializeToken(admin: Address): [] {
-  require(adminAddress == zero_address, "Already initialized");
-  adminAddress = admin;
-  publish("TOKEN_INITIALIZED", admin);
+// Property status for tracking real-world property lifecycle
+enum PropertyStatus {
+    Registered,
+    Tokenized,
+    Transferred,
+    Deactivated
 }
 
-export circuit initializeShares(
-  pid: u64, 
-  owner: Address, 
-  total: u64,
-  authProof: Opaque<"bool">
+// Enhanced ledger state for fungible token
+export ledger total_supply: Uint<64>;
+export ledger circulating_supply: Uint<64>;
+export ledger nonce: Counter;
+
+// Track token balances using bridge contract patterns
+export ledger balances: Map<Uint<32>, Uint<64>>;
+export ledger token_state: TokenState;
+
+// Track token holders and metadata
+export ledger holder_count: Uint<64>;
+export ledger holders: Map<Uint<32>, Boolean>;
+
+// Property-specific ledgers
+export ledger property_statuses: Map<Bytes<32>, PropertyStatus>; // Property ID -> Status
+export ledger property_owners: Map<Bytes<32>, Uint<32>>; // Property ID -> Owner ID
+export ledger property_token_ids: Map<Bytes<32>, Uint<32>>; // Property ID -> Token ID (if 1:1 tokenization)
+
+// Constructor to initialize the token
+constructor() {
+    total_supply = 0;
+    circulating_supply = 0;
+    token_state = TokenState.Active;
+    holder_count = 0;
+}
+
+export circuit mint(
+    to: Uint<32>,
+    amount: Uint<64>
 ): [] {
-  require(total > 0u64, "Invalid total");
-  require(total <= 1000000u64, "Total shares too high");
-  require(totalShares[pid] == 0u64, "Already initialized");
-
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Unauthorized");
-
-  totalShares[pid] = total;
-  balances[(pid, owner)] = total;
-  transferHistory[pid] = 0u64;
-  isPaused[pid] = false;
-
-  // Generate initial ownership proof
-  let proof: OwnershipProof = {
-    owner: owner,
-    pid: pid,
-    shareAmount: total,
-    proofHash: "initial_proof",
-    generatedAt: 0u64 //current timestamp
-  };
-  ownershipProofs[(pid, owner)] = proof;
-
-  publish("SHARES_INITIALIZED", pid, owner, total);
+    // Check token is active
+    assert(token_state == TokenState.Active, "Token is not active");
+    
+    // Validate amount is positive
+    assert(amount > 0, "Amount must be positive");
+    
+    // Get current balance or 0 if new holder
+    const current_balance = balances.member(disclose(to)) 
+        ? balances.lookup(disclose(to)) 
+        : 0 as Uint<64>;
+    
+    // Update balance using bridge contract patterns
+    balances.insert(disclose(to), (current_balance + disclose(amount)) as Uint<64>);
+    
+    // Track new holders
+    if (!holders.member(disclose(to))) {
+        holders.insert(disclose(to), true);
+        holder_count = (holder_count + 1) as Uint<64>;
+    }
+    
+    // Update total and circulating supply using proper type casting
+    total_supply = (total_supply + disclose(amount)) as Uint<64>;
+    circulating_supply = (circulating_supply + disclose(amount)) as Uint<64>;
+    
+    // Increment nonce for state tracking
+    nonce.increment(1);
 }
 
-export circuit transferShares(
-  pid: u64,
-  from: Address,
-  to: Address,
-  amount: u64,
-  authProof: Opaque<"bool">
+export circuit transfer(
+    from: Uint<32>,
+    to: Uint<32>,
+    amount: Uint<64>
 ): [] {
-  require(!isPaused[pid], "Transfers paused for this property");
-  require(amount > 0u64, "Invalid amount");
-  require(from != to, "Cannot transfer to self");
-
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Unauthorized");
-
-  let senderBal = balances[(pid, from)];
-  require(senderBal >= amount, "Insufficient shares");
-
-  // Update balances
-  balances[(pid, from)] = senderBal - amount;
-  balances[(pid, to)] = balances[(pid, to)] + amount;
-
-  // Update transfer history
-  transferHistory[pid] = transferHistory[pid] + 1u64;
-
-  // Update ownership proofs
-  let fromProof: OwnershipProof = {
-    owner: from,
-    pid: pid,
-    shareAmount: senderBal - amount,
-    proofHash: "updated_proof_from",
-    generatedAt: 0u64
-  };
-  ownershipProofs[(pid, from)] = fromProof;
-
-  let toProof: OwnershipProof = {
-    owner: to,
-    pid: pid,
-    shareAmount: balances[(pid, to)],
-    proofHash: "updated_proof_to",
-    generatedAt: 0u64
-  };
-  ownershipProofs[(pid, to)] = toProof;
-
-  publish("SHARES_TRANSFERRED", pid, from, to, amount);
+    // Check token is active
+    assert(token_state == TokenState.Active, "Token is not active");
+    
+    // Validate amount is positive
+    assert(amount > 0, "Amount must be positive");
+    
+    // Check sender has sufficient balance
+    assert(balances.member(disclose(from)), "Sender has no balance");
+    const from_balance = balances.lookup(disclose(from));
+    assert(from_balance >= disclose(amount), "Insufficient balance");
+    
+    // Get recipient balance or 0 if new holder
+    const to_balance = balances.member(disclose(to)) 
+        ? balances.lookup(disclose(to)) 
+        : 0 as Uint<64>;
+    
+    // Update balances using bridge contract patterns
+    balances.insert(disclose(from), (from_balance - disclose(amount)) as Uint<64>);
+    balances.insert(disclose(to), (to_balance + disclose(amount)) as Uint<64>);
+    
+    // Track new holders
+    if (!holders.member(disclose(to))) {
+        holders.insert(disclose(to), true);
+        holder_count = (holder_count + 1) as Uint<64>;
+    }
+    
+    // Increment nonce for state tracking
+    nonce.increment(1);
 }
 
-export circuit burnShares(
-  pid: u64,
-  owner: Address,
-  amount: u64,
-  authProof: Opaque<"bool">
+export circuit approve(
+    owner: Uint<32>,
+    spender: Uint<32>,
+    amount: Uint<64>
 ): [] {
-  require(amount > 0u64, "Invalid amount");
-
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Unauthorized");
-
-  let ownerBal = balances[(pid, owner)];
-  require(ownerBal >= amount, "Insufficient shares");
-
-  balances[(pid, owner)] = ownerBal - amount;
-  totalShares[pid] = totalShares[pid] - amount;
-
-  // Update ownership proof
-  let proof: OwnershipProof = {
-    owner: owner,
-    pid: pid,
-    shareAmount: ownerBal - amount,
-    proofHash: "burned_proof",
-    generatedAt: 0u64
-  };
-  ownershipProofs[(pid, owner)] = proof;
-
-  publish("SHARES_BURNED", pid, owner, amount);
+    // Check token is active
+    assert(token_state == TokenState.Active, "Token is not active");
+    
+    // Validate amount is positive
+    assert(amount > 0, "Amount must be positive");
+    
+    // Note: In a full implementation, you'd track allowances in a separate Map
+    // For simplicity, this basic version just validates the parameters
+    
+    // Increment nonce for state tracking
+    nonce.increment(1);
 }
 
-export circuit pauseTransfers(
-  pid: u64,
-  authProof: Opaque<"bool">
+export circuit burn(
+    from: Uint<32>,
+    amount: Uint<64>
 ): [] {
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Admin only");
-
-  isPaused[pid] = true;
-  publish("TRANSFERS_PAUSED", pid);
+    // Check token is active
+    assert(token_state == TokenState.Active, "Token is not active");
+    
+    // Validate amount is positive
+    assert(amount > 0, "Amount must be positive");
+    
+    // Check holder has sufficient balance
+    assert(balances.member(disclose(from)), "Holder has no balance");
+    const current_balance = balances.lookup(disclose(from));
+    assert(current_balance >= disclose(amount), "Insufficient balance to burn");
+    
+    // Update balance using bridge contract patterns
+    balances.insert(disclose(from), (current_balance - disclose(amount)) as Uint<64>);
+    
+    // Update total and circulating supply
+    total_supply = (total_supply - disclose(amount)) as Uint<64>;
+    circulating_supply = (circulating_supply - disclose(amount)) as Uint<64>;
+    
+    // Increment nonce for state tracking
+    nonce.increment(1);
 }
 
-export circuit unpauseTransfers(
-  pid: u64,
-  authProof: Opaque<"bool">
-): [] {
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Admin only");
-
-  isPaused[pid] = false;
-  publish("TRANSFERS_UNPAUSED", pid);
+export circuit pause_token(): [] {
+    // Change token state to paused
+    token_state = TokenState.Paused;
+    
+    // Increment nonce for state tracking
+    nonce.increment(1);
 }
 
-export circuit generateOwnershipProof(
-  pid: u64,
-  owner: Address,
-  proofHash: string,
-  authProof: Opaque<"bool">
+export circuit unpause_token(): [] {
+    // Check token is currently paused
+    assert(token_state == TokenState.Paused, "Token is not paused");
+    
+    // Change token state back to active
+    token_state = TokenState.Active;
+    
+    // Increment nonce for state tracking
+    nonce.increment(1);
+}
+
+// Property-specific circuits
+export circuit register_property(
+    property_id: Bytes<32>,
+    owner_id: Uint<32>
 ): [] {
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Unauthorized");
+    assert(!property_statuses.member(disclose(property_id)), "Property already registered");
+    property_statuses.insert(disclose(property_id), PropertyStatus.Registered);
+    property_owners.insert(disclose(property_id), disclose(owner_id));
+    nonce.increment(1);
+}
 
-  let balance = balances[(pid, owner)];
-  require(balance > 0u64, "No shares owned");
+export circuit tokenize_property(
+    property_id: Bytes<32>,
+    token_id: Uint<32>
+): [] {
+    assert(property_statuses.member(disclose(property_id)), "Property not registered");
+    assert(property_statuses.lookup(disclose(property_id)) == PropertyStatus.Registered, "Property not in Registered state");
+    property_statuses.insert(disclose(property_id), PropertyStatus.Tokenized);
+    property_token_ids.insert(disclose(property_id), disclose(token_id));
+    nonce.increment(1);
+}
 
-  let proof: OwnershipProof = {
-    owner: owner,
-    pid: pid,
-    shareAmount: balance,
-    proofHash: proofHash,
-    generatedAt: 0u64 //current timestamp
-  };
-  ownershipProofs[(pid, owner)] = proof;
+export circuit transfer_property_ownership(
+    property_id: Bytes<32>,
+    new_owner_id: Uint<32>
+): [] {
+    assert(property_statuses.member(disclose(property_id)), "Property not registered");
+    assert(property_owners.member(disclose(property_id)), "Property has no owner");
+    property_owners.insert(disclose(property_id), disclose(new_owner_id));
+    property_statuses.insert(disclose(property_id), PropertyStatus.Transferred);
+    nonce.increment(1);
+}
 
-  publish("OWNERSHIP_PROOF_GENERATED", pid, owner, proofHash);
+export circuit deactivate_property(
+    property_id: Bytes<32>
+): [] {
+    assert(property_statuses.member(disclose(property_id)), "Property not registered");
+    property_statuses.insert(disclose(property_id), PropertyStatus.Deactivated);
+    nonce.increment(1);
 }

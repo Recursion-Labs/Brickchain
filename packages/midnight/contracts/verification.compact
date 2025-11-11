@@ -1,136 +1,181 @@
 pragma language_version >= 0.16 && <= 0.18;
 
 import CompactStandardLibrary;
-import "./lib/types.compact";
 
-export ledger {
-  verificationRequests: Map<u64, VerificationRequest>;
-  verifiedProofs: Map<string, bool>;
-  nextRequestId: u64 = 1;
-  adminAddress: Address = zero_address;
-  verificationFee: u128 = 500u128;
+// Verification status
+enum VerificationStatus {
+    Pending,
+    InProgress,
+    Approved,
+    Rejected,
+    Expired
 }
 
-export type VerificationRequest = {
-  requester: Address,
-  pid: u64,
-  proofType: string,
-  proofHash: string,
-  isVerified: bool,
-  verifiedAt: u64,
-  createdAt: u64
-};
+// Verification requests
+export ledger verification_requesters: Map<Bytes<32>, Uint<32>>; // request_id -> requester
+export ledger verification_property_ids: Map<Bytes<32>, Bytes<32>>; // request_id -> property_id
+export ledger verification_statuses: Map<Bytes<32>, VerificationStatus>; // request_id -> status
+export ledger verification_timestamps: Map<Bytes<32>, Uint<64>>; // request_id -> created_at
+export ledger verification_documents: Map<Bytes<32>, Bytes<64>>; // request_id -> document_hash
+export ledger verification_results: Map<Bytes<32>, Bytes<128>>; // request_id -> result_hash
 
-export circuit initializeVerification(admin: Address): [] {
-  require(adminAddress == zero_address, "Already initialized");
-  adminAddress = admin;
-  publish("VERIFICATION_INITIALIZED", admin);
+// Verification service configuration
+export ledger verification_initialized: Boolean;
+export ledger verification_fee: Uint<64>;
+export ledger verification_paused: Boolean;
+export ledger admin_address: Uint<32>;
+export ledger verifier_addresses: Map<Uint<32>, Boolean>; // approved verifiers
+
+// Request counter
+export ledger request_counter: Counter;
+
+// Constructor
+constructor() {
+    verification_initialized = false;
+    verification_fee = 500 as Uint<64>; // Default fee
+    verification_paused = false;
+    admin_address = 0 as Uint<32>;
 }
 
+// Initialize verification service
+export circuit initializeVerification(admin: Uint<32>): [] {
+    assert(!verification_initialized, "Verification service already initialized");
+    assert(admin != 0 as Uint<32>, "Invalid admin address");
+
+    verification_initialized = true;
+    admin_address = disclose(admin);
+}
+
+// Request property verification
 export circuit requestVerification(
-  pid: u64,
-  requester: Address,
-  proofType: string,
-  proofHash: string,
-  authProof: Opaque<"bool">
-): [u64] {
-  require(pid > 0u64, "Invalid property ID");
-  
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Unauthorized");
+    request_id: Bytes<32>,
+    property_id: Bytes<32>,
+    document_hash: Bytes<64>,
+    requester: Uint<32>
+): [] {
+    assert(verification_initialized, "Verification service not initialized");
+    assert(!verification_paused, "Verification service is paused");
+    assert(!verification_statuses.member(disclose(request_id)), "Request already exists");
+    assert(disclose(requester) != 0 as Uint<32>, "Invalid requester address");
 
-  let requestId = nextRequestId;
-  nextRequestId += 1;
+    const current_time = 1234567890 as Uint<64>; // Would be actual timestamp
 
-  let request: VerificationRequest = {
-    requester: requester,
-    pid: pid,
-    proofType: proofType,
-    proofHash: proofHash,
-    isVerified: false,
-    verifiedAt: 0u64,
-    createdAt: 0u64 //current timestamp
-  };
+    verification_requesters.insert(disclose(request_id), disclose(requester));
+    verification_property_ids.insert(disclose(request_id), disclose(property_id));
+    verification_statuses.insert(disclose(request_id), VerificationStatus.Pending);
+    verification_timestamps.insert(disclose(request_id), current_time);
+    verification_documents.insert(disclose(request_id), disclose(document_hash));
 
-  verificationRequests[requestId] = request;
-  publish("VERIFICATION_REQUESTED", requestId, requester, pid, proofType, proofHash);
-  return [requestId];
+    request_counter.increment(1);
 }
 
+// Start verification process (verifier only)
+export circuit startVerification(
+    request_id: Bytes<32>,
+    verifier: Uint<32>
+): [] {
+    assert(verification_initialized, "Verification service not initialized");
+    assert(!verification_paused, "Verification service is paused");
+    assert(verification_statuses.member(disclose(request_id)), "Request not found");
+    assert(verifier_addresses.member(disclose(verifier)), "Not an approved verifier");
+
+    const current_status = verification_statuses.lookup(disclose(request_id));
+    assert(current_status == VerificationStatus.Pending, "Request not in pending state");
+
+    verification_statuses.insert(disclose(request_id), VerificationStatus.InProgress);
+}
+
+// Submit verification result (verifier only)
+export circuit submitVerificationResult(
+    request_id: Bytes<32>,
+    result_hash: Bytes<128>,
+    approved: Boolean,
+    verifier: Uint<32>
+): [] {
+    assert(verification_initialized, "Verification service not initialized");
+    assert(!verification_paused, "Verification service is paused");
+    assert(verification_statuses.member(disclose(request_id)), "Request not found");
+    assert(verifier_addresses.member(disclose(verifier)), "Not an approved verifier");
+
+    const current_status = verification_statuses.lookup(disclose(request_id));
+    assert(current_status == VerificationStatus.InProgress, "Request not in progress");
+
+    verification_results.insert(disclose(request_id), disclose(result_hash));
+
+    if (disclose(approved)) {
+        verification_statuses.insert(disclose(request_id), VerificationStatus.Approved);
+    } else {
+        verification_statuses.insert(disclose(request_id), VerificationStatus.Rejected);
+    }
+}
+
+// Get verification status
+export circuit getVerificationStatus(request_id: Bytes<32>): [VerificationStatus, Uint<32>, Bytes<32>] {
+    assert(verification_initialized, "Verification service not initialized");
+    assert(verification_statuses.member(disclose(request_id)), "Request not found");
+
+    const status = verification_statuses.lookup(disclose(request_id));
+    const requester = verification_requesters.lookup(disclose(request_id));
+    const property_id = verification_property_ids.lookup(disclose(request_id));
+
+    return [status, requester, property_id];
+}
+
+// Approve verifier (admin only)
+export circuit approveVerifier(verifier: Uint<32>, caller: Uint<32>): [] {
+    assert(verification_initialized, "Verification service not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can approve verifiers");
+    assert(disclose(verifier) != 0 as Uint<32>, "Invalid verifier address");
+
+    verifier_addresses.insert(disclose(verifier), true);
+}
+
+// Remove verifier (admin only)
+export circuit removeVerifier(verifier: Uint<32>, caller: Uint<32>): [] {
+    assert(verification_initialized, "Verification service not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can remove verifiers");
+    assert(verifier_addresses.member(disclose(verifier)), "Verifier not found");
+
+    verifier_addresses.insert(disclose(verifier), false);
+}
+
+// Set verification fee (admin only)
+export circuit setVerificationFee(new_fee: Uint<64>, caller: Uint<32>): [] {
+    assert(verification_initialized, "Verification service not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can set fee");
+
+    verification_fee = disclose(new_fee);
+}
+
+// Pause/unpause verification service (admin only)
+export circuit pauseVerification(caller: Uint<32>): [] {
+    assert(verification_initialized, "Verification service not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can pause verification");
+    assert(!verification_paused, "Verification service already paused");
+
+    verification_paused = true;
+}
+
+export circuit unpauseVerification(caller: Uint<32>): [] {
+    assert(verification_initialized, "Verification service not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can unpause verification");
+    assert(verification_paused, "Verification service not paused");
+
+    verification_paused = false;
+}
+
+// Verify proof (simplified - would validate actual proof)
 export circuit verifyProof(
-  requestId: u64,
-  isValid: bool,
-  authProof: Opaque<"bool">
-): [] {
-  require(verificationRequests[requestId].requester != zero_address, "Request not found");
+    request_id: Bytes<32>,
+    proof_data: Bytes<256>,
+    caller: Uint<32>
+): Boolean {
+    assert(verification_initialized, "Verification service not initialized");
+    assert(!verification_paused, "Verification service is paused");
+    assert(verification_statuses.member(disclose(request_id)), "Request not found");
 
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Admin only");
-
-  let request = verificationRequests[requestId];
-  
-  verificationRequests[requestId] = (
-    requester: request.requester,
-    pid: request.pid,
-    proofType: request.proofType,
-    proofHash: request.proofHash,
-    isVerified: isValid,
-    verifiedAt: 0u64, // current timestamp
-    createdAt: request.createdAt
-  );
-
-  if (isValid) {
-    verifiedProofs[request.proofHash] = true;
-  }
-
-  publish("PROOF_VERIFIED", requestId, request.proofHash, isValid);
-}
-
-export circuit generateOwnershipZKProof(
-  pid: u64,
-  owner: Address,
-  shareAmount: u64,
-  proofData: Opaque<"string">,
-  authProof: Opaque<"bool">
-): [string] {
-  require(shareAmount > 0u64, "Invalid share amount");
-
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Unauthorized");
-
-  let data = disclose(proofData);
-  
-  // Here we will need a real implementation, currently this would generate ZK proof but for now I am simulating it
-  let proofHash = "zk_proof_" + string(pid) + "_" + string(shareAmount);
-
-  publish("ZK_PROOF_GENERATED", pid, owner, shareAmount, proofHash);
-  return [proofHash];
-}
-
-export circuit verifyOwnershipZKProof(
-  proofHash: string,
-  expectedOwner: Address,
-  expectedPid: u64,
-  expectedShares: u64,
-  authProof: Opaque<"bool">
-): [bool] {
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Unauthorized");
-
-  // In a real implementation, this would verify the actual ZK proof for now I checking if the proof exists in our verified proofs
-  let isValid = verifiedProofs[proofHash];
-
-  publish("ZK_PROOF_VERIFICATION", proofHash, expectedOwner, expectedPid, expectedShares, isValid);
-  return [isValid];
-}
-
-export circuit setVerificationFee(
-  newFee: u128,
-  authProof: Opaque<"bool">
-): [] {
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Admin only");
-
-  verificationFee = newFee;
-  publish("VERIFICATION_FEE_UPDATED", newFee);
+    // In a real implementation, this would validate cryptographic proof
+    // For now, return true if request exists and is approved
+    const status = verification_statuses.lookup(disclose(request_id));
+    return status == VerificationStatus.Approved;
 }

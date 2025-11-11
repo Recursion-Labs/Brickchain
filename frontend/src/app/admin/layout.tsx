@@ -43,9 +43,34 @@ function AdminLayoutInner({
 }: {
   children: React.ReactNode
 }) {
-  const { isConnected } = useWalletState()
+  const { isConnected, address, isConnecting } = useWalletState()
 
-  if (!isConnected) {
+  // Check if actually connected - not just localStorage state
+  // isConnecting is true while wallet is being initialized
+  const isActuallyConnected = isConnected && address && address.length > 0
+
+  // Show loading state while wallet is initializing (autoConnect)
+  if (isConnecting) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="mb-6">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="animate-spin w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Checking Wallet Connection</h2>
+            <p className="text-muted-foreground mb-4">
+              Please wait while we verify your wallet...
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isActuallyConnected) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center max-w-md mx-auto p-6">

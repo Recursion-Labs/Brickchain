@@ -1,111 +1,159 @@
 pragma language_version >= 0.16 && <= 0.18;
 
 import CompactStandardLibrary;
-import "./lib/types.compact";
 
-export ledger {
-  owners: Map<u64, Address>;
-  propertyCID: Map<u64, string>;
-  propertyMetadata: Map<u64, PropertyMetadata>;
-  propertyDetails: Map<u64, PropertyDetails>;
-  nextPropertyId: u64 = 1;
-  registrationFee: u128 = 1000000u128; // Base registration fee
-  adminAddress: Address = zero_address;
-  isPaused: bool = false;
+// Property states
+enum PropertyStatus {
+    Registered,
+    Verified,
+    Tokenized,
+    Listed,
+    Sold,
+    Deactivated
 }
 
-export circuit initializeRegistry(admin: Address): [] {
-  require(adminAddress == zero_address, "Already initialized");
-  adminAddress = admin;
-  publish("REGISTRY_INITIALIZED", admin);
+// Property data structure (stored as individual fields for Compact compatibility)
+export ledger property_owners: Map<Bytes<32>, Uint<32>>; // property_id -> owner
+export ledger property_statuses: Map<Bytes<32>, PropertyStatus>; // property_id -> status
+export ledger property_values: Map<Bytes<32>, Uint<64>>; // property_id -> valuation
+export ledger property_locations: Map<Bytes<32>, Bytes<64>>; // property_id -> location hash
+export ledger property_documents: Map<Bytes<32>, Bytes<64>>; // property_id -> document hash
+
+// Registry configuration
+export ledger registry_initialized: Boolean;
+export ledger registration_fee: Uint<64>;
+export ledger registry_paused: Boolean;
+export ledger admin_address: Uint<32>;
+
+// Property counter for unique IDs
+export ledger property_counter: Counter;
+
+// Constructor
+constructor() {
+    registry_initialized = false;
+    registration_fee = 1000000 as Uint<64>; // Default fee
+    registry_paused = false;
+    admin_address = 0 as Uint<32>;
 }
 
+// Initialize the property registry
+export circuit initializeRegistry(admin: Uint<32>): [] {
+    assert(!registry_initialized, "Registry already initialized");
+    assert(admin != 0 as Uint<32>, "Invalid admin address");
+
+    registry_initialized = true;
+    admin_address = disclose(admin);
+}
+
+// Register a new property
 export circuit registerProperty(
-  propertyDetailsOpaque: Opaque<"PropertyDetails">,
-  owner: Address,
-  totalShares: u64,
-  publishPublicCID: bool,
-  authProof: Opaque<"bool">
-): [u64] {
-  require(!isPaused, "Registry is paused");
-  require(totalShares > 0u64, "Total shares must be > 0");
-  require(totalShares <= 1000000u64, "Total shares too high");
+    property_id: Bytes<32>,
+    owner: Uint<32>,
+    valuation: Uint<64>,
+    location_hash: Bytes<64>,
+    document_hash: Bytes<64>
+): [] {
+    assert(registry_initialized, "Registry not initialized");
+    assert(!registry_paused, "Registry is paused");
+    assert(!property_statuses.member(disclose(property_id)), "Property already registered");
+    assert(disclose(owner) != 0 as Uint<32>, "Invalid owner address");
+    assert(disclose(valuation) > 0 as Uint<64>, "Invalid valuation");
 
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Unauthorized");
+    // Register property
+    property_owners.insert(disclose(property_id), disclose(owner));
+    property_statuses.insert(disclose(property_id), PropertyStatus.Registered);
+    property_values.insert(disclose(property_id), disclose(valuation));
+    property_locations.insert(disclose(property_id), disclose(location_hash));
+    property_documents.insert(disclose(property_id), disclose(document_hash));
 
-  let details = disclose(propertyDetailsOpaque);
-  let pid = nextPropertyId;
-  nextPropertyId += 1;
-
-  owners[pid] = owner;
-  propertyDetails[pid] = details;
-
-  let metadata: PropertyMetadata = {
-    totalShares: totalShares,
-    currentOwners: 1u64,
-    lastTransferAt: 0u64,
-    isTokenized: false,
-    registrationFee: registrationFee
-  };
-  propertyMetadata[pid] = metadata;
-
-  if (publishPublicCID) {
-    propertyCID[pid] = details.cid;
-  }
-
-  publish("PROPERTY_REGISTERED", pid, owner, details.cid, totalShares);
-  return [pid];
+    // Increment counter
+    property_counter.increment(1);
 }
 
+// Update property status
 export circuit updatePropertyStatus(
-  pid: u64,
-  isActive: bool,
-  authProof: Opaque<"bool">
+    property_id: Bytes<32>,
+    new_status: PropertyStatus,
+    caller: Uint<32>
 ): [] {
-  require(owners[pid] != zero_address, "Property not found");
-  
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Unauthorized");
+    assert(registry_initialized, "Registry not initialized");
+    assert(!registry_paused, "Registry is paused");
+    assert(property_statuses.member(disclose(property_id)), "Property not registered");
 
-  let details = propertyDetails[pid];
-  propertyDetails[pid] = (
-    cid: details.cid,
-    fileName: details.fileName,
-    uploader: details.uploader,
-    uploadedAt: details.uploadedAt,
-    propertyType: details.propertyType,
-    location: details.location,
-    valuation: details.valuation,
-    isActive: isActive
-  );
+    const current_owner = property_owners.lookup(disclose(property_id));
+    assert(disclose(caller) == current_owner || disclose(caller) == admin_address, "Not authorized");
 
-  publish("PROPERTY_STATUS_UPDATED", pid, isActive);
+    property_statuses.insert(disclose(property_id), disclose(new_status));
 }
 
-export circuit setRegistrationFee(
-  newFee: u128,
-  authProof: Opaque<"bool">
+// Get property information
+export circuit getProperty(property_id: Bytes<32>): [Uint<32>, PropertyStatus, Uint<64>] {
+    assert(registry_initialized, "Registry not initialized");
+    assert(property_statuses.member(disclose(property_id)), "Property not found");
+
+    const owner = property_owners.lookup(disclose(property_id));
+    const status = property_statuses.lookup(disclose(property_id));
+    const value = property_values.lookup(disclose(property_id));
+
+    return [owner, status, value];
+}
+
+// Set registration fee (admin only)
+export circuit setRegistrationFee(new_fee: Uint<64>, caller: Uint<32>): [] {
+    assert(registry_initialized, "Registry not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can set fee");
+
+    registration_fee = disclose(new_fee);
+}
+
+// Pause/unpause registry (admin only)
+export circuit pauseRegistry(caller: Uint<32>): [] {
+    assert(registry_initialized, "Registry not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can pause registry");
+    assert(!registry_paused, "Registry already paused");
+
+    registry_paused = true;
+}
+
+export circuit unpauseRegistry(caller: Uint<32>): [] {
+    assert(registry_initialized, "Registry not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can unpause registry");
+    assert(registry_paused, "Registry not paused");
+
+    registry_paused = false;
+}
+
+// Transfer property ownership
+export circuit transferProperty(
+    property_id: Bytes<32>,
+    new_owner: Uint<32>,
+    caller: Uint<32>
 ): [] {
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Admin only");
-  
-  registrationFee = newFee;
-  publish("REGISTRATION_FEE_UPDATED", newFee);
+    assert(registry_initialized, "Registry not initialized");
+    assert(!registry_paused, "Registry is paused");
+    assert(property_statuses.member(disclose(property_id)), "Property not registered");
+
+    const current_owner = property_owners.lookup(disclose(property_id));
+    assert(disclose(caller) == current_owner || disclose(caller) == admin_address, "Not authorized");
+    assert(disclose(new_owner) != 0 as Uint<32>, "Invalid new owner");
+
+    property_owners.insert(disclose(property_id), disclose(new_owner));
+    property_statuses.insert(disclose(property_id), PropertyStatus.Sold);
 }
 
-export circuit pauseRegistry(authProof: Opaque<"bool">): [] {
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Admin only");
-  
-  isPaused = true;
-  publish("REGISTRY_PAUSED");
-}
+// Verify property (verification service only)
+export circuit verifyProperty(
+    property_id: Bytes<32>,
+    caller: Uint<32>
+): [] {
+    assert(registry_initialized, "Registry not initialized");
+    assert(!registry_paused, "Registry is paused");
+    assert(property_statuses.member(disclose(property_id)), "Property not registered");
 
-export circuit unpauseRegistry(authProof: Opaque<"bool">): [] {
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Admin only");
-  
-  isPaused = false;
-  publish("REGISTRY_UNPAUSED");
+    // In a real implementation, this would check caller authorization
+    // For now, allow any caller (would be restricted to verification contract)
+    const current_status = property_statuses.lookup(disclose(property_id));
+    assert(current_status == PropertyStatus.Registered, "Property not in registered state");
+
+    property_statuses.insert(disclose(property_id), PropertyStatus.Verified);
 }
