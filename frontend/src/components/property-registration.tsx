@@ -201,8 +201,8 @@ export function PropertyRegistration({ onSuccess }: PropertyRegistrationProps) {
       // Step 2: Create property record with document metadata
       toast.loading('Creating property record...', { id: 'creating' });
 
-      const propertyId = `prop_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
+      const propertyId = `prop_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+      
       // In a real app, you'd save this to your database
       const propertyData = {
         id: propertyId,
