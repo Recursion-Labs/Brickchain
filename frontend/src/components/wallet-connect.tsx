@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle, Loader2, Wallet, ChevronDown, Copy, User, Settings, LogOut } from 'lucide-react';
+import { AlertCircle, CheckCircle, Loader2, Wallet, ChevronDown, User, Settings, LogOut } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { WalletProfileDialog } from './wallet-profile-dialog';
+import { useAuth } from '@/lib/auth';
 
 const WALLET_NAMES = {
   metamask: 'MetaMask',
@@ -296,6 +297,7 @@ function WalletConnectContent() {
 function WalletConnectCompact() {
   const { connectWallet, disconnectWallet, isConnected, isConnecting } = useWalletConnection();
   const { address, provider } = useWalletState();
+  const { user } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 
@@ -322,39 +324,6 @@ function WalletConnectCompact() {
     }
   };
 
-  const formatAddress = (addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-  };
-
-  const copyAddress = async () => {
-    if (!address) return;
-
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(address);
-        console.log('Address copied to clipboard');
-      } else {
-        const textArea = document.createElement('textarea');
-        textArea.value = address;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-
-        try {
-          document.execCommand('copy');
-          console.log('Address copied to clipboard');
-        } finally {
-          document.body.removeChild(textArea);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to copy address:', error);
-    }
-  };
-
   const handleViewProfile = () => {
     setIsProfileOpen(true);
   };
@@ -368,34 +337,38 @@ function WalletConnectCompact() {
   };
 
   if (isConnected && address && provider) {
+    // Get user info from Google Auth
     return (
       <>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-9 gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="hidden md:inline">{formatAddress(address)}</span>
-              <span className="md:hidden">Connected</span>
+              <span className="hidden md:inline text-xs font-medium">
+                {user?.username || 'Connected'}
+              </span>
+              <span className="md:hidden text-xs font-medium">Connected</span>
               <ChevronDown className="h-3 w-3" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={copyAddress} className="gap-2">
-              <Copy className="h-4 w-4" />
-              Copy Address
-            </DropdownMenuItem>
+            <div className="px-2 py-1.5 text-sm">
+              <p className="font-medium text-foreground">{user?.username}</p>
+              <p className="text-xs text-muted-foreground">{user?.email}</p>
+            </div>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleViewProfile} className="gap-2">
               <User className="h-4 w-4" />
-              View Profile
+              Wallet Profile
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleSettings} className="gap-2">
               <Settings className="h-4 w-4" />
-              Settings
+              Wallet Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleDisconnect} className="gap-2 text-red-600">
               <LogOut className="h-4 w-4" />
-              Disconnect
+              Disconnect Wallet
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
