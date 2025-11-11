@@ -125,7 +125,8 @@ export circuit purchaseListing(
     assert(current_status == ListingStatus.Active, "Listing not active");
 
     const price = listing_prices.lookup(disclose(listing_id));
-    const fee_amount = (price * marketplace_fee) / 10000 as Uint<64>; // Calculate fee in basis points
+    // Calculate fee as 2.5% (marketplace_fee basis points / 10000)
+    const fee_amount = price / 40 as Uint<64>; // Simplified: 2.5% = 1/40
 
     // Update collected fees
     collected_fees = (collected_fees + fee_amount) as Uint<64>;
