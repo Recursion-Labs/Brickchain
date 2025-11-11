@@ -1,33 +1,33 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="14" failures="0" errors="0" time="0.194">
-    <testsuite name="test/test.ts" timestamp="2025-11-11T03:09:37.235Z" hostname="samarthhh.local" tests="14" failures="0" errors="0" skipped="0" time="0.00597125">
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Contract Compilation &gt; should compile all contracts successfully" time="0.000626625">
+<testsuites name="vitest tests" tests="14" failures="0" errors="0" time="0.187">
+    <testsuite name="test/test.ts" timestamp="2025-11-11T11:33:09.850Z" hostname="samarthhh.local" tests="14" failures="0" errors="0" skipped="0" time="0.004067333">
+        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Contract Compilation &gt; should compile all contracts successfully" time="0.000588209">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Contract Compilation &gt; should have compiled contract directories" time="0.000249708">
+        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Contract Compilation &gt; should have compiled contract directories" time="0.000193542">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Contract Structure &gt; should have valid pragma statements in all contracts" time="0.002839792">
+        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Contract Structure &gt; should have valid pragma statements in all contracts" time="0.000763083">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Contract Structure &gt; should have proper imports in main contract" time="0.000127292">
+        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Contract Structure &gt; should have proper imports in main contract" time="0.0000985">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Contract Structure &gt; should have system initialization circuit" time="0.0000705">
+        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Contract Structure &gt; should have system initialization circuit" time="0.000065917">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Fractional Token Contract &gt; should have all required circuits" time="0.0001645">
+        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Fractional Token Contract &gt; should have all required circuits" time="0.000174625">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Fractional Token Contract &gt; should have proper enum definitions" time="0.000095458">
+        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Fractional Token Contract &gt; should have proper enum definitions" time="0.000191666">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Fractional Token Contract &gt; should have ledger declarations" time="0.000170125">
+        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Fractional Token Contract &gt; should have ledger declarations" time="0.00017725">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Fractional Token Contract &gt; should have constructor" time="0.000159042">
+        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Fractional Token Contract &gt; should have constructor" time="0.000154833">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Fractional Token Contract &gt; should use proper assert statements" time="0.000073209">
+        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Fractional Token Contract &gt; should use proper assert statements" time="0.000085375">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Deployment Configuration &gt; should validate deployment.json structure when it exists" time="0.00006925">
+        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Deployment Configuration &gt; should validate deployment.json structure when it exists" time="0.000055084">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Deployment Configuration &gt; should handle missing deployment.json gracefully" time="0.00004625">
+        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Deployment Configuration &gt; should handle missing deployment.json gracefully" time="0.000043667">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Error Handling &gt; should handle missing contract files gracefully" time="0.000058583">
+        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Error Handling &gt; should handle missing contract files gracefully" time="0.000063042">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Error Handling &gt; should validate contract syntax requirements" time="0.000231334">
+        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Error Handling &gt; should validate contract syntax requirements" time="0.000286625">
         </testcase>
     </testsuite>
 </testsuites>
