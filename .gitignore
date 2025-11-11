@@ -14,5 +14,6 @@ managed
 
 target
 Cargo.lock
+.pdfdb/
 
 build
