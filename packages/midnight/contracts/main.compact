@@ -2,34 +2,102 @@ pragma language_version >= 0.16 && <= 0.18;
 
 import CompactStandardLibrary;
 
-export circuit test(): [] {
-  // do nothing
+// System state management
+export ledger system_initialized: Boolean;
+export ledger emergency_paused: Boolean;
+export ledger admin_address: Uint<32>;
+export ledger system_metrics: Map<Bytes<32>, Uint<64>>;
+export ledger contract_versions: Map<Bytes<32>, Uint<32>>;
+
+// Constructor - initialize system state
+constructor() {
+    system_initialized = false;
+    emergency_paused = false;
+    admin_address = 0 as Uint<32>; // Will be set during initialization
 }
 
-export circuit initializeSystem(): [] {
-  // Simplified
+// Initialize the entire BrickChain system
+export circuit initializeSystem(admin: Uint<32>): [] {
+    assert(!system_initialized, "System already initialized");
+    assert(admin != 0 as Uint<32>, "Invalid admin address");
+
+    system_initialized = true;
+    admin_address = disclose(admin);
+
+    // Initialize system metrics
+    system_metrics.insert("total_users         " as Bytes<32>, 0 as Uint<64>);
+    system_metrics.insert("total_properties    " as Bytes<32>, 0 as Uint<64>);
+    system_metrics.insert("total_transactions  " as Bytes<32>, 0 as Uint<64>);
+    system_metrics.insert("system_fees_collected" as Bytes<32>, 0 as Uint<64>);
 }
 
-export circuit getSystemStatus(): [] {
-  // Simplified
+// Emergency pause - only admin can call
+export circuit emergencyPause(caller: Uint<32>): [] {
+    assert(system_initialized, "System not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can pause system");
+    assert(!emergency_paused, "System already paused");
+
+    emergency_paused = true;
 }
 
-export circuit emergencyPause(): [] {
-  // Simplified
+// Emergency unpause - only admin can call
+export circuit emergencyUnpause(caller: Uint<32>): [] {
+    assert(system_initialized, "System not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can unpause system");
+    assert(emergency_paused, "System not paused");
+
+    emergency_paused = false;
 }
 
-export circuit emergencyUnpause(): [] {
-  // Simplified
+// Get system status
+export circuit getSystemStatus(): [Boolean, Boolean, Uint<32>] {
+    return [system_initialized, emergency_paused, admin_address];
 }
 
-export circuit createAuthProof(): [] {
-  // Simplified
+// Update system metrics
+export circuit updateMetrics(metric_key: Bytes<32>, value: Uint<64>, caller: Uint<32>): [] {
+    assert(system_initialized, "System not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can update metrics");
+    assert(!emergency_paused, "System is paused");
+
+    system_metrics.insert(disclose(metric_key), disclose(value));
 }
 
-export circuit updateMetrics(): [] {
-  // Simplified
+// Get metric value
+export circuit getMetric(metric_key: Bytes<32>): Uint<64> {
+    assert(system_initialized, "System not initialized");
+    assert(system_metrics.member(disclose(metric_key)), "Metric not found");
+
+    return system_metrics.lookup(disclose(metric_key));
 }
 
-export circuit collectSystemFees(): [] {
-  // Simplified
+// Register contract version for upgrade tracking
+export circuit registerContractVersion(contract_name: Bytes<32>, version: Uint<32>, caller: Uint<32>): [] {
+    assert(system_initialized, "System not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can register versions");
+    assert(!emergency_paused, "System is paused");
+
+    contract_versions.insert(disclose(contract_name), disclose(version));
+}
+
+// Get contract version
+export circuit getContractVersion(contract_name: Bytes<32>): Uint<32> {
+    assert(system_initialized, "System not initialized");
+    assert(contract_versions.member(disclose(contract_name)), "Contract version not registered");
+
+    return contract_versions.lookup(disclose(contract_name));
+}
+
+// Collect system fees (simplified - would integrate with token contract)
+export circuit collectSystemFees(amount: Uint<64>, caller: Uint<32>): [] {
+    assert(system_initialized, "System not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can collect fees");
+    assert(!emergency_paused, "System is paused");
+
+    // Update fee collection metric
+    const current_fees = system_metrics.member("system_fees_collected" as Bytes<32>)
+        ? system_metrics.lookup("system_fees_collected" as Bytes<32>)
+        : 0 as Uint<64>;
+
+    system_metrics.insert("system_fees_collected" as Bytes<32>, (current_fees + disclose(amount)) as Uint<64>);
 }
