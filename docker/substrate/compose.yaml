@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  substrate:
+    image: parity/substrate:latest
+    ports:
+      - "9944:9944"    # WebSocket RPC
+      - "9933:9933"    # HTTP RPC
+      - "9615:9615"    # Prometheus metrics
+    command: --dev --rpc-external --rpc-cors=all
+    volumes:
+      - substrate_data:/tmp/substrate
+    restart: unless-stopped
+
+volumes:
+  substrate_data:
