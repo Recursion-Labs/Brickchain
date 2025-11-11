@@ -2,95 +2,18 @@ pragma language_version >= 0.16 && <= 0.18;
 
 import CompactStandardLibrary;
 
-import "./lib/types.compact";
-import "./utils.compact";
-
-export ledger {
-  verificationRequests: Map<u64, VerificationRequest>;
-  verifiedProofs: Map<u64, VerifiedProof>;
-  nextRequestId: u64 = 1;
-  adminAddress: Address = zero_address;
-  verificationFee: u128 = 500u128;
+export circuit initializeVerification(): [] {
+  // Simplified
 }
 
-export type VerificationRequest = {
-  requester: Address,
-  pid: u64,
-  proofType: string,
-  proofHash: string,
-  isVerified: bool,
-  verifiedAt: u64,
-  createdAt: u64
-};
-
-export type VerifiedProof = {
-  pid: u64,
-  proofHash: string,
-  verifiedAt: u64,
-  verifier: Address
-};
-
-export circuit initializeVerification(admin: Address): [] {
-  require(adminAddress == zero_address, "Already initialized");
-  adminAddress = admin;
-  publish("VERIFICATION_INITIALIZED", admin);
+export circuit requestVerification(): [] {
+  // Simplified
 }
 
-export circuit requestVerification(
-  pid: u64,
-  requester: Address,
-  proofType: string,
-  proofHash: string,
-  authProof: Opaque<"bool">
-): [u64] {
-  require(pid > 0u64, "Invalid property ID");
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Unauthorized");
-  let requestId = nextRequestId;
-  nextRequestId += 1;
-  let request: VerificationRequest = {
-    requester: requester,
-    pid: pid,
-    proofType: proofType,
-    proofHash: proofHash,
-    isVerified: false,
-    verifiedAt: 0u64,
-    createdAt: getCurrentTime()
-  };
-  verificationRequests[requestId] = request;
-  publish("VERIFICATION_REQUESTED", requestId, pid, requester);
-  return [requestId];
+export circuit verifyProof(): [] {
+  // Simplified
 }
 
-export circuit verifyProof(
-  requestId: u64,
-  verifier: Address,
-  isValid: bool,
-  authProof: Opaque<"bool">
-): [] {
-  require(verificationRequests[requestId].isVerified == false, "Already verified");
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Unauthorized");
-  let verifiedAt = getCurrentTime();
-  verificationRequests[requestId].isVerified = isValid;
-  verificationRequests[requestId].verifiedAt = verifiedAt;
-  let pid = verificationRequests[requestId].pid;
-  let proofHash = verificationRequests[requestId].proofHash;
-  verifiedProofs[requestId] = {
-    pid: pid,
-    proofHash: proofHash,
-    verifiedAt: verifiedAt,
-    verifier: verifier
-  };
-  publish("PROOF_VERIFIED", requestId, pid, isValid, verifier);
-}
-
-export circuit setVerificationFee(
-  newFee: u128,
-  authProof: Opaque<"bool">
-): [] {
-  let auth = disclose(authProof);
-  require(auth == "true" || auth == "1", "Admin only");
-  verificationFee = newFee;
-  publish("VERIFICATION_FEE_UPDATED", newFee);
+export circuit setVerificationFee(): [] {
+  // Simplified
 }

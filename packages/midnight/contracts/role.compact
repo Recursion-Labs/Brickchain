@@ -1,35 +1,43 @@
 pragma language_version >= 0.16 && <= 0.18;
 
 import CompactStandardLibrary;
-import "./utils.compact";
 
-export ledger {
-  userRoles: Map<Address, string>;
-  adminAddress: Address = zero_address;
-  isInitialized: bool = false;
+enum Role {
+    USER,
+    ADMIN,
+    MODERATOR
 }
 
-export circuit initializeRoles(admin: Address): [] {
-  require(!isInitialized, "Already initialized");
-  require(admin != zero_address, "Invalid admin address");
-  adminAddress = admin;
-  userRoles[admin] = "ADMIN";
-  isInitialized = true;
-  publish("ROLES_INITIALIZED", admin);
+// Role management ledger
+export ledger user_roles: Map<Uint<32>, Role>;
+export ledger admin_address: Uint<32>;
+export ledger is_initialized: Boolean;
+
+// Constructor
+constructor() {
+    admin_address = 0 as Uint<32>;
+    is_initialized = false;
 }
 
-export circuit setRole(user: Address, role: string, caller: Address): [] {
-  require(isInitialized, "Not initialized");
-  require(caller == adminAddress, "Admin only");
-  require(user != zero_address, "Invalid user address");
-  userRoles[user] = role;
-  publish("ROLE_SET", user, role);
+export circuit initialize_roles(admin: Uint<32>): [] {
+    assert(!is_initialized, "Already initialized");
+    assert(admin != 0 as Uint<32>, "Invalid admin address");
+    admin_address = disclose(admin);
+    user_roles.insert(disclose(admin), Role.ADMIN);
+    is_initialized = true;
 }
 
-export circuit getUserRole(address: Address): [string] {
-  let role = userRoles[address];
-  if (role == "") {
-    return ["USER"];
-  }
-  return [role];
+export circuit set_role(user: Uint<32>, role: Role, caller: Uint<32>): [] {
+    assert(is_initialized, "Not initialized");
+    assert(disclose(caller) == admin_address, "Admin only");
+    assert(disclose(user) != 0 as Uint<32>, "Invalid user address");
+    user_roles.insert(disclose(user), disclose(role));
+}
+
+export circuit get_user_role(user: Uint<32>): [Role] {
+    if (user_roles.member(disclose(user))) {
+        return [user_roles.lookup(disclose(user))];
+    } else {
+        return [Role.USER];
+    }
 }
