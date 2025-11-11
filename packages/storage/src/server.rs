@@ -2,7 +2,7 @@
 use anyhow::{Context, Result};
 use axum::{
     extract::{Path, Query, State, Multipart},
-    http::{StatusCode, header},
+    http::{StatusCode, header, Method},
     response::{IntoResponse, Response, Json},
     routing::{get, post},
     Router,
@@ -10,7 +10,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::{sync::Arc, path::PathBuf, net::SocketAddr};
 use store::DocStore;
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{CorsLayer, Any};
 
 /// Application state shared across handlers
 #[derive(Clone)]
@@ -81,15 +81,15 @@ async fn health_check() -> impl IntoResponse {
 
 /// Store a PDF document with MANDATORY IPFS pinning and blockchain publishing
 /// POST /api/store (always pins to IPFS and publishes to blockchain)
-async fn store_pdf(
+pub async fn store_pdf(
     State(state): State<AppState>,
     Query(_params): Query<StoreQuery>,
     mut multipart: Multipart,
-) -> Result<Json<StoreResponse>, AppError> {
+) -> impl IntoResponse {
     // Extract the file from multipart form data
     let mut temp_path: Option<PathBuf> = None;
     
-    while let Some(field) = multipart.next_field().await? {
+    while let Ok(Some(field)) = multipart.next_field().await {
         let name = field.name().unwrap_or("");
         if name == "file" {
             let filename = field.file_name()
@@ -97,30 +97,55 @@ async fn store_pdf(
                 .to_string();
             
             // Save to temp file
-            let data = field.bytes().await?;
+            let data = match field.bytes().await {
+                Ok(d) => d,
+                Err(e) => {
+                    return (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to read file data: {}", e)).into_response();
+                }
+            };
+            
             let temp_dir = std::env::temp_dir();
             let temp_file = temp_dir.join(filename);
-            std::fs::write(&temp_file, data)?;
+            
+            if let Err(e) = std::fs::write(&temp_file, data) {
+                return (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to write temp file: {}", e)).into_response();
+            }
+            
             temp_path = Some(temp_file);
             break;
         }
     }
     
-    let temp_path = temp_path.ok_or_else(|| anyhow::anyhow!("No file provided"))?;
+    let temp_path = match temp_path {
+        Some(p) => p,
+        None => {
+            return (StatusCode::BAD_REQUEST, "No file provided").into_response();
+        }
+    };
     
     // ALWAYS store with IPFS pinning (mandatory for decentralization)
-    let meta = state.db.store_pdf_with_ipfs(&temp_path, state.ipfs_url.as_deref())?;
+    let meta = match state.db.store_pdf_with_ipfs(&temp_path, state.ipfs_url.as_deref()).await {
+        Ok(m) => m,
+        Err(e) => {
+            let _ = std::fs::remove_file(&temp_path);
+            return (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to store PDF: {}", e)).into_response();
+        }
+    };
     
     // ALWAYS publish to blockchain (mandatory for tamper-proof registry)
-    use tokio::runtime::Runtime;
     use store::chain::publish_remark;
-    let rt = Runtime::new()?;
-    let block_hash = rt.block_on(publish_remark(&state.node_url, &state.seed, &meta))?;
+    let block_hash = match publish_remark(&state.node_url, &state.seed, &meta).await {
+        Ok(b) => b,
+        Err(e) => {
+            let _ = std::fs::remove_file(&temp_path);
+            return (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to publish to blockchain: {}", e)).into_response();
+        }
+    };
     
     // Clean up temp file
     let _ = std::fs::remove_file(temp_path);
     
-    Ok(Json(StoreResponse {
+    Json(StoreResponse {
         success: true,
         id: meta.id_hex.clone(),
         sha256: meta.id_hex.clone(),
@@ -128,7 +153,7 @@ async fn store_pdf(
         size_bytes: meta.size_bytes,
         block_hash: Some(block_hash),
         message: "PDF stored successfully on IPFS and on-chain".to_string(),
-    }))
+    }).into_response()
 }
 
 /// Get document metadata by ID
@@ -296,6 +321,17 @@ where
 
 /// Build the application router
 fn app(state: AppState) -> Router {
+    // Configure CORS to handle ngrok and local development
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
+        .allow_headers(Any)
+        .expose_headers([
+            header::CONTENT_TYPE,
+            header::CONTENT_LENGTH,
+            header::CONTENT_DISPOSITION,
+        ]);
+
     Router::new()
         .route("/health", get(health_check))
         .route("/", get(api_docs))
@@ -304,7 +340,7 @@ fn app(state: AppState) -> Router {
         .route("/api/docs/:id", get(get_metadata).delete(delete_doc))
         .route("/api/docs/:id/download", get(download_pdf))
         .route("/api/docs/:id/export", get(export_onchain))
-        .layer(CorsLayer::permissive())
+        .layer(cors)
         .with_state(state)
 }
 
