@@ -1,0 +1,1 @@
+export { default as manageProperty } from "./manage.controller"

@@ -24,3 +24,16 @@ export const verifyOtpSchema = z.object({
 	otp: z.string().length(6),
 });
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
+
+export const propertyDtoSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	description: z.string(),
+	type: z.enum(["RESIDENTIAL", "COMMERCIAL", "INDUSTRIAL", "LAND", "MULTI_FAMILY", "OFFICE_BUILDING", "RETAIL", "MIXED_USE"]),
+	Location: z.string(),
+	Value: z.number(),
+	Shares: z.number(),
+	createdAt: z.date(),
+	updatedAt: z.date(),
+});
+export type PropertyDTO = z.infer<typeof propertyDtoSchema>;

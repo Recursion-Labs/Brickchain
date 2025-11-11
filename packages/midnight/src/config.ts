@@ -65,7 +65,7 @@ export const DEPLOYMENT_CONFIG: DeploymentConfig = {
 
 // Test configuration
 export const TEST_CONFIG = {
-  contractsDir: 'packages/midnight/contracts',
+  contractsDir: 'contracts',
   buildDir: 'build',
   contractFiles: [
     'main.compact',
@@ -73,41 +73,32 @@ export const TEST_CONFIG = {
     'fractional_token.compact',
     'marketplace.compact',
     'verification.compact',
-    'role.compact',
-    'utils.compact',
-    'lib/types.compact'
-  ],
-  requiredTypes: [
-    'PropertyMetadata',
-    'PropertyDetails',
-    'OwnershipProof',
-    'Listing',
-    'Escrow',
-    'VerificationRequest',
-    'VerifiedProof'
-  ],
-  utilityFunctions: [
-    'getCurrentTime',
-    'validateAddress',
-    'validateAmount',
-    'validateShares'
+    'role.compact'
   ],
   contractTests: [
     {
+      name: 'main',
+      circuits: ['test', 'initializeSystem', 'registerUser', 'updateUser', 'getUser', 'transferFunds', 'getBalance', 'withdrawFunds']
+    },
+    {
+      name: 'role',
+      circuits: ['initializeRoles', 'setRole', 'getUserRole']
+    },
+    {
       name: 'property_registry',
-      circuits: ['registerProperty', 'initializeRegistry', 'updatePropertyStatus']
+      circuits: ['initializeRegistry', 'registerProperty', 'updateProperty', 'getProperty', 'transferProperty', 'verifyProperty']
     },
     {
       name: 'fractional_token',
-      circuits: ['transferShares', 'initializeToken', 'mintShares', 'burnShares']
+      circuits: ['initializeToken', 'transferShares', 'mintShares', 'burnShares', 'getBalance', 'getTotalSupply', 'approve', 'transferFrom']
     },
     {
       name: 'marketplace',
-      circuits: ['createListing', 'fulfillListing', 'initializeMarketplace']
+      circuits: ['initializeMarketplace', 'createListing', 'updateListing', 'cancelListing', 'purchaseListing', 'getListing']
     },
     {
       name: 'verification',
-      circuits: ['requestVerification', 'verifyProof', 'initializeVerification']
+      circuits: ['initializeVerification', 'requestVerification', 'verifyProof', 'getVerificationStatus']
     }
   ]
 };
