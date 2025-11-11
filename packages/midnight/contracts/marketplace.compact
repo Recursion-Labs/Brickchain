@@ -2,26 +2,184 @@ pragma language_version >= 0.16 && <= 0.18;
 
 import CompactStandardLibrary;
 
-export circuit initializeMarketplace(): [] {
-  // Simplified
+// Listing status
+enum ListingStatus {
+    Active,
+    Sold,
+    Cancelled,
+    Expired
 }
 
-export circuit createListing(): [] {
-  // Simplified
+// Marketplace listings
+export ledger listing_sellers: Map<Bytes<32>, Uint<32>>; // listing_id -> seller
+export ledger listing_property_ids: Map<Bytes<32>, Bytes<32>>; // listing_id -> property_id
+export ledger listing_prices: Map<Bytes<32>, Uint<64>>; // listing_id -> price
+export ledger listing_statuses: Map<Bytes<32>, ListingStatus>; // listing_id -> status
+export ledger listing_timestamps: Map<Bytes<32>, Uint<64>>; // listing_id -> created_at
+export ledger listing_durations: Map<Bytes<32>, Uint<64>>; // listing_id -> duration_seconds
+
+// Marketplace configuration
+export ledger marketplace_initialized: Boolean;
+export ledger marketplace_fee: Uint<64>; // Basis points (e.g., 250 = 2.5%)
+export ledger marketplace_paused: Boolean;
+export ledger admin_address: Uint<32>;
+export ledger collected_fees: Uint<64>;
+
+// Listing counter
+export ledger listing_counter: Counter;
+
+// Constructor
+constructor() {
+    marketplace_initialized = false;
+    marketplace_fee = 250 as Uint<64>; // 2.5% default fee
+    marketplace_paused = false;
+    admin_address = 0 as Uint<32>;
+    collected_fees = 0 as Uint<64>;
 }
 
-export circuit fulfillListing(): [] {
-  // Simplified
+// Initialize marketplace
+export circuit initializeMarketplace(admin: Uint<32>): [] {
+    assert(!marketplace_initialized, "Marketplace already initialized");
+    assert(admin != 0 as Uint<32>, "Invalid admin address");
+
+    marketplace_initialized = true;
+    admin_address = disclose(admin);
 }
 
-export circuit setMarketplaceFee(): [] {
-  // Simplified
+// Create a new listing
+export circuit createListing(
+    listing_id: Bytes<32>,
+    property_id: Bytes<32>,
+    price: Uint<64>,
+    duration_seconds: Uint<64>,
+    seller: Uint<32>
+): [] {
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(!marketplace_paused, "Marketplace is paused");
+    assert(!listing_statuses.member(disclose(listing_id)), "Listing already exists");
+    assert(disclose(price) > 0 as Uint<64>, "Price must be positive");
+    assert(disclose(seller) != 0 as Uint<32>, "Invalid seller address");
+
+    const current_time = 1234567890 as Uint<64>; // Would be actual timestamp in real implementation
+
+    listing_sellers.insert(disclose(listing_id), disclose(seller));
+    listing_property_ids.insert(disclose(listing_id), disclose(property_id));
+    listing_prices.insert(disclose(listing_id), disclose(price));
+    listing_statuses.insert(disclose(listing_id), ListingStatus.Active);
+    listing_timestamps.insert(disclose(listing_id), current_time);
+    listing_durations.insert(disclose(listing_id), disclose(duration_seconds));
+
+    listing_counter.increment(1);
 }
 
-export circuit pauseMarketplace(): [] {
-  // Simplified
+// Update listing price
+export circuit updateListing(
+    listing_id: Bytes<32>,
+    new_price: Uint<64>,
+    caller: Uint<32>
+): [] {
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(!marketplace_paused, "Marketplace is paused");
+    assert(listing_statuses.member(disclose(listing_id)), "Listing not found");
+
+    const seller = listing_sellers.lookup(disclose(listing_id));
+    assert(disclose(caller) == seller || disclose(caller) == admin_address, "Not authorized");
+
+    const current_status = listing_statuses.lookup(disclose(listing_id));
+    assert(current_status == ListingStatus.Active, "Listing not active");
+
+    assert(disclose(new_price) > 0 as Uint<64>, "Price must be positive");
+
+    listing_prices.insert(disclose(listing_id), disclose(new_price));
 }
 
-export circuit unpauseMarketplace(): [] {
-  // Simplified
+// Cancel listing
+export circuit cancelListing(
+    listing_id: Bytes<32>,
+    caller: Uint<32>
+): [] {
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(!marketplace_paused, "Marketplace is paused");
+    assert(listing_statuses.member(disclose(listing_id)), "Listing not found");
+
+    const seller = listing_sellers.lookup(disclose(listing_id));
+    assert(disclose(caller) == seller || disclose(caller) == admin_address, "Not authorized");
+
+    const current_status = listing_statuses.lookup(disclose(listing_id));
+    assert(current_status == ListingStatus.Active, "Listing not active");
+
+    listing_statuses.insert(disclose(listing_id), ListingStatus.Cancelled);
+}
+
+// Purchase listing
+export circuit purchaseListing(
+    listing_id: Bytes<32>,
+    buyer: Uint<32>
+): [] {
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(!marketplace_paused, "Marketplace is paused");
+    assert(listing_statuses.member(disclose(listing_id)), "Listing not found");
+    assert(disclose(buyer) != 0 as Uint<32>, "Invalid buyer address");
+
+    const current_status = listing_statuses.lookup(disclose(listing_id));
+    assert(current_status == ListingStatus.Active, "Listing not active");
+
+    const price = listing_prices.lookup(disclose(listing_id));
+    const fee_amount = (price * marketplace_fee) / 10000 as Uint<64>; // Calculate fee in basis points
+
+    // Update collected fees
+    collected_fees = (collected_fees + fee_amount) as Uint<64>;
+
+    // Mark as sold
+    listing_statuses.insert(disclose(listing_id), ListingStatus.Sold);
+}
+
+// Get listing information
+export circuit getListing(listing_id: Bytes<32>): [Uint<32>, Bytes<32>, Uint<64>, ListingStatus] {
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(listing_statuses.member(disclose(listing_id)), "Listing not found");
+
+    const seller = listing_sellers.lookup(disclose(listing_id));
+    const property_id = listing_property_ids.lookup(disclose(listing_id));
+    const price = listing_prices.lookup(disclose(listing_id));
+    const status = listing_statuses.lookup(disclose(listing_id));
+
+    return [seller, property_id, price, status];
+}
+
+// Set marketplace fee (admin only)
+export circuit setMarketplaceFee(new_fee: Uint<64>, caller: Uint<32>): [] {
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can set fee");
+    assert(disclose(new_fee) <= 1000 as Uint<64>, "Fee cannot exceed 10%");
+
+    marketplace_fee = disclose(new_fee);
+}
+
+// Pause/unpause marketplace (admin only)
+export circuit pauseMarketplace(caller: Uint<32>): [] {
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can pause marketplace");
+    assert(!marketplace_paused, "Marketplace already paused");
+
+    marketplace_paused = true;
+}
+
+export circuit unpauseMarketplace(caller: Uint<32>): [] {
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can unpause marketplace");
+    assert(marketplace_paused, "Marketplace not paused");
+
+    marketplace_paused = false;
+}
+
+// Collect accumulated fees (admin only)
+export circuit collectFees(caller: Uint<32>): Uint<64> {
+    assert(marketplace_initialized, "Marketplace not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can collect fees");
+
+    const fees_to_collect = collected_fees;
+    collected_fees = 0 as Uint<64>;
+
+    return fees_to_collect;
 }
