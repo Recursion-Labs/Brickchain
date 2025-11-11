@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const STORAGE_API_URL = process.env.NEXT_PUBLIC_STORAGE_API_URL || 'http://localhost:3000';
+const STORAGE_API_URL = process.env.NEXT_PUBLIC_STORAGE_API_URL || 'http://localhost:3020';
 const IPFS_GATEWAY = process.env.NEXT_PUBLIC_IPFS_GATEWAY || 'https://gateway.pinata.cloud/ipfs';
 
 export interface StorageResponse {
@@ -53,14 +53,20 @@ class StorageService {
       const formData = new FormData();
       formData.append('file', file);
 
-      console.log(`[Storage] Uploading ${file.name} to ${STORAGE_API_URL}/api/store`);
+      // Remove trailing slash to avoid double slashes
+      const baseUrl = STORAGE_API_URL.replace(/\/$/, '');
+      console.log(`[Storage] Uploading ${file.name} to ${baseUrl}/api/store`);
 
       const response = await axios.post<any>(
-        `${STORAGE_API_URL}/api/store`,
+        `${baseUrl}/api/store`,
         formData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
+            // Add ngrok bypass header if using ngrok
+            ...(STORAGE_API_URL.includes('ngrok') && {
+              'ngrok-skip-browser-warning': 'true'
+            }),
           },
           onUploadProgress: (progressEvent: any) => {
             if (onProgress && progressEvent.total) {
@@ -109,7 +115,14 @@ class StorageService {
    */
   async getDocument(documentId: string): Promise<DocumentMetadata | null> {
     try {
-      const response = await axios.get(`${STORAGE_API_URL}/api/docs/${documentId}`);
+      const baseUrl = STORAGE_API_URL.replace(/\/$/, '');
+      const response = await axios.get(`${baseUrl}/api/docs/${documentId}`, {
+        headers: {
+          ...(STORAGE_API_URL.includes('ngrok') && {
+            'ngrok-skip-browser-warning': 'true'
+          }),
+        },
+      });
       
       if (!response.data.success || !response.data.metadata) {
         return null;
@@ -138,7 +151,8 @@ class StorageService {
    * Returns the download URL
    */
   getDownloadUrl(documentId: string): string {
-    return `${STORAGE_API_URL}/api/docs/${documentId}/download`;
+    const baseUrl = STORAGE_API_URL.replace(/\/$/, '');
+    return `${baseUrl}/api/docs/${documentId}/download`;
   }
 
   /**
@@ -147,7 +161,14 @@ class StorageService {
   async deleteDocument(documentId: string): Promise<void> {
     try {
       console.log(`[Storage] Deleting document ${documentId}`);
-      const response = await axios.delete(`${STORAGE_API_URL}/api/docs/${documentId}`);
+      const baseUrl = STORAGE_API_URL.replace(/\/$/, '');
+      const response = await axios.delete(`${baseUrl}/api/docs/${documentId}`, {
+        headers: {
+          ...(STORAGE_API_URL.includes('ngrok') && {
+            'ngrok-skip-browser-warning': 'true'
+          }),
+        },
+      });
       
       if (!response.data.success) {
         throw new Error('Delete failed: ' + response.data.message);
@@ -168,7 +189,14 @@ class StorageService {
    */
   async listDocuments(): Promise<DocumentMetadata[]> {
     try {
-      const response = await axios.get(`${STORAGE_API_URL}/api/docs`);
+      const baseUrl = STORAGE_API_URL.replace(/\/$/, '');
+      const response = await axios.get(`${baseUrl}/api/docs`, {
+        headers: {
+          ...(STORAGE_API_URL.includes('ngrok') && {
+            'ngrok-skip-browser-warning': 'true'
+          }),
+        },
+      });
       
       if (!response.data.success) {
         return [];
@@ -201,8 +229,14 @@ class StorageService {
    */
   async checkHealth(): Promise<boolean> {
     try {
-      const response = await axios.get(`${STORAGE_API_URL}/health`, {
+      const baseUrl = STORAGE_API_URL.replace(/\/$/, '');
+      const response = await axios.get(`${baseUrl}/health`, {
         timeout: 5000,
+        headers: {
+          ...(STORAGE_API_URL.includes('ngrok') && {
+            'ngrok-skip-browser-warning': 'true'
+          }),
+        },
       });
       return response.status === 200 && response.data.status === 'healthy';
     } catch (error) {
