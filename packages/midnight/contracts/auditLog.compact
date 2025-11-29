@@ -1,0 +1,245 @@
+// audit_log.compact -> Records all system events and transactions for audit trail, Provides immutable event logging for compliance and transparency, Enables comprehensive system activity tracking and analysis
+
+pragma language_version >= 0.16 && <= 0.18;
+
+import CompactStandardLibrary;
+
+// Event types in the system
+enum EventType {
+    PropertyRegistered,
+    PropertyVerified,
+    PropertyTokenized,
+    ListingCreated,
+    ListingSold,
+    TransactionCompleted,
+    UserRoleChanged,
+    AdminAction,
+    EmergencyPause,
+    FeeCollected,
+    DisputeFiled,
+    DisputeResolved
+}
+
+// LEDGER STATE - Audit Log Management
+export ledger audit_entries: Map<Bytes<32>, EventType>; // entry_id -> event_type
+export ledger entry_actors: Map<Bytes<32>, Uint<32>>; // entry_id -> actor_address
+export ledger entry_targets: Map<Bytes<32>, Bytes<32>>; // entry_id -> target_id
+export ledger entry_details: Map<Bytes<32>, Bytes<128>>; // entry_id -> event_details_hash
+export ledger entry_timestamps: Map<Bytes<32>, Uint<64>>; // entry_id -> timestamp
+export ledger entry_statuses: Map<Bytes<32>, Boolean>; // entry_id -> success/failure
+
+// Audit configuration
+export ledger audit_initialized: Boolean;
+export ledger admin_address: Uint<32>;
+export ledger audit_paused: Boolean;
+export ledger total_entries: Uint<64>;
+
+// Audit trail tracking
+export ledger entry_counter: Counter;
+export ledger entries_by_type: Map<EventType, Uint<64>>; // event_type -> count
+export ledger entries_by_actor: Map<Uint<32>, Uint<64>>; // actor -> count
+
+// CONSTRUCTOR
+constructor() {
+    audit_initialized = false;
+    admin_address = 0 as Uint<32>;
+    audit_paused = false;
+    total_entries = 0 as Uint<64>;
+}
+
+// INITIALIZATION CIRCUIT
+
+// Initialize audit logging system
+export circuit initializeAudit(admin: Uint<32>): [] {
+    assert(!audit_initialized, "Audit logging already initialized");
+    assert(admin != 0 as Uint<32>, "Invalid admin address");
+
+    audit_initialized = true;
+    admin_address = disclose(admin);
+}
+
+// AUDIT LOGGING CIRCUITS
+
+// Log property event
+// Records when properties are registered, verified, or tokenized
+export circuit logPropertyEvent(
+    entry_id: Bytes<32>,
+    event_type: EventType,
+    property_id: Bytes<32>,
+    actor: Uint<32>,
+    timestamp_seconds: Uint<64>
+): [] {
+    assert(audit_initialized, "Audit logging not initialized");
+    assert(!audit_paused, "Audit logging is paused");
+    assert(!audit_entries.member(disclose(entry_id)), "Entry already exists");
+    assert(disclose(actor) != 0 as Uint<32>, "Invalid actor address");
+    assert(disclose(timestamp_seconds) > 0 as Uint<64>, "Invalid timestamp");
+
+    audit_entries.insert(disclose(entry_id), disclose(event_type));
+    entry_actors.insert(disclose(entry_id), disclose(actor));
+    entry_targets.insert(disclose(entry_id), disclose(property_id));
+    entry_timestamps.insert(disclose(entry_id), disclose(timestamp_seconds));
+    entry_statuses.insert(disclose(entry_id), true);
+
+    entry_counter.increment(1);
+    total_entries = (total_entries + 1 as Uint<64>) as Uint<64>;
+
+    // Update statistics
+    const type_count = entries_by_type.member(disclose(event_type))
+        ? entries_by_type.lookup(disclose(event_type))
+        : 0 as Uint<64>;
+    entries_by_type.insert(disclose(event_type), (type_count + 1 as Uint<64>) as Uint<64>);
+
+    const actor_count = entries_by_actor.member(disclose(actor))
+        ? entries_by_actor.lookup(disclose(actor))
+        : 0 as Uint<64>;
+    entries_by_actor.insert(disclose(actor), (actor_count + 1 as Uint<64>) as Uint<64>);
+}
+
+// Log transaction event
+// Records marketplace transactions, listings, and sales
+export circuit logTransactionEvent(
+    entry_id: Bytes<32>,
+    event_type: EventType,
+    transaction_id: Bytes<32>,
+    actor: Uint<32>,
+    counterparty: Uint<32>,
+    amount: Uint<64>,
+    timestamp_seconds: Uint<64>
+): [] {
+    assert(audit_initialized, "Audit logging not initialized");
+    assert(!audit_paused, "Audit logging is paused");
+    assert(!audit_entries.member(disclose(entry_id)), "Entry already exists");
+    assert(disclose(actor) != 0 as Uint<32>, "Invalid actor address");
+    assert(disclose(timestamp_seconds) > 0 as Uint<64>, "Invalid timestamp");
+
+    audit_entries.insert(disclose(entry_id), disclose(event_type));
+    entry_actors.insert(disclose(entry_id), disclose(actor));
+    entry_targets.insert(disclose(entry_id), disclose(transaction_id));
+    entry_timestamps.insert(disclose(entry_id), disclose(timestamp_seconds));
+    entry_statuses.insert(disclose(entry_id), true);
+
+    entry_counter.increment(1);
+    total_entries = (total_entries + 1 as Uint<64>) as Uint<64>;
+
+    // Update statistics
+    const type_count = entries_by_type.member(disclose(event_type))
+        ? entries_by_type.lookup(disclose(event_type))
+        : 0 as Uint<64>;
+    entries_by_type.insert(disclose(event_type), (type_count + 1 as Uint<64>) as Uint<64>);
+
+    const actor_count = entries_by_actor.member(disclose(actor))
+        ? entries_by_actor.lookup(disclose(actor))
+        : 0 as Uint<64>;
+    entries_by_actor.insert(disclose(actor), (actor_count + 1 as Uint<64>) as Uint<64>);
+}
+
+// Log admin action
+// Records all administrative actions for compliance
+export circuit logAdminAction(
+    entry_id: Bytes<32>,
+    action_type: EventType,
+    admin: Uint<32>,
+    target_resource: Bytes<32>,
+    details_hash: Bytes<128>,
+    timestamp_seconds: Uint<64>
+): [] {
+    assert(audit_initialized, "Audit logging not initialized");
+    assert(!audit_paused, "Audit logging is paused");
+    assert(disclose(admin) == admin_address, "Only admin can log admin actions");
+    assert(!audit_entries.member(disclose(entry_id)), "Entry already exists");
+
+    audit_entries.insert(disclose(entry_id), disclose(action_type));
+    entry_actors.insert(disclose(entry_id), disclose(admin));
+    entry_targets.insert(disclose(entry_id), disclose(target_resource));
+    entry_details.insert(disclose(entry_id), disclose(details_hash));
+    entry_timestamps.insert(disclose(entry_id), disclose(timestamp_seconds));
+    entry_statuses.insert(disclose(entry_id), true);
+
+    entry_counter.increment(1);
+    total_entries = (total_entries + 1 as Uint<64>) as Uint<64>;
+
+    // Update statistics
+    const type_count = entries_by_type.member(disclose(action_type))
+        ? entries_by_type.lookup(disclose(action_type))
+        : 0 as Uint<64>;
+    entries_by_type.insert(disclose(action_type), (type_count + 1 as Uint<64>) as Uint<64>);
+}
+
+// Mark log entry as failed
+// Records failed transactions or actions
+export circuit markEntryFailed(
+    entry_id: Bytes<32>,
+    caller: Uint<32>
+): [] {
+    assert(audit_initialized, "Audit logging not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can mark entries");
+    assert(audit_entries.member(disclose(entry_id)), "Entry not found");
+
+    entry_statuses.insert(disclose(entry_id), false);
+}
+
+// QUERY CIRCUITS
+
+// Get audit entry
+// Retrieves complete audit log entry
+export circuit getAuditEntry(entry_id: Bytes<32>): [EventType, Uint<32>, Bytes<32>, Uint<64>, Boolean] {
+    assert(audit_initialized, "Audit logging not initialized");
+    assert(audit_entries.member(disclose(entry_id)), "Entry not found");
+
+    const event_type = audit_entries.lookup(disclose(entry_id));
+    const actor = entry_actors.lookup(disclose(entry_id));
+    const target = entry_targets.lookup(disclose(entry_id));
+    const timestamp = entry_timestamps.lookup(disclose(entry_id));
+    const status = entry_statuses.lookup(disclose(entry_id));
+
+    return [event_type, actor, target, timestamp, status];
+}
+
+// Get event count by type
+export circuit getEventTypeCount(event_type: EventType): Uint<64> {
+    assert(audit_initialized, "Audit logging not initialized");
+
+    if (entries_by_type.member(disclose(event_type))) {
+        return entries_by_type.lookup(disclose(event_type));
+    } else {
+        return 0 as Uint<64>;
+    }
+}
+
+// Get actor activity count
+export circuit getActorEventCount(actor: Uint<32>): Uint<64> {
+    assert(audit_initialized, "Audit logging not initialized");
+
+    if (entries_by_actor.member(disclose(actor))) {
+        return entries_by_actor.lookup(disclose(actor));
+    } else {
+        return 0 as Uint<64>;
+    }
+}
+
+// Get total log entries
+export circuit getTotalEntries(): Uint<64> {
+    assert(audit_initialized, "Audit logging not initialized");
+    return total_entries;
+}
+
+// ADMIN MANAGEMENT CIRCUITS
+
+// Pause audit logging (emergency only)
+export circuit pauseAudit(caller: Uint<32>): [] {
+    assert(audit_initialized, "Audit logging not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can pause");
+    assert(!audit_paused, "Already paused");
+
+    audit_paused = true;
+}
+
+// Unpause audit logging
+export circuit unpauseAudit(caller: Uint<32>): [] {
+    assert(audit_initialized, "Audit logging not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can unpause");
+    assert(audit_paused, "Not paused");
+
+    audit_paused = false;
+}

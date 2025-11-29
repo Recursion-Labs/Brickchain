@@ -1,58 +1,93 @@
+// types.compact -> Common types and utilities for the BrickChain system
+
 pragma language_version >= 0.16 && <= 0.18;
 
-module types {
-export struct PropertyMetadata {
-  totalShares: u64,
-  currentOwners: u64,
-  lastTransferAt: u64,
-  isTokenized: bool,
-  registrationFee: u128
-};
-export struct PropertyDetails {
-  cid: string,
-  fileName: string,
-  uploader: Address,
-  uploadedAt: u64,
-  propertyType: string,
-  location: string,
-  valuation: u128,
-  isActive: bool
-};
-export struct OwnershipProof {
-  pid: u64,
-  owner: Address,
-  proofHash: string
-};
-export struct Listing {
-  pid: u64,
-  seller: Address,
-  shareAmount: u64,
-  pricePerShare: u128,
-  isFullSale: bool,
-  expiresAt: u64,
-  createdAt: u64,
-  isActive: bool
-};
-export struct Escrow {
-  listingId: u64,
-  buyer: Address,
-  amount: u128,
-  released: bool,
-  escrowedAt: u64
-};
-export struct VerificationRequest {
-  requester: Address,
-  pid: u64,
-  proofType: string,
-  proofHash: string,
-  isVerified: bool,
-  verifiedAt: u64,
-  createdAt: u64
-};
-export struct VerifiedProof {
-  pid: u64,
-  proofHash: string,
-  verifiedAt: u64,
-  verifier: Address
-};
+import CompactStandardLibrary;
+
+// Default values for system initialization
+export circuit getDefaultRegistrationFee(): Uint<64> {
+    return 1000000 as Uint<64>;
+}
+
+export circuit getDefaultMarketplaceFee(): Uint<64> {
+    return 250 as Uint<64>; // 2.5% basis points
+}
+
+export circuit getDefaultEscrowFee(): Uint<64> {
+    return 100 as Uint<64>; // 1% basis points
+}
+
+export circuit getDefaultVerificationFee(): Uint<64> {
+    return 500 as Uint<64>;
+}
+
+// Maximum fee limits for safety
+export circuit getMaximumFeePercentage(): Uint<64> {
+    return 1000 as Uint<64>; // 10% maximum
+}
+
+// VALIDATION UTILITIES
+
+// Validate if address is valid (non-zero)
+export circuit isValidAddress(address: Uint<32>): Boolean {
+    return address != 0 as Uint<32>;
+}
+
+// Validate if amount is positive
+export circuit isValidAmount(amount: Uint<64>): Boolean {
+    return amount > 0 as Uint<64>;
+}
+
+// Validate if timestamp is valid (non-zero)
+export circuit isValidTimestamp(timestamp: Uint<64>): Boolean {
+    return timestamp > 0 as Uint<64>;
+}
+
+// Validate bytes32 is not empty
+export circuit isValidHash(hash: Bytes<32>): Boolean {
+    // Check that at least some bytes are non-zero
+    return hash != 0x0000000000000000000000000000000000000000000000000000000000000000 as Bytes<32>;
+}
+
+// PERMISSION CHECKING UTILITIES
+
+// Verify caller is admin
+export circuit requireAdmin(caller: Uint<32>, admin: Uint<32>): [] {
+    assert(caller == admin, "Only admin can perform this action");
+}
+
+// Verify system is initialized
+export circuit requireInitialized(is_initialized: Boolean): [] {
+    assert(is_initialized, "System not initialized");
+}
+
+// Verify system is not paused
+export circuit requireNotPaused(is_paused: Boolean): [] {
+    assert(!is_paused, "System is paused");
+}
+
+// COMMON QUERY FUNCTIONS
+
+// Get maximum basis points (100%)
+export circuit getBasisPointsMax(): Uint<64> {
+    return 10000 as Uint<64>;
+}
+
+// Calculate percentage of amount
+// result = (amount * basis_points) / 10000
+export circuit calculatePercentage(amount: Uint<64>, basis_points: Uint<64>): Uint<64> {
+    // Note: Compact doesn't have division, so we implement as multiplier
+    // caller should handle the division by using pre-calculated values
+    const calculated = (amount * basis_points) as Uint<64>;
+    return calculated;
+}
+
+// Get zero address constant
+export circuit getZeroAddress(): Uint<32> {
+    return 0 as Uint<32>;
+}
+
+// Get empty hash constant
+export circuit getEmptyHash(): Bytes<32> {
+    return 0x0000000000000000000000000000000000000000000000000000000000000000 as Bytes<32>;
 }

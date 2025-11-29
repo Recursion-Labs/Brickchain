@@ -1,3 +1,5 @@
+// role.compact -> This contract manages user roles and permissions in the BrickChain system, Supports USER, ADMIN, and MODERATOR roles with proper authorization checks
+
 pragma language_version >= 0.16 && <= 0.18;
 
 import CompactStandardLibrary;
@@ -8,36 +10,116 @@ enum Role {
     MODERATOR
 }
 
-// Role management ledger
+// LEDGER STATE - Role Storage
 export ledger user_roles: Map<Uint<32>, Role>;
 export ledger admin_address: Uint<32>;
 export ledger is_initialized: Boolean;
+export ledger role_counter: Counter; // Track role changes for auditing
+export ledger is_paused: Boolean; // Emergency pause capability
 
-// Constructor
+// CONSTRUCTOR
 constructor() {
     admin_address = 0 as Uint<32>;
     is_initialized = false;
+    is_paused = false;
 }
 
+// INITIALIZATION CIRCUIT - Setup admin role 
+
+// Initializes the role contract with the system admin
+// Can only be called once
 export circuit initialize_roles(admin: Uint<32>): [] {
     assert(!is_initialized, "Already initialized");
     assert(admin != 0 as Uint<32>, "Invalid admin address");
+    
     admin_address = disclose(admin);
     user_roles.insert(disclose(admin), Role.ADMIN);
     is_initialized = true;
+    role_counter.increment(1);
 }
 
+// ROLE MANAGEMENT CIRCUITS
+
+// Set user role - Admin only
+// Assigns a role to a user address
 export circuit set_role(user: Uint<32>, role: Role, caller: Uint<32>): [] {
-    assert(is_initialized, "Not initialized");
-    assert(disclose(caller) == admin_address, "Admin only");
+    assert(is_initialized, "Contract not initialized");
+    assert(!is_paused, "Contract is paused");
+    assert(disclose(caller) == admin_address, "Only admin can set roles");
     assert(disclose(user) != 0 as Uint<32>, "Invalid user address");
+    
     user_roles.insert(disclose(user), disclose(role));
+    role_counter.increment(1);
 }
 
+// Get user role - Public read
+// Returns the role of a given user (defaults to USER if not set)
 export circuit get_user_role(user: Uint<32>): [Role] {
+    assert(is_initialized, "Contract not initialized");
+    
     if (user_roles.member(disclose(user))) {
         return [user_roles.lookup(disclose(user))];
     } else {
         return [Role.USER];
     }
+}
+
+// Remove user role - Admin only
+// Revokes all roles from a user, resetting to USER
+export circuit remove_role(user: Uint<32>, caller: Uint<32>): [] {
+    assert(is_initialized, "Contract not initialized");
+    assert(!is_paused, "Contract is paused");
+    assert(disclose(caller) == admin_address, "Only admin can remove roles");
+    assert(user_roles.member(disclose(user)), "User role not found");
+    
+    user_roles.insert(disclose(user), Role.USER);
+    role_counter.increment(1);
+}
+
+// ADMIN MANAGEMENT CIRCUITS
+
+// Check if user is admin
+export circuit is_user_admin(user: Uint<32>): [Boolean] {
+    assert(is_initialized, "Contract not initialized");
+    
+    if (user_roles.member(disclose(user))) {
+        const role = user_roles.lookup(disclose(user));
+        return [role == Role.ADMIN];
+    } else {
+        return [false];
+    }
+}
+
+// Transfer admin rights - Current admin only
+export circuit transfer_admin(new_admin: Uint<32>, caller: Uint<32>): [] {
+    assert(is_initialized, "Contract not initialized");
+    assert(!is_paused, "Contract is paused");
+    assert(disclose(caller) == admin_address, "Only current admin can transfer");
+    assert(disclose(new_admin) != 0 as Uint<32>, "Invalid new admin address");
+    
+    user_roles.insert(disclose(new_admin), Role.ADMIN);
+    admin_address = disclose(new_admin);
+    role_counter.increment(1);
+}
+
+// PAUSE/UNPAUSE CIRCUITS - Emergency Controls
+
+// Pause role contract - Admin only
+export circuit pause_contract(caller: Uint<32>): [] {
+    assert(is_initialized, "Contract not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can pause");
+    assert(!is_paused, "Already paused");
+    
+    is_paused = true;
+    role_counter.increment(1);
+}
+
+// Unpause role contract - Admin only
+export circuit unpause_contract(caller: Uint<32>): [] {
+    assert(is_initialized, "Contract not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can unpause");
+    assert(is_paused, "Not paused");
+    
+    is_paused = false;
+    role_counter.increment(1);
 }
