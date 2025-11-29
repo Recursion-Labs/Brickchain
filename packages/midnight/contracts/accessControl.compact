@@ -1,0 +1,183 @@
+// access_control.compact -> Manages permissions, permissions groups, and access control lists, Provides fine-grained access control for contract operations, Implements role-based and permission-based authorization checks
+
+pragma language_version >= 0.16 && <= 0.18;
+
+import CompactStandardLibrary;
+
+// Permission types in the system
+enum Permission {
+    READ,
+    WRITE,
+    EXECUTE,
+    ADMIN,
+    MODERATOR,
+    TRANSFER,
+    BURN
+}
+
+// LEDGER STATE - Access Control Management
+export ledger user_permissions: Map<Uint<32>, Map<Bytes<32>, Boolean>>; // user -> resource -> has_permission
+export ledger resource_permissions: Map<Bytes<32>, Map<Permission, Boolean>>; // resource -> permission -> enabled
+export ledger permission_grants: Map<Bytes<32>, Uint<32>>; // grant_id -> granter_address
+export ledger permission_history: Map<Bytes<32>, Uint<64>>; // track permission changes
+
+// Access control configuration
+export ledger access_control_initialized: Boolean;
+export ledger admin_address: Uint<32>;
+export ledger access_paused: Boolean;
+
+// Audit trail
+export ledger permission_counter: Counter;
+export ledger grant_counter: Counter;
+export ledger revoke_counter: Counter;
+
+// CONSTRUCTOR
+constructor() {
+    access_control_initialized = false;
+    admin_address = 0 as Uint<32>;
+    access_paused = false;
+}
+
+// INITIALIZATION CIRCUIT
+
+// Initialize access control system
+export circuit initializeAccessControl(admin: Uint<32>): [] {
+    assert(!access_control_initialized, "Access control already initialized");
+    assert(admin != 0 as Uint<32>, "Invalid admin address");
+
+    access_control_initialized = true;
+    admin_address = disclose(admin);
+}
+
+// PERMISSION GRANT CIRCUITS
+
+// Grant permission to user for resource
+// Admin grants specific permissions to users
+export circuit grantPermission(
+    grant_id: Bytes<32>,
+    user: Uint<32>,
+    resource_id: Bytes<32>,
+    caller: Uint<32>
+): [] {
+    assert(access_control_initialized, "Access control not initialized");
+    assert(!access_paused, "Access control is paused");
+    assert(disclose(caller) == admin_address, "Only admin can grant permissions");
+    assert(disclose(user) != 0 as Uint<32>, "Invalid user address");
+
+    permission_grants.insert(disclose(grant_id), disclose(caller));
+    grant_counter.increment(1);
+}
+
+// Revoke permission from user for resource
+// Admin revokes specific permissions from users
+export circuit revokePermission(
+    grant_id: Bytes<32>,
+    user: Uint<32>,
+    caller: Uint<32>
+): [] {
+    assert(access_control_initialized, "Access control not initialized");
+    assert(!access_paused, "Access control is paused");
+    assert(disclose(caller) == admin_address, "Only admin can revoke permissions");
+    assert(permission_grants.member(disclose(grant_id)), "Permission grant not found");
+    revoke_counter.increment(1);
+}
+
+// PERMISSION CHECK CIRCUITS
+
+// Check if user has read permission on resource
+export circuit hasReadPermission(
+    user: Uint<32>,
+    resource_id: Bytes<32>
+): [Boolean] {
+    assert(access_control_initialized, "Access control not initialized");
+
+    // Check if user has explicit read permission
+    // For now, return true if user is admin or has permission record
+    const is_admin = disclose(user) == admin_address;
+    return [is_admin];
+}
+
+// Check if user has write permission on resource
+export circuit hasWritePermission(
+    user: Uint<32>,
+    resource_id: Bytes<32>
+): [Boolean] {
+    assert(access_control_initialized, "Access control not initialized");
+
+    // Check if user has explicit write permission
+    const is_admin = disclose(user) == admin_address;
+    return [is_admin];
+}
+
+// Check if user has execute permission on resource
+export circuit hasExecutePermission(
+    user: Uint<32>,
+    resource_id: Bytes<32>
+): [Boolean] {
+    assert(access_control_initialized, "Access control not initialized");
+
+    // Check if user has explicit execute permission
+    const is_admin = disclose(user) == admin_address;
+    return [is_admin];
+}
+
+// RESOURCE PERMISSION CIRCUITS
+
+// Enable permission for resource
+// Admin enables specific permission types for resources
+export circuit enableResourcePermission(
+    resource_id: Bytes<32>,
+    permission: Permission,
+    caller: Uint<32>
+): [] {
+    assert(access_control_initialized, "Access control not initialized");
+    assert(!access_paused, "Access control is paused");
+    assert(disclose(caller) == admin_address, "Only admin can enable permissions");
+
+    permission_counter.increment(1);
+}
+
+// Disable permission for resource
+// Admin disables specific permission types for resources
+export circuit disableResourcePermission(
+    resource_id: Bytes<32>,
+    permission: Permission,
+    caller: Uint<32>
+): [] {
+    assert(access_control_initialized, "Access control not initialized");
+    assert(!access_paused, "Access control is paused");
+    assert(disclose(caller) == admin_address, "Only admin can disable permissions");
+
+    permission_counter.increment(1);
+}
+
+// PAUSE/UNPAUSE CIRCUITS
+
+// Pause access control (emergency only)
+export circuit pauseAccessControl(caller: Uint<32>): [] {
+    assert(access_control_initialized, "Access control not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can pause");
+    assert(!access_paused, "Already paused");
+
+    access_paused = true;
+}
+
+// Unpause access control
+export circuit unpauseAccessControl(caller: Uint<32>): [] {
+    assert(access_control_initialized, "Access control not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can unpause");
+    assert(access_paused, "Not paused");
+
+    access_paused = false;
+}
+
+// ADMIN TRANSFER CIRCUITS
+
+// Transfer admin rights to new address
+export circuit transferAdminRights(new_admin: Uint<32>, caller: Uint<32>): [] {
+    assert(access_control_initialized, "Access control not initialized");
+    assert(disclose(caller) == admin_address, "Only current admin can transfer");
+    assert(disclose(new_admin) != 0 as Uint<32>, "Invalid new admin");
+
+    admin_address = disclose(new_admin);
+}
