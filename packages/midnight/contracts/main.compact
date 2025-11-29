@@ -1,69 +1,158 @@
+// main.compact -> Central orchestrator for the BrickChain system And manages system state, initialization, emergency controls, and version tracking And acts as the primary entry point for system-wide operations
+
 pragma language_version >= 0.16 && <= 0.18;
 
 import CompactStandardLibrary;
 
-// System state management
+// LEDGER STATE - System Management
 export ledger system_initialized: Boolean;
 export ledger emergency_paused: Boolean;
 export ledger admin_address: Uint<32>;
 export ledger system_metrics: Map<Bytes<32>, Uint<64>>;
 export ledger contract_versions: Map<Bytes<32>, Uint<32>>;
+export ledger system_event_counter: Counter; // Track all system events
 
-// Constructor - initialize system state
+// Metric key registry - maps metric names to their hash keys
+export ledger metric_keys: Map<Bytes<32>, Boolean>; // Registered metric key tracking
+export ledger total_users_count: Uint<64>; // Direct ledger for total users
+export ledger total_properties_count: Uint<64>; // Direct ledger for total properties
+export ledger total_transactions_count: Uint<64>; // Direct ledger for total transactions
+export ledger system_fees_collected: Uint<64>; // Direct ledger for collected fees
+
+// CONSTRUCTOR
 constructor() {
     system_initialized = false;
     emergency_paused = false;
-    admin_address = 0 as Uint<32>; // Will be set during initialization
+    admin_address = 0 as Uint<32>;
+    total_users_count = 0 as Uint<64>;
+    total_properties_count = 0 as Uint<64>;
+    total_transactions_count = 0 as Uint<64>;
+    system_fees_collected = 0 as Uint<64>;
 }
 
+// SYSTEM INITIALIZATION
+
 // Initialize the entire BrickChain system
+// Sets up admin and initializes all system metrics
 export circuit initializeSystem(admin: Uint<32>): [] {
     assert(!system_initialized, "System already initialized");
     assert(admin != 0 as Uint<32>, "Invalid admin address");
 
     system_initialized = true;
     admin_address = disclose(admin);
-
-    // Initialize system metrics
-    system_metrics.insert(0x746f74616c5f757365727300000000000000000000000000 as Bytes<32>, 0 as Uint<64>);
-    system_metrics.insert(0x746f74616c5f70726f706572746965730000000000000000 as Bytes<32>, 0 as Uint<64>);
-    system_metrics.insert(0x746f74616c5f7472616e73616374696f6e73000000000000 as Bytes<32>, 0 as Uint<64>);
-    system_metrics.insert(0x73797374656d5f666565735f636f6c6c6563746564000000 as Bytes<32>, 0 as Uint<64>);
+    system_event_counter.increment(1);
+    
+    // Initialize all system metrics to zero
+    total_users_count = 0 as Uint<64>;
+    total_properties_count = 0 as Uint<64>;
+    total_transactions_count = 0 as Uint<64>;
+    system_fees_collected = 0 as Uint<64>;
 }
 
-// Emergency pause - only admin can call
+// EMERGENCY CONTROL CIRCUITS
+
+// Emergency pause - freezes all operations
+// Only admin can call this in case of critical issues
 export circuit emergencyPause(caller: Uint<32>): [] {
     assert(system_initialized, "System not initialized");
     assert(disclose(caller) == admin_address, "Only admin can pause system");
     assert(!emergency_paused, "System already paused");
 
     emergency_paused = true;
+    system_event_counter.increment(1);
 }
 
-// Emergency unpause - only admin can call
+// Emergency unpause - resumes all operations
+// Only admin can restore normal operation after emergency pause
 export circuit emergencyUnpause(caller: Uint<32>): [] {
     assert(system_initialized, "System not initialized");
     assert(disclose(caller) == admin_address, "Only admin can unpause system");
     assert(emergency_paused, "System not paused");
 
     emergency_paused = false;
+    system_event_counter.increment(1);
 }
 
+// SYSTEM STATUS QUERIES
+
 // Get system status
+// Returns initialization state, pause state, and admin address
 export circuit getSystemStatus(): [Boolean, Boolean, Uint<32>] {
     return [system_initialized, emergency_paused, admin_address];
 }
 
-// Update system metrics
-export circuit updateMetrics(metric_key: Bytes<32>, value: Uint<64>, caller: Uint<32>): [] {
-    assert(system_initialized, "System not initialized");
-    assert(disclose(caller) == admin_address, "Only admin can update metrics");
-    assert(!emergency_paused, "System is paused");
-
-    system_metrics.insert(disclose(metric_key), disclose(value));
+// Check if system is operational
+export circuit isSystemOperational(): [Boolean] {
+    const is_operational = system_initialized && !emergency_paused;
+    return [is_operational];
 }
 
-// Get metric value
+// SYSTEM METRICS MANAGEMENT
+
+// Update total user count
+// Admin only - increments user count
+export circuit incrementUserCount(caller: Uint<32>): [] {
+    assert(system_initialized, "System not initialized");
+    assert(!emergency_paused, "System is paused");
+    assert(disclose(caller) == admin_address, "Only admin can update metrics");
+
+    total_users_count = (total_users_count + 1 as Uint<64>) as Uint<64>;
+    system_event_counter.increment(1);
+}
+
+// Update total property count
+// Admin only - increments property count
+export circuit incrementPropertyCount(caller: Uint<32>): [] {
+    assert(system_initialized, "System not initialized");
+    assert(!emergency_paused, "System is paused");
+    assert(disclose(caller) == admin_address, "Only admin can update metrics");
+
+    total_properties_count = (total_properties_count + 1 as Uint<64>) as Uint<64>;
+    system_event_counter.increment(1);
+}
+
+// Update total transaction count
+// Admin only - increments transaction count
+export circuit incrementTransactionCount(caller: Uint<32>): [] {
+    assert(system_initialized, "System not initialized");
+    assert(!emergency_paused, "System is paused");
+    assert(disclose(caller) == admin_address, "Only admin can update metrics");
+
+    total_transactions_count = (total_transactions_count + 1 as Uint<64>) as Uint<64>;
+    system_event_counter.increment(1);
+}
+
+// Get total users
+export circuit getTotalUsers(): Uint<64> {
+    assert(system_initialized, "System not initialized");
+    return total_users_count;
+}
+
+// Get total properties
+export circuit getTotalProperties(): Uint<64> {
+    assert(system_initialized, "System not initialized");
+    return total_properties_count;
+}
+
+// Get total transactions
+export circuit getTotalTransactions(): Uint<64> {
+    assert(system_initialized, "System not initialized");
+    return total_transactions_count;
+}
+
+// Update system metric (generic for custom metrics)
+// Admin only - updates any system metric key-value pair in map
+export circuit updateMetric(metric_key: Bytes<32>, value: Uint<64>, caller: Uint<32>): [] {
+    assert(system_initialized, "System not initialized");
+    assert(!emergency_paused, "System is paused");
+    assert(disclose(caller) == admin_address, "Only admin can update metrics");
+
+    system_metrics.insert(disclose(metric_key), disclose(value));
+    system_event_counter.increment(1);
+}
+
+// Get custom metric value
+// Public read - retrieves current value of any registered metric
 export circuit getMetric(metric_key: Bytes<32>): Uint<64> {
     assert(system_initialized, "System not initialized");
     assert(system_metrics.member(disclose(metric_key)), "Metric not found");
@@ -71,33 +160,91 @@ export circuit getMetric(metric_key: Bytes<32>): Uint<64> {
     return system_metrics.lookup(disclose(metric_key));
 }
 
-// Register contract version for upgrade tracking
-export circuit registerContractVersion(contract_name: Bytes<32>, version: Uint<32>, caller: Uint<32>): [] {
+// Increment metric by value (generic)
+// Admin only - safely increments a custom metric
+export circuit incrementMetric(metric_key: Bytes<32>, increment_value: Uint<64>, caller: Uint<32>): [] {
     assert(system_initialized, "System not initialized");
-    assert(disclose(caller) == admin_address, "Only admin can register versions");
     assert(!emergency_paused, "System is paused");
+    assert(disclose(caller) == admin_address, "Only admin can increment metrics");
+    assert(system_metrics.member(disclose(metric_key)), "Metric not found");
+
+    const current_value = system_metrics.lookup(disclose(metric_key));
+    system_metrics.insert(
+        disclose(metric_key),
+        (current_value + disclose(increment_value)) as Uint<64>
+    );
+    system_event_counter.increment(1);
+}
+
+// CONTRACT VERSION MANAGEMENT
+
+// Register contract version for upgrade tracking
+// Admin only - tracks version history for contract upgrades
+export circuit registerContractVersion(
+    contract_name: Bytes<32>,
+    version: Uint<32>,
+    caller: Uint<32>
+): [] {
+    assert(system_initialized, "System not initialized");
+    assert(!emergency_paused, "System is paused");
+    assert(disclose(caller) == admin_address, "Only admin can register versions");
 
     contract_versions.insert(disclose(contract_name), disclose(version));
+    system_event_counter.increment(1);
 }
 
 // Get contract version
+// Public read - retrieves current version of a contract
 export circuit getContractVersion(contract_name: Bytes<32>): Uint<32> {
     assert(system_initialized, "System not initialized");
-    assert(contract_versions.member(disclose(contract_name)), "Contract version not registered");
+    assert(contract_versions.member(disclose(contract_name)), "Contract not registered");
 
     return contract_versions.lookup(disclose(contract_name));
 }
 
-// Collect system fees (simplified - would integrate with token contract)
+// SYSTEM FEE MANAGEMENT
+
+// Collect system fees
+// Admin only - accumulates fees for system operations
 export circuit collectSystemFees(amount: Uint<64>, caller: Uint<32>): [] {
     assert(system_initialized, "System not initialized");
-    assert(disclose(caller) == admin_address, "Only admin can collect fees");
     assert(!emergency_paused, "System is paused");
+    assert(disclose(caller) == admin_address, "Only admin can collect fees");
+    assert(disclose(amount) > 0 as Uint<64>, "Amount must be positive");
 
-    // Update fee collection metric
-    const current_fees = system_metrics.member(0x73797374656d5f666565735f636f6c6c6563746564000000 as Bytes<32>)
-        ? system_metrics.lookup(0x73797374656d5f666565735f636f6c6c6563746564000000 as Bytes<32>)
-        : 0 as Uint<64>;
+    system_fees_collected = (system_fees_collected + disclose(amount)) as Uint<64>;
+    system_event_counter.increment(1);
+}
 
-    system_metrics.insert(0x73797374656d5f666565735f636f6c6c6563746564000000 as Bytes<32>, (current_fees + disclose(amount)) as Uint<64>);
+// Get collected fees
+// Public read - returns accumulated system fees
+export circuit getCollectedFees(): Uint<64> {
+    assert(system_initialized, "System not initialized");
+    return system_fees_collected;
+}
+
+// Withdraw collected fees (admin only)
+// Admin only - withdraws accumulated fees, resets counter
+export circuit withdrawCollectedFees(caller: Uint<32>): Uint<64> {
+    assert(system_initialized, "System not initialized");
+    assert(disclose(caller) == admin_address, "Only admin can withdraw fees");
+
+    const fees_to_withdraw = system_fees_collected;
+    system_fees_collected = 0 as Uint<64>;
+    system_event_counter.increment(1);
+    
+    return fees_to_withdraw;
+}
+
+// ADMIN MANAGEMENT
+
+// Transfer admin rights
+// Current admin only - allows migration to new admin
+export circuit transferAdmin(new_admin: Uint<32>, caller: Uint<32>): [] {
+    assert(system_initialized, "System not initialized");
+    assert(disclose(caller) == admin_address, "Only current admin can transfer");
+    assert(disclose(new_admin) != 0 as Uint<32>, "Invalid new admin address");
+
+    admin_address = disclose(new_admin);
+    system_event_counter.increment(1);
 }
