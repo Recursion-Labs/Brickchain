@@ -1,33 +1,187 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="14" failures="0" errors="0" time="0.194">
-    <testsuite name="test/test.ts" timestamp="2025-11-11T03:09:37.235Z" hostname="samarthhh.local" tests="14" failures="0" errors="0" skipped="0" time="0.00597125">
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Contract Compilation &gt; should compile all contracts successfully" time="0.000626625">
+<testsuites name="vitest tests" tests="91" failures="0" errors="0" time="2.325">
+    <testsuite name="test/test.ts" timestamp="2025-11-29T16:13:29.362Z" hostname="Ninja" tests="91" failures="0" errors="0" skipped="0" time="0.112402362">
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Global Contract Requirements &gt; should have all 9 contracts compiled successfully" time="0.004398363">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Contract Compilation &gt; should have compiled contract directories" time="0.000249708">
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Global Contract Requirements &gt; should have valid pragma in all contracts" time="0.006363882">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Contract Structure &gt; should have valid pragma statements in all contracts" time="0.002839792">
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Global Contract Requirements &gt; should have CompactStandardLibrary import in all contracts" time="0.001115366">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Contract Structure &gt; should have proper imports in main contract" time="0.000127292">
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Global Contract Requirements &gt; should have constructor in all contracts" time="0.001168316">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Contract Structure &gt; should have system initialization circuit" time="0.0000705">
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Global Contract Requirements &gt; should have export circuit definitions in all contracts" time="0.001091791">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Fractional Token Contract &gt; should have all required circuits" time="0.0001645">
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Global Contract Requirements &gt; should use proper assert statements" time="0.001174589">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Fractional Token Contract &gt; should have proper enum definitions" time="0.000095458">
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Global Contract Requirements &gt; should have disclose statements for privacy" time="0.001108924">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Fractional Token Contract &gt; should have ledger declarations" time="0.000170125">
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Main Contract &gt; should have all required ledgers" time="0.000622551">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Fractional Token Contract &gt; should have constructor" time="0.000159042">
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Main Contract &gt; should have system initialization circuit" time="0.000935695">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Fractional Token Contract &gt; should use proper assert statements" time="0.000073209">
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Main Contract &gt; should have emergency control circuits" time="0.001036134">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Deployment Configuration &gt; should validate deployment.json structure when it exists" time="0.00006925">
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Main Contract &gt; should have metrics management circuits" time="0.000621219">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Deployment Configuration &gt; should handle missing deployment.json gracefully" time="0.00004625">
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Main Contract &gt; should have contract version management" time="0.0004642">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Error Handling &gt; should handle missing contract files gracefully" time="0.000058583">
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Main Contract &gt; should have system fee management" time="0.000575081">
         </testcase>
-        <testcase classname="test/test.ts" name="BrickChain Contracts &gt; Error Handling &gt; should validate contract syntax requirements" time="0.000231334">
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Main Contract &gt; should have admin transfer capability" time="0.000324696">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Main Contract &gt; should use Counter for event tracking" time="0.00048999">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; AccessControl Contract &gt; should have Permission enum" time="0.00081204">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; AccessControl Contract &gt; should have all required ledgers" time="0.000797482">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; AccessControl Contract &gt; should have initialization circuit" time="0.000293507">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; AccessControl Contract &gt; should have permission grant/revoke circuits" time="0.000452338">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; AccessControl Contract &gt; should have permission check circuits" time="0.000363129">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; AccessControl Contract &gt; should have resource permission circuits" time="0.000561726">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; AccessControl Contract &gt; should have pause/unpause circuits" time="0.000649132">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; AccessControl Contract &gt; should have admin transfer circuit" time="0.000485241">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; AuditLog Contract &gt; should have EventType enum with all events" time="0.001233459">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; AuditLog Contract &gt; should have complete audit tracking ledgers" time="0.000965221">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; AuditLog Contract &gt; should have initialization circuit" time="0.000653992">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; AuditLog Contract &gt; should have comprehensive logging circuits" time="0.000556475">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; AuditLog Contract &gt; should have query circuits for audit data" time="0.000874378">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; AuditLog Contract &gt; should have pause/unpause audit circuits" time="0.00052693">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Escrow Contract &gt; should have EscrowStatus enum" time="0.000763809">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Escrow Contract &gt; should have complete escrow ledgers" time="0.000820725">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Escrow Contract &gt; should have initialization circuit" time="0.000735865">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Escrow Contract &gt; should have deposit circuit" time="0.000579309">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Escrow Contract &gt; should have release and dispute circuits" time="0.00085956">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Escrow Contract &gt; should have query circuits" time="0.000694537">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Escrow Contract &gt; should have admin management circuits" time="0.000591432">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Fractional Token Contract &gt; should have TokenState and PropertyStatus enums" time="0.000464461">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Fractional Token Contract &gt; should have complete token ledgers" time="0.002051701">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Fractional Token Contract &gt; should have supply management circuits" time="0.003127442">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Fractional Token Contract &gt; should have transfer circuits" time="0.002524708">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Fractional Token Contract &gt; should have token state management" time="0.002183317">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Fractional Token Contract &gt; should have token query circuits" time="0.00387738">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Fractional Token Contract &gt; should have property tokenization circuits" time="0.004165807">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Fractional Token Contract &gt; should track holder history and transactions" time="0.004465817">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Marketplace Contract &gt; should have ListingStatus enum" time="0.003843501">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Marketplace Contract &gt; should have complete marketplace ledgers" time="0.008866077">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Marketplace Contract &gt; should have initialization circuit" time="0.00285743">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Marketplace Contract &gt; should have listing management circuits" time="0.002091818">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Marketplace Contract &gt; should have transaction circuit" time="0.002752902">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Marketplace Contract &gt; should have query circuits" time="0.002025192">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Marketplace Contract &gt; should have admin circuits" time="0.000440997">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Property Registry Contract &gt; should have PropertyStatus enum" time="0.000772095">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Property Registry Contract &gt; should have complete property ledgers" time="0.000634434">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Property Registry Contract &gt; should have initialization circuit" time="0.000254412">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Property Registry Contract &gt; should have registration circuit" time="0.000231038">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Property Registry Contract &gt; should have status management circuits" time="0.000338311">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Property Registry Contract &gt; should have query circuits" time="0.000355765">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Property Registry Contract &gt; should have transfer circuits" time="0.000214607">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Property Registry Contract &gt; should have verification circuit" time="0.000203496">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Property Registry Contract &gt; should have admin circuits" time="0.000338462">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Role Contract &gt; should have Role enum with all roles" time="0.000314266">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Role Contract &gt; should have complete role ledgers" time="0.00031091">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Role Contract &gt; should have initialization circuit" time="0.000233293">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Role Contract &gt; should have role management circuits" time="0.000604337">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Role Contract &gt; should have admin check circuit" time="0.000274551">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Role Contract &gt; should have admin transfer circuit" time="0.000402153">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Role Contract &gt; should have pause/unpause circuits" time="0.000271986">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Role Contract &gt; should use role_counter for auditing" time="0.000329766">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Verification Contract &gt; should have VerificationStatus enum" time="0.000403174">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Verification Contract &gt; should have complete verification ledgers" time="0.000577225">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Verification Contract &gt; should have initialization circuit" time="0.000214938">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Verification Contract &gt; should have request circuit" time="0.000207253">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Verification Contract &gt; should have verifier management circuits" time="0.000410429">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Verification Contract &gt; should have verification workflow circuits" time="0.000323263">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Verification Contract &gt; should have query circuits" time="0.000278227">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Verification Contract &gt; should have proof verification circuit" time="0.000212102">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Verification Contract &gt; should have admin circuits" time="0.000702754">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Verification Contract &gt; should have statistics circuit" time="0.000217783">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Verification Contract &gt; should track approval and rejection counts" time="0.00027959">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Contract Integration &gt; should verify all 9 contracts present" time="0.000167978">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Contract Integration &gt; should have no duplicate contracts" time="0.000249754">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Contract Integration &gt; should follow naming conventions" time="0.000634914">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Contract Integration &gt; should have reasonable file sizes" time="0.001063307">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Contract Integration &gt; should have proper documentation comments" time="0.001120596">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; State Management and Ledger Integrity &gt; should use Counter for audit trail tracking" time="0.002212843">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; State Management and Ledger Integrity &gt; should have initialization checks in core contracts" time="0.001299845">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; State Management and Ledger Integrity &gt; should have admin address tracking in admin-enabled contracts" time="0.001045527">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; State Management and Ledger Integrity &gt; should have pause/unpause capability in applicable contracts" time="0.000867295">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; State Management and Ledger Integrity &gt; should have token_state ledger in fractional_token contract" time="0.000393777">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Build Artifacts Verification &gt; should have build directory" time="0.000517492">
+        </testcase>
+        <testcase classname="test/test.ts" name="BrickChain Complete Contract Test Suite &gt; Build Artifacts Verification &gt; should have compiled contracts in build directory" time="0.000811059">
         </testcase>
     </testsuite>
 </testsuites>
