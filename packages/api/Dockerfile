@@ -1,41 +1,41 @@
-ARG NODE_VERSION=24.20.0
+FROM oven/bun:alpine AS builder
 
-# ---------- Builder Stage ----------
-FROM node:${NODE_VERSION}-alpine AS builder
+WORKDIR /app
 
-WORKDIR /usr/src/brickchain-api
-
-COPY package*.json ./
-RUN npm install
+COPY package.json bun.lock* ./
+RUN bun install --frozen-lockfile
 
 COPY . .
 
-RUN npx prisma generate
+RUN bunx prisma generate
+RUN bun run build
 
-RUN npm run build
 
-# Remove devDependencies after build to reduce image size
-RUN npm prune --production
+FROM oven/bun:alpine AS production
 
-# ---------- Production Stage ----------
-FROM node:${NODE_VERSION}-alpine AS production
+RUN apk add --no-cache curl
 
-# Install tzdata for time zone support
-RUN apk add --no-cache tzdata && \
-    cp /usr/share/zoneinfo/Asia/Kolkata /etc/localtime && \
-    echo "Asia/Kolkata" > /etc/timezone && \
-    apk del tzdata
+WORKDIR /app
 
-WORKDIR /usr/src/brickchain-api
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/generated ./generated
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/.env ./
 
-ENV TZ=Asia/Kolkata
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nextjs -u 1001 && \
+    chown -R nextjs:nodejs /app
+
+USER nextjs
+
+ENV NODE_ENV=production
 
 EXPOSE 3000
 
-COPY --from=builder /usr/src/brickchain-api/node_modules ./node_modules
-COPY --from=builder /usr/src/brickchain-api/generated ./generated
-COPY --from=builder /usr/src/brickchain-api/dist ./dist
-COPY --from=builder /usr/src/brickchain-api/package*.json ./
-COPY --from=builder /usr/src/brickchain-api/.env ./
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
 
-CMD ["npm", "run","start"]
+CMD ["bun", "run", "start"]

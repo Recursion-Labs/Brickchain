@@ -1,8 +1,14 @@
 services:
-  brickChain_auth:
+  brickchain_auth:
     build:
-      context: packages/api/.
-      dockerfile: packages/api/Dockerfile
-    container_name: brickChain_auth
+      context: ../../packages/api/.
+      dockerfile: ../../packages/api/Dockerfile
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     ports:
       - "127.0.0.1:3000:3000"
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
