@@ -5,7 +5,7 @@ class RedisService {
 	private client: Redis;
 
 	constructor(
-		host: string = process.env.REDIS_HOST || "127.0.0.1",
+		host: string = process.env.REDIS_HOST || "localhost",
 		port: number = Number(process.env.REDIS_PORT) || 6379,
 		db: number = Number(process.env.REDIS_DB) || 0,
 	) {
