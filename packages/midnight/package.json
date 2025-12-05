@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "compile": "compact compile contracts/hello-world.compact contracts/managed/hello-world",
+    "compile": "for file in contracts/*.compact; do name=$(basename \"$file\" .compact); echo \"Compiling $file to build/$name\"; mkdir -p build/$name && compact compile $file build/$name; done",
     "build": "tsc",
     "deploy": "node dist/deploy.js",
     "test": "vitest run",
