@@ -1,5 +1,6 @@
 {
   "include": ["src/**/*.ts"],
+  "exclude": ["src/frontend/**/*.ts"],
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
