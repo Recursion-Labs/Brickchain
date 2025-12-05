@@ -8,7 +8,6 @@ import { TESTNET_CONFIG } from "../src/config/network.js";
 import { MainAPI } from "../src/api/MainAPI.js";
 import { RoleAPI, Role } from "../src/api/RoleAPI.js";
 import { PropertyRegistryAPI } from "../src/api/PropertyRegistryAPI.js";
-import type { Wallet } from "@midnight-ntwrk/wallet-api";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -17,7 +16,7 @@ globalThis.WebSocket = WebSocket;
 setNetworkId(NetworkId.TestNet);
 
 describe("API Integration Tests", () => {
-  let wallet: Wallet;
+  let wallet: any;
   let deployments: any;
   const testSeed = process.env.TEST_WALLET_SEED || "0".repeat(64);
 

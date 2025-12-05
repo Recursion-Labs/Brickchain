@@ -54,8 +54,6 @@ const waitForFunds = (wallet: Wallet) =>
 
 
 async function main() {
-  console.log("Midnight Hello World Deployment\n");
-
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
