@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import Image from "next/image"
+import Logo from "@/components/custom/Logo"
 import {
   LayoutDashboard,
   Users,
@@ -12,6 +12,7 @@ import {
   LogOut,
   ChevronRight,
   Building,
+  FileText,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -54,6 +55,11 @@ const adminItems: NavItem[] = [
     icon: Building,
   },
   {
+    title: "Documents",
+    url: "/admin/documents",
+    icon: FileText,
+  },
+  {
     title: "Waitlist",
     url: "/admin/waitlist",
     icon: Users,
@@ -93,27 +99,19 @@ export function AdminSidebar() {
       {/* Header with Logo and Trigger */}
       <SidebarHeader className="h-16 border-b border-border">
         {isCollapsed ? (
-          <div className="flex items-center justify-between gap-2 px-2">
-            <Image
-              src="https://ik.imagekit.io/mwhha64ay/Brickchain/black-trans-logo.png"
-              alt="BrickChain"
-              width={32}
-              height={32}
-              className="w-8 h-8 shrink-0 invert"
-            />
-            <SidebarTrigger className="h-6 w-6" />
+            <div className="flex items-center justify-between gap-2 px-2">
+            <div className="w-8 h-8">
+              <Logo width={32} height={32} className="w-7 h-7 sm:w-8 sm:h-8 shrink-0" />
+            </div>
+            <SidebarTrigger className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
         ) : (
-          <div className="flex items-center justify-between gap-3 px-8">
-            <div className="flex items-center gap-3 flex-1 justify-center">
-              <Image
-                src="https://ik.imagekit.io/mwhha64ay/Brickchain/black-trans-logo.png"
-                alt="BrickChain"
-                width={40}
-                height={40}
-                className="w-10 h-10 shrink-0 invert"
-              />
-              <span className="font-bold text-lg leading-tight text-sidebar-foreground">Admin</span>
+          <div className="flex items-center justify-between gap-2 sm:gap-3 px-4 sm:px-8">
+              <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-center">
+              <div className="w-10 h-10">
+                <Logo width={40} height={40} className="w-8 sm:w-10 h-8 sm:h-10 shrink-0" />
+              </div>
+              <span className="font-bold text-base sm:text-lg leading-tight text-sidebar-foreground hidden sm:inline">Admin</span>
             </div>
             <SidebarTrigger />
           </div>
@@ -124,7 +122,7 @@ export function AdminSidebar() {
       <SidebarContent className="bg-sidebar">
         <SidebarGroup>
           {!isCollapsed && (
-            <SidebarGroupLabel className="text-muted-foreground">Management</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-xs sm:text-sm text-muted-foreground">Management</SidebarGroupLabel>
           )}
           <SidebarGroupContent>
             <SidebarMenu className={cn(
@@ -145,7 +143,7 @@ export function AdminSidebar() {
                       isActive={isActive}
                       tooltip={item.title}
                       className={cn(
-                        "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/20",
+                        "text-xs sm:text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/20",
                         isActive && "bg-sidebar-accent/30 text-sidebar-foreground",
                         isCollapsed && "justify-center"
                       )}
@@ -167,14 +165,14 @@ export function AdminSidebar() {
           <SidebarGroup>
             <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen}>
               <SidebarGroupLabel asChild>
-                <CollapsibleTrigger className="flex w-full items-center justify-between text-muted-foreground hover:text-sidebar-foreground">
+                <CollapsibleTrigger className="flex w-full items-center justify-between text-xs sm:text-sm text-muted-foreground hover:text-sidebar-foreground">
                   <div className="flex items-center gap-2">
-                    <Settings className="w-4 h-4" />
+                    <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
                     <span>Settings</span>
                   </div>
                   <ChevronRight
                     className={cn(
-                      "h-4 w-4 transition-transform",
+                      "h-3 w-3 sm:h-4 sm:w-4 transition-transform",
                       settingsOpen && "rotate-180"
                     )}
                   />
@@ -191,7 +189,7 @@ export function AdminSidebar() {
                             asChild
                             isActive={isActive}
                             className={cn(
-                              "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/20 pl-8",
+                              "text-xs sm:text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/20 pl-6 sm:pl-8",
                               isActive && "bg-sidebar-accent/30 text-sidebar-foreground"
                             )}
                           >
@@ -216,10 +214,10 @@ export function AdminSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/20"
+              className="text-xs sm:text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/20"
             >
               <Link href="/">
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
                 {!isCollapsed && <span>Logout</span>}
               </Link>
             </SidebarMenuButton>

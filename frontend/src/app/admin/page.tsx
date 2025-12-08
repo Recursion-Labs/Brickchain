@@ -56,22 +56,31 @@ export default function AdminDashboard() {
       try {
         setLoading(true);
 
-        // Fetch stats from multiple endpoints
-        const [, , waitlistResponses, contactResponses] = await Promise.all([
+        // Fetch stats from multiple endpoints with better error handling
+        const results = await Promise.allSettled([
           apiClient.getWaitlistStats(),
           apiClient.getContactStats(),
           apiClient.getWaitlistResponses(),
           apiClient.getContactResponses()
         ]);
 
+        // Process results safely
+        let waitlistResponses = null;
+        let contactResponses = null;
+
+        if (results[2].status === 'fulfilled') {
+          waitlistResponses = results[2].value;
+        }
+        if (results[3].status === 'fulfilled') {
+          contactResponses = results[3].value;
+        }
+
         // Process waitlist data
-        const waitlistApiData = waitlistResponses.data as unknown as WaitlistApiResponse;
-        const waitlistData = waitlistApiData?.data || [];
+        const waitlistData = waitlistResponses?.data?.data || [];
         const totalWaitlist = Array.isArray(waitlistData) ? waitlistData.length : 0;
 
         // Process contact data
-        const contactApiData = contactResponses.data as unknown as ContactApiResponse;
-        const contactData = contactApiData?.data || [];
+        const contactData = contactResponses?.data?.data || [];
         const totalContacts = Array.isArray(contactData) ? contactData.length : 0;
         const unreadContacts = Array.isArray(contactData)
           ? contactData.filter((msg: ContactMessage) => msg.status === 'unread').length
@@ -94,6 +103,14 @@ export default function AdminDashboard() {
         });
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
+        // Set default empty stats on error
+        setStats({
+          totalWaitlist: 0,
+          totalContacts: 0,
+          unreadContacts: 0,
+          recentWaitlist: [],
+          recentContacts: []
+        });
       } finally {
         setLoading(false);
       }
@@ -126,23 +143,23 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="w-full p-8 space-y-8">
+    <div className="w-full min-h-screen p-4 sm:p-6 lg:p-8 space-y-8">
       {/* Header */}
       <div>
-        <h2 className="text-3xl font-bold text-foreground">Dashboard</h2>
-        <p className="text-muted-foreground mt-2">Welcome to the BrickChain admin panel</p>
+        <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h2>
+        <p className="text-muted-foreground mt-2 text-sm sm:text-base">Welcome to the BrickChain admin panel</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Total Waitlist */}
         <Card className="bg-card border border-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-foreground">Total Waitlist</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium text-foreground">Total Waitlist</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-xl sm:text-2xl font-bold text-foreground">
               {loading ? "..." : stats.totalWaitlist}
             </div>
             <p className="text-xs text-muted-foreground mt-1">People on waitlist</p>
@@ -191,15 +208,15 @@ export default function AdminDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
         {/* Recent Waitlist */}
         <Card className="bg-card border border-border">
           <CardHeader>
-            <CardTitle className="text-foreground">Recent Waitlist Signups</CardTitle>
-            <CardDescription>Latest people who joined the waitlist</CardDescription>
+            <CardTitle className="text-lg sm:text-xl text-foreground">Recent Waitlist Signups</CardTitle>
+            <CardDescription className="text-sm">Latest people who joined the waitlist</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {loading ? (
                 <div className="flex items-center justify-center py-8 text-muted-foreground">
                   <p>Loading...</p>
@@ -230,11 +247,11 @@ export default function AdminDashboard() {
         {/* Recent Messages */}
         <Card className="bg-card border border-border">
           <CardHeader>
-            <CardTitle className="text-foreground">Recent Contact Messages</CardTitle>
-            <CardDescription>Latest messages from contact form</CardDescription>
+            <CardTitle className="text-lg sm:text-xl text-foreground">Recent Contact Messages</CardTitle>
+            <CardDescription className="text-sm">Latest messages from contact form</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {loading ? (
                 <div className="flex items-center justify-center py-8 text-muted-foreground">
                   <p>Loading...</p>

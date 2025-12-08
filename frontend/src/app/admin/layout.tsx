@@ -15,7 +15,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         <AdminSidebar />
         <SidebarInset className="flex flex-col h-screen w-full">
           <AdminHeader />
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto w-full">
             {children}
           </main>
         </SidebarInset>
@@ -90,7 +90,7 @@ function AdminLayoutInner({
           </div>
           <div className="space-y-2">
             <Link
-              href="/"
+              href="/dashboard"
               className="inline-flex items-center justify-center w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
             >
               Go to Main Page

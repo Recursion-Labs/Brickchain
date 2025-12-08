@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Settings, Menu, LogOut, Copy, Check, User as UserIcon } from "lucide-react";
+import { Bell, Settings, Menu, LogOut, Copy, Check, User as UserIcon, Home as HomeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcherButton } from "@/components/custom/theme-switcher-button";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -59,7 +59,7 @@ export function AdminHeader() {
 
   return (
     <header className="w-full border-b border-border bg-sidebar">
-      <div className="flex items-center justify-between h-16 px-4 md:px-8 gap-6">
+      <div className="flex items-center justify-between h-16 px-2 sm:px-4 lg:px-8 gap-2 sm:gap-6">
         {/* Mobile Menu Trigger */}
         <Button
           variant="ghost"
@@ -71,19 +71,19 @@ export function AdminHeader() {
         </Button>
 
         {/* Left Section */}
-        <div className="flex-1">
-          <h1 className="text-xl font-bold text-foreground">Admin Dashboard</h1>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground truncate">Admin Dashboard</h1>
         </div>
 
         {/* Right Section - Controls */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1 sm:gap-4">
           {/* Notifications */}
           <Button
             variant="ghost"
             size="icon"
             className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/20"
           >
-            <Bell className="h-5 w-5" />
+            <Bell className="h-4 sm:h-5 w-4 sm:w-5" />
           </Button>
 
           {/* Theme Switcher */}
@@ -93,9 +93,9 @@ export function AdminHeader() {
           <Button
             variant="ghost"
             size="icon"
-            className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/20"
+            className="hidden sm:flex text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/20"
           >
-            <Settings className="h-5 w-5" />
+            <Settings className="h-4 sm:h-5 w-4 sm:w-5" />
           </Button>
 
           {/* Wallet Connection Status */}
@@ -104,11 +104,11 @@ export function AdminHeader() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 px-3 py-2 h-10 text-foreground border-green-500/50 hover:border-green-500"
+                  className="hidden sm:flex items-center gap-2 px-2 sm:px-3 py-2 h-10 text-xs sm:text-sm font-mono text-foreground border-green-500/50 hover:border-green-500"
                   disabled={isConnecting}
                 >
                   <div className="h-2 w-2 rounded-full bg-green-500" />
-                  <span className="text-sm font-mono">{shortAddress}</span>
+                  <span>{shortAddress}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -134,16 +134,16 @@ export function AdminHeader() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="flex items-center gap-2 px-3 py-2 h-10 text-sidebar-foreground hover:bg-sidebar-accent/20"
+                  className="flex items-center gap-1 sm:gap-2 px-1 sm:px-3 py-2 h-10 text-sidebar-foreground hover:bg-sidebar-accent/20"
                 >
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                     <AvatarImage src={user.profilePicture || undefined} alt={displayName} />
                     <AvatarFallback className="text-xs font-semibold">{getInitials()}</AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium hidden sm:inline">{displayName}</span>
+                  <span className="text-xs sm:text-sm font-medium hidden sm:inline">{displayName}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuContent align="end" className="w-56 sm:w-64">
                 {/* User Info Section */}
                 <div className="px-3 py-2 border-b">
                   <div className="flex items-center gap-3">
@@ -162,6 +162,12 @@ export function AdminHeader() {
                 </div>
 
                 {/* Menu Items */}
+                <DropdownMenuItem asChild>
+                  <a href="/dashboard" className="cursor-pointer">
+                    <HomeIcon className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </a>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <a href="/admin/profile" className="cursor-pointer">
                     <UserIcon className="mr-2 h-4 w-4" />
