@@ -15,4 +15,6 @@ router.get(
     v1.auth.googleControllers.googleCallback
 );
 
+router.post("/minecraft/login", v1.auth.minecraftControllers.login);
+
 export default router;
