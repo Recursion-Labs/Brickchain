@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, Settings, ChevronDown, Menu, LogOut, User as UserIcon } from "lucide-react";
+import { Search, Bell, Settings, ChevronDown, Menu, LogOut, User as UserIcon, Home as HomeIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcherButton } from "@/components/custom/theme-switcher-button";
@@ -121,6 +121,12 @@ export function AppHeader() {
                 </div>
 
                 {/* Menu Items */}
+                <DropdownMenuItem asChild>
+                  <a href="/dashboard" className="cursor-pointer">
+                    <HomeIcon className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </a>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <a href="/profile" className="cursor-pointer">
                     <UserIcon className="mr-2 h-4 w-4" />

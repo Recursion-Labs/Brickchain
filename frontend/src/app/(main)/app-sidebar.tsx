@@ -3,20 +3,18 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import Image from "next/image"
+// using theme-aware Logo component
+import Logo from "@/components/custom/Logo"
 import {
   Compass,
   Grid3x3,
   Coins,
   ArrowLeftRight,
-  Gift,
-  Activity,
-  Trophy,
-  Wand2,
   BookOpen,
   Settings,
   HelpCircle,
   ChevronRight,
+  User,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -69,30 +67,12 @@ const mainItems: NavItem[] = [
     icon: ArrowLeftRight,
   },
   {
-    title: "Swap",
-    url: "/swap",
-    icon: ArrowLeftRight,
+    title: "Me",
+    url: "/me",
+    icon: User,
   },
-  {
-    title: "Drops",
-    url: "/drops",
-    icon: Gift,
-  },
-  {
-    title: "Activity",
-    url: "/activity",
-    icon: Activity,
-  },
-  {
-    title: "Rewards",
-    url: "/rewards",
-    icon: Trophy,
-  },
-  {
-    title: "Studio",
-    url: "/studio",
-    icon: Wand2,
-  },
+  // Navigation items that are enabled by default for users.
+  // Sidebar trimmed: removed legacy items (Swap, Drops, Activity, Rewards, Studio)
 ]
 
 const resourcesItems: NavItem[] = [
@@ -156,27 +136,19 @@ export function AppSidebar() {
     >
       {/* Header with Logo and Trigger */}
       <SidebarHeader className="h-16 border-b border-border">
-        {isCollapsed ? (
-          <div className="flex items-center justify-between gap-2 px-2">
-            <Image
-              src="https://ik.imagekit.io/mwhha64ay/Brickchain/black-trans-logo.png"
-              alt="BrickChain"
-              width={32}
-              height={32}
-              className="w-8 h-8 shrink-0 invert"
-            />
+          {isCollapsed ? (
+            <div className="flex items-center justify-between gap-2 px-2">
+            <div className="w-8 h-8">
+              <Logo width={32} height={32} className="w-8 h-8 shrink-0" />
+            </div>
             <SidebarTrigger className="h-6 w-6" />
           </div>
         ) : (
           <div className="flex items-center justify-between gap-3 px-8">
-            <div className="flex items-center gap-3 flex-1 justify-center">
-              <Image
-                src="https://ik.imagekit.io/mwhha64ay/Brickchain/black-trans-logo.png"
-                alt="BrickChain"
-                width={40}
-                height={40}
-                className="w-10 h-10 shrink-0 invert"
-              />
+              <div className="flex items-center gap-3 flex-1 justify-center">
+              <div className="w-10 h-10">
+                <Logo width={40} height={40} className="w-10 h-10 shrink-0" />
+              </div>
               <span className="font-bold text-lg leading-tight text-sidebar-foreground">BrickChain</span>
             </div>
             <SidebarTrigger />

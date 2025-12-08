@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Heart, Eye, Share2, Grid3x3, List } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,8 @@ interface NFTGalleryProps {
 
 export default function NFTGallery({ activeTab = "galleries" }: NFTGalleryProps) {
   const [currentTab, setCurrentTab] = useState<"galleries" | "favorites" | "property" | "watchlist">(activeTab);
+  const [properties, setProperties] = useState<any[]>([]);
+  const [loadingProperties, setLoadingProperties] = useState(false);
 
   // Mock data - replace with API calls
   const galleryNFTs: NFT[] = [
@@ -54,13 +56,53 @@ export default function NFTGallery({ activeTab = "galleries" }: NFTGalleryProps)
       case "favorites":
         return favoritesNFTs;
       case "property":
-        return propertyNFTs;
+        return properties.length > 0 ? properties as any : propertyNFTs;
       case "watchlist":
         return watchlistNFTs;
       default:
         return galleryNFTs;
     }
   };
+
+  // Fetch properties when the property tab is active (My Properties)
+  useEffect(() => {
+    const fetchMyProperties = async () => {
+      try {
+        if (currentTab !== 'property') return;
+        setLoadingProperties(true);
+        const apiClient = (await import('@/lib/api')).apiClient;
+        const response = await apiClient.getProperties();
+        if (response.success && response.data) {
+          const apiData = response.data as { success?: boolean; data?: unknown[] };
+          const rawData = Array.isArray(response.data) ? response.data : (Array.isArray(apiData.data) ? apiData.data : []);
+          const normalized = rawData.map((p: any) => ({
+            id: p.id,
+            title: p.name || p.title || 'Untitled',
+            image: '/nft-7.jpg',
+            price: p.value ? `${p.value}` : undefined,
+            likes: 0,
+            views: 0,
+            isLiked: false,
+          }));
+
+          // Filter using localStorage stored ids for "My Properties"
+          const myPropsJson = localStorage.getItem('myPropertyIds');
+          if (myPropsJson) {
+            const myPropIds = JSON.parse(myPropsJson) as string[];
+            const myNormalized = normalized.filter(n => n.id && myPropIds.includes(n.id));
+            setProperties(myNormalized);
+          } else {
+            setProperties(normalized);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch properties for My Properties tab', err);
+      } finally {
+        setLoadingProperties(false);
+      }
+    };
+    fetchMyProperties();
+  }, [currentTab]);
 
   const nfts = getNFTsByTab();
 
@@ -253,7 +295,7 @@ export default function NFTGallery({ activeTab = "galleries" }: NFTGalleryProps)
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {nfts.map((nft, index) => (
+          {nfts.map((nft: any, index: number) => (
             <motion.div
               key={nft.id}
               initial={{ opacity: 0, y: 20 }}
