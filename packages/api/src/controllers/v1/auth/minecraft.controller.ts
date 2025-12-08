@@ -11,37 +11,25 @@ const login = catchAsync(async (req: Request, res: Response) => {
     if (!minecraftPlayerData || !minecraftPlayerData.id) {
         throw new APIError(400, "Minecraft player data with id is required");
     }
-    console.log(req.body)
-    // Check if user exists with the token
     let user = await db.user.findFirst({
         where: {
             minecraftAuthToken: token
         }
     });
-
     if (!user) {
-        // Create new user account
-        const playerId = minecraftPlayerData.id;
-        const email = `${playerId}@minecraft.local`; // Generate unique email
-
-        user = await db.user.create({
-            data: {
-                email,
-                minecraftAuthToken: token,
-                minecraftPlayerData,
-                name: minecraftPlayerData.name || `Player_${playerId}`,
-            }
-        });
-    } else {
-        // If user exists but has no minecraftPlayerData, update it
-        if (!user.minecraftPlayerData) {
-            user = await db.user.update({
-                where: { id: user.id },
-                data: { minecraftPlayerData }
-            });
+        throw new APIError(404, "User not found");
+    }
+    if (user.minecraftPlayerData) {
+        if ((user.minecraftPlayerData as any).id !== minecraftPlayerData.id) {
+            throw new APIError(409, "Minecraft player data does not match");
         }
     }
-
+    if (!user.minecraftPlayerData) {
+        user = await db.user.update({
+            where: { id: user.id },
+            data: { minecraftPlayerData }
+        });
+    }
     res.status(200).json({
         success: true,
         message: "Minecraft authentication successful",
