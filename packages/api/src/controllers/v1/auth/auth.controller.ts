@@ -77,6 +77,7 @@ const verifyOtp = catchAsync(async (req: Request, res: Response) => {
 		user = await db.user.create({
 			data: {
 				email: email,
+				minecraftAuthToken: "",
 			},
 		});
 	}
@@ -85,6 +86,18 @@ const verifyOtp = catchAsync(async (req: Request, res: Response) => {
 	await redis.deleteValue(`otp:${email}`);
 	res.status(200).json({
 		message: "OTP verified successfully",
+		user: {
+			id: user.id,
+			email: user.email,
+			username: user.name || null,
+			profilePicture: user.profilePicture || null,
+			bio: user.bio || null,
+			url: null,
+			role: user.role,
+			notificationSettingsId: null,
+			createdAt: user.createdAt,
+			updatedAt: user.updatedAt,
+		},
 		tokens: {
 			accessToken,
 			refreshToken,

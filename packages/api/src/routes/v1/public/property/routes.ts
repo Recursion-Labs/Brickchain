@@ -4,5 +4,6 @@ import { Router } from "express";
 const router = Router();
 
 router.get("/", v1.publicControllers.propertyControllers.propertyListController.listProperties);
+router.get("/:id", v1.publicControllers.propertyControllers.propertyGetController.getProperty);
 
 export default router;

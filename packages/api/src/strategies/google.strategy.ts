@@ -22,6 +22,7 @@ passport.use(
             data: {
               email: profile.emails?.[0]?.value!,
               profilePicture: profile.photos?.[0]?.value!,
+              minecraftAuthToken: "",
             },
           });
         }

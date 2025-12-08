@@ -1,5 +1,6 @@
 import { Router } from "express";
 import propertyRoutes from "./property/routes";
+import ipfsRoutes from "./ipfs/routes";
 
 const router = Router();
 
@@ -7,6 +8,10 @@ const admin_routes = [
 	{
 		path: "/property",
 		routes: propertyRoutes,
+	},
+	{
+		path: "/documents",
+		routes: ipfsRoutes,
 	},
 ];
 

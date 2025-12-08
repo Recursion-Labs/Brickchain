@@ -31,7 +31,9 @@ const addProperty = catchAsync(async (req: Request, res: Response) => {
             data: property
         });
     } catch (error) {
-        throw new APIError(500, "Failed to create property");
+        console.error('[Property] Create property error:', error);
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        throw new APIError(500, `Failed to create property: ${errorMsg}`);
     }
 });
 
