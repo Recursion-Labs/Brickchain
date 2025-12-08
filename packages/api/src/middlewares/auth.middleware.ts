@@ -13,40 +13,61 @@ declare global {
 export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const authHeader = req.headers.authorization;
 	const token = authHeader && authHeader.split(" ")[1];
+	const minecraftToken = req.headers['x-minecraft-token'] as string;
 
-	if (token == null) {
-		res.status(401).json({ message: "Authentication Failed: Please provide a token to verify" });
-		return;
+	// Try JWT authentication first
+	if (token) {
+		return new Promise<void>((resolve) => {
+			jwt.verify(token, envVars.JWT_SECRET, async (err, decodedToken) => {
+				if (!err) {
+					const userId = (decodedToken as any).id;
+					if (userId) {
+						try {
+							const userAccount = await db.user.findFirst({
+								where: { id: userId },
+							});
+							if (userAccount) {
+								(req as any).user = userAccount;
+								next();
+								return resolve();
+							}
+						} catch (error) {
+							next(error);
+							return resolve();
+						}
+					}
+				}
+				// JWT failed, try Minecraft auth
+				tryMinecraftAuth();
+				resolve();
+			});
+		});
+	} else {
+		// No JWT token, try Minecraft auth
+		tryMinecraftAuth();
 	}
 
-	return new Promise<void>((resolve) => {
-		jwt.verify(token, envVars.JWT_SECRET, async (err, decodedToken) => {
-			if (err) {
-				res.status(403).json({ message: "Invalid token" });
-				return resolve();
-			}
-			const userId = (decodedToken as any).id;
-			if (!userId) {
-				res.status(403).json({ message: "Invalid token: Missing userId" });
-				return resolve();
-			}
+	async function tryMinecraftAuth() {
+		if (minecraftToken) {
 			try {
 				const userAccount = await db.user.findFirst({
-					where: { id: userId },
+					where: { minecraftAuthToken: minecraftToken },
 				});
-				if (!userAccount) {
-					res.status(404).json({ message: "User not found" });
-					return resolve();
+
+				if (userAccount) {
+					(req as any).user = userAccount;
+					next();
+					return;
 				}
-				(req as any).user = userAccount;
-				next();
-				resolve();
 			} catch (error) {
 				next(error);
-				resolve();
+				return;
 			}
-		});
-	});
+		}
+
+		// Both authentication methods failed
+		res.status(401).json({ message: "Authentication Failed: Please provide a valid JWT token or Minecraft token" });
+	}
 };
 
 export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {

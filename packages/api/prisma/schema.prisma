@@ -15,16 +15,41 @@ datasource db {
 }
 
 model User {
-  id             String     @id @default(uuid())
-  email          String     @unique
-  bio            String?
-  profilePicture String?
-  banner         String?
-  name           String?
-  myProperties   Property[]
-  role           Role       @default(USER)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  id                  String             @id @default(uuid())
+  email               String             @unique
+  bio                 String?
+  profilePicture      String?
+  banner              String?
+  name                String?
+  minecraftAuthToken  String             @default(cuid())
+  minecraftPlayerData Json?
+  myProperties        Property[]
+  requestedProperties PropertyRequests[]
+  role                Role               @default(USER)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+}
+
+model PropertyRequests {
+  id                String        @id @default(uuid())
+  entity            String
+  minecraftPlayerId String
+  status            RequestStatus @default(PENDING)
+  stage             RequestStage  @default(STAGE_1)
+  user              User?         @relation(fields: [userId], references: [id])
+  userId            String?
+  images            images[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model images {
+  id                 String            @id @default(uuid())
+  url                String
+  propertyRequests   PropertyRequests? @relation(fields: [propertyRequestsId], references: [id])
+  propertyRequestsId String?
+  property           Property?         @relation(fields: [propertyId], references: [id])
+  propertyId         String?
 }
 
 model Property {
@@ -36,6 +61,7 @@ model Property {
   location    String
   value       Float
   shares      Int
+  gallery     images[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   user        User?        @relation(fields: [userId], references: [id])
@@ -56,4 +82,16 @@ enum PropertyType {
   OFFICE_BUILDING
   RETAIL
   MIXED_USE
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RequestStage {
+  STAGE_1
+  STAGE_2
+  STAGE_3
 }

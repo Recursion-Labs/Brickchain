@@ -125,7 +125,7 @@ export function withErrorHandling<T extends any[], R>(
       const context = errorContext ? { context: errorContext } : undefined;
       throw new BrickChainError(
         `Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
-        'UNKNOWN_ERROR',
+        ErrorCode.UNKNOWN_ERROR,
         context
       );
     }
@@ -217,7 +217,7 @@ export function mapErrorForFrontend(error: BrickChainError): {
   userMessage: string;
   context?: Record<string, any>;
 } {
-  const errorMap: Record<ErrorCode, string> = {
+  const errorMap: Partial<Record<ErrorCode, string>> = {
     [ErrorCode.CONTRACT_NOT_FOUND]: "Contract not found. Please ensure the contract is deployed.",
     [ErrorCode.WALLET_INSUFFICIENT_BALANCE]: "Insufficient wallet balance. Please add funds to continue.",
     [ErrorCode.INVALID_ADDRESS]: "Invalid address format. Please check the address and try again.",
@@ -233,7 +233,7 @@ export function mapErrorForFrontend(error: BrickChainError): {
   return {
     code: error.code,
     message: error.message,
-    userMessage: errorMap[error.code] || errorMap[ErrorCode.UNKNOWN_ERROR],
+    userMessage: errorMap[error.code] || errorMap[ErrorCode.UNKNOWN_ERROR] || "An unexpected error occurred. Please try again or contact support.",
     context: error.context
   };
 }
