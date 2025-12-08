@@ -39,6 +39,7 @@ path = "src/lib.rs"
 [[bin]]
 name = "store-cli"
 path = "src/main.rs"
+required-features = ["chain"]
 
 [[bin]]
 name = "store-server"

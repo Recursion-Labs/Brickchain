@@ -26,7 +26,7 @@ struct AppState {
 struct StoreResponse {
     success: bool,
     id: String,
-    sha256: String,
+    sha256: Vec<u8>,
     cid: Option<String>,
     size_bytes: u64,
     block_hash: Option<String>,
@@ -108,14 +108,11 @@ async fn store_pdf(
     
     let temp_path = temp_path.ok_or_else(|| anyhow::anyhow!("No file provided"))?;
     
-    // ALWAYS store with IPFS pinning (mandatory for decentralization)
-    let meta = state.db.store_pdf_with_ipfs(&temp_path, state.ipfs_url.as_deref())?;
+    // Store PDF without IPFS pinning (will be handled by Express API)
+    let meta = state.db.store_pdf(&temp_path, None)?;
     
-    // ALWAYS publish to blockchain (mandatory for tamper-proof registry)
-    use tokio::runtime::Runtime;
-    use store::chain::publish_remark;
-    let rt = Runtime::new()?;
-    let block_hash = rt.block_on(publish_remark(&state.node_url, &state.seed, &meta))?;
+    // IPFS pinning and blockchain publishing disabled temporarily
+    // These will be handled by the Express API endpoints
     
     // Clean up temp file
     let _ = std::fs::remove_file(temp_path);
@@ -123,11 +120,11 @@ async fn store_pdf(
     Ok(Json(StoreResponse {
         success: true,
         id: meta.id_hex.clone(),
-        sha256: meta.id_hex.clone(),
+        sha256: meta.sha256.to_vec(),
         cid: meta.cid.clone(),
         size_bytes: meta.size_bytes,
-        block_hash: Some(block_hash),
-        message: "PDF stored successfully on IPFS and on-chain".to_string(),
+        block_hash: None,
+        message: "PDF stored successfully".to_string(),
     }))
 }
 

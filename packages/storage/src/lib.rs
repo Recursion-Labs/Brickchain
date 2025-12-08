@@ -13,6 +13,7 @@ use {
     sled::Db,
     std::{
         fs,
+        io::Read,
         io::Write,
         path::{Path, PathBuf},
         time::{SystemTime, UNIX_EPOCH},
@@ -149,11 +150,11 @@ impl DocStore {
     pub fn store_pdf_with_ipfs<P: AsRef<Path>>(
         &self,
         input_path: P,
-        ipfs_url: Option<&str>,
+        _ipfs_url: Option<&str>,
     ) -> Result<DocMeta> {
-use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
-        use ipfs_api_prelude::TryFromUri;
-        use std::io::{Cursor, Read};
+        // use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
+        // use ipfs_api_prelude::TryFromUri;
+        // use std::io::{Cursor, Read};
 
         let input_path = input_path.as_ref();
         // Read file fully and compute hash
@@ -178,20 +179,21 @@ use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
         }
         let sha256_bytes: [u8; 32] = hasher.finalize().into();
 
-        // Pin to IPFS
-        let cid = {
-            let client = match ipfs_url {
-                Some(u) => IpfsClient::from_str(u).context("invalid IPFS url")?,
-                None => IpfsClient::default(),
-            };
-            // Read file into memory for IPFS
-            let mut file_data = Vec::new();
-            std::fs::File::open(temp.path())?.read_to_end(&mut file_data)?;
-            
-            let rt = tokio::runtime::Runtime::new()?;
-            let add_resp = rt.block_on(client.add(Cursor::new(file_data)))?;
-            Some(add_resp.hash)
-        };
+        // IPFS pinning disabled - will be handled by Express API
+        // let cid = {
+        //     let client = match ipfs_url {
+        //         Some(u) => IpfsClient::from_str(u).context("invalid IPFS url")?,
+        //         None => IpfsClient::default(),
+        //     };
+        //     // Read file into memory for IPFS
+        //     let mut file_data = Vec::new();
+        //     std::fs::File::open(temp.path())?.read_to_end(&mut file_data)?;
+        //     
+        //     let rt = tokio::runtime::Runtime::new()?;
+        //     let add_resp = rt.block_on(client.add(Cursor::new(file_data)))?;
+        //     Some(add_resp.hash)
+        // };
+        let cid = None;
         let id_hex = hex::encode(sha256_bytes);
         let final_path = self.root.join("pdfs").join(format!("{id_hex}.pdf"));
         if final_path.exists() { let _ = temp.close(); } else { temp.persist(&final_path)?; }
