@@ -305,7 +305,7 @@ export default function OTPVerify({
 
   return (
     <motion.div
-      className="flex items-center justify-center min-h-screen bg-black p-6"
+      className="flex items-center justify-center min-h-screen bg-background p-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useWalletConnection, useWalletState, WalletContext } from './providers/wallet-provider';
-import { MidnightWalletState } from '@/lib/wallet-types';
+import { MidnightWalletState } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

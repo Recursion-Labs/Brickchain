@@ -9,7 +9,7 @@ import {
   WalletConnectionResult,
   WALLET_ERRORS,
   MidnightWalletState,
-} from '@/lib/wallet-types';
+} from '@/types';
 
 // Wallet configurations
 const walletConfigs: Record<WalletProviderType, WalletConfig> = {

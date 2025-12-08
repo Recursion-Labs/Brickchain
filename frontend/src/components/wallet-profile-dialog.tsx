@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useWalletState, useWalletConnection, useWallet } from './providers/wallet-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+// Input removed - not required in this dialog
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -25,7 +25,6 @@ import {
 import {
   Copy,
   Send,
-  Building,
   History,
   Wallet,
   AlertCircle,
@@ -34,7 +33,9 @@ import {
   Coins,
   Home,
   TrendingUp,
+  User,
 } from 'lucide-react';
+import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { MidnightSessionTimer } from '@uppzen/midnight-auth';
 
@@ -103,10 +104,7 @@ export function WalletProfileDialog({ children, open, onOpenChange }: WalletProf
   const { address, provider, balance, walletState, providerName, walletName, apiVersion } = useWalletState();
   const { disconnectWallet } = useWalletConnection();
   const { refreshBalance } = useWallet();
-  const [sendAmount, setSendAmount] = useState('');
-  const [sendAddress, setSendAddress] = useState('');
-  const [sendToken, setSendToken] = useState('tDUST');
-  const [isSending, setIsSending] = useState(false);
+  // Removed send state - send functionality is no longer available in wallet dialog
 
   const formatAddress = (addr?: string) => {
     if (!addr) return "—";
@@ -148,27 +146,7 @@ export function WalletProfileDialog({ children, open, onOpenChange }: WalletProf
     }
   };
 
-  const handleSend = async () => {
-    if (!sendAmount || !sendAddress) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
-    setIsSending(true);
-    try {
-      // Mock send functionality - replace with real implementation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      toast.success(`Successfully sent ${sendAmount} ${sendToken} to ${formatAddress(sendAddress)}`);
-
-      // Reset form
-      setSendAmount('');
-      setSendAddress('');
-    } catch {
-      toast.error('Failed to send transaction');
-    } finally {
-      setIsSending(false);
-    }
-  };
+  // send removed; no send handler necessary
 
   const totalPropertyValue = mockProperties.reduce((sum, prop) => {
     const userValue = (prop.totalValue * prop.userShares) / prop.totalShares;
@@ -184,22 +162,48 @@ export function WalletProfileDialog({ children, open, onOpenChange }: WalletProf
       )}
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Wallet className="h-5 w-5" />
-            Wallet Profile
-          </DialogTitle>
-          <DialogDescription>
-            Manage your BrickChain wallet, view properties, and send transactions
-          </DialogDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <DialogTitle className="flex items-center gap-2">
+                <Wallet className="h-5 w-5" />
+                Wallet Profile
+              </DialogTitle>
+              <DialogDescription>
+                Manage your BrickChain wallet, view properties, and send transactions
+              </DialogDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/me">
+                <Button variant="ghost" size="sm" asChild>
+                  <a className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Me
+                  </a>
+                </Button>
+              </Link>
+              <Link href="/settings/profile">
+                <Button variant="outline" size="sm" asChild>
+                  <a className="flex items-center gap-2">
+                    <ExternalLink className="h-4 w-4" />
+                    Settings
+                  </a>
+                </Button>
+              </Link>
+            </div>
+          </div>
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="send">Send</TabsTrigger>
-            <TabsTrigger value="properties">Properties</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
+
+          {/* Quick Links: Me & Settings */}
+          <div className="flex gap-3 justify-end px-2 pt-3">
+            <Link href="/me" className="text-sm text-muted-foreground hover:text-foreground">Me</Link>
+            <Link href="/settings/profile" className="text-sm text-muted-foreground hover:text-foreground">Settings</Link>
+          </div>
 
           <TabsContent value="overview" className="space-y-6">
             {/* Wallet Summary */}
@@ -417,167 +421,9 @@ export function WalletProfileDialog({ children, open, onOpenChange }: WalletProf
             )}
           </TabsContent>
 
-          <TabsContent value="send" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Send className="h-5 w-5" />
-                  Send Tokens
-                </CardTitle>
-                <CardDescription>
-                  Transfer tDUST tokens or property tokens to another address
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <Label htmlFor="send-token">Token Type</Label>
-                    <select
-                      id="send-token"
-                      value={sendToken}
-                      onChange={(e) => setSendToken(e.target.value)}
-                      className="w-full mt-1 px-3 py-2 border border-input bg-background rounded-md"
-                    >
-                      <option value="tDUST">tDUST (Native Token)</option>
-                      {mockProperties.map(prop => (
-                        <option key={prop.tokenSymbol} value={prop.tokenSymbol}>
-                          {prop.tokenSymbol} ({prop.name})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+          {/* 'Send' tab removed per request */}
 
-                  <div>
-                    <Label htmlFor="send-amount">Amount</Label>
-                    <Input
-                      id="send-amount"
-                      type="number"
-                      placeholder="Enter amount to send"
-                      value={sendAmount}
-                      onChange={(e) => setSendAmount(e.target.value)}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="send-address">Recipient Address</Label>
-                    <Input
-                      id="send-address"
-                      placeholder="Enter recipient address"
-                      value={sendAddress}
-                      onChange={(e) => setSendAddress(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-4">
-                  <Button
-                    onClick={handleSend}
-                    disabled={isSending || !sendAmount || !sendAddress}
-                    className="flex-1"
-                  >
-                    {isSending ? (
-                      <>
-                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="mr-2 h-4 w-4" />
-                        Send Transaction
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                <div className="text-sm text-muted-foreground">
-                  <AlertCircle className="inline h-4 w-4 mr-1" />
-                  Transactions on BrickChain are private and shielded for your security.
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="properties" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building className="h-5 w-5" />
-                  My Properties
-                </CardTitle>
-                <CardDescription>
-                  View your fractional property ownership and token holdings
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {mockProperties.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Building className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="font-semibold mb-2">No Properties Yet</h3>
-                    <p className="text-muted-foreground mb-4">
-                      You haven&apos;t invested in any properties yet. Browse available properties to get started.
-                    </p>
-                    <Button>
-                      <TrendingUp className="mr-2 h-4 w-4" />
-                      Browse Properties
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {mockProperties.map((property) => (
-                      <Card key={property.id} className="p-4">
-                        <div className="flex items-start gap-4">
-                          <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
-                            <Building className="h-8 w-8 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <h4 className="font-semibold">{property.name}</h4>
-                                <p className="text-sm text-muted-foreground">{property.location}</p>
-                              </div>
-                              <Badge variant="outline">{property.tokenSymbol}</Badge>
-                            </div>
-
-                            <div className="mt-3 grid grid-cols-3 gap-4 text-sm">
-                              <div>
-                                <div className="text-muted-foreground">Your Shares</div>
-                                <div className="font-semibold">{property.userShares} / {property.totalShares}</div>
-                              </div>
-                              <div>
-                                <div className="text-muted-foreground">Ownership</div>
-                                <div className="font-semibold">
-                                  {((property.userShares / property.totalShares) * 100).toFixed(1)}%
-                                </div>
-                              </div>
-                              <div>
-                                <div className="text-muted-foreground">Value</div>
-                                <div className="font-semibold">
-                                  ${((property.totalValue * property.userShares) / property.totalShares).toLocaleString()}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-
-                    <Separator />
-
-                    <div className="flex items-center justify-between pt-4">
-                      <div>
-                        <div className="text-sm text-muted-foreground">Total Property Value</div>
-                        <div className="text-2xl font-bold">${totalPropertyValue.toLocaleString()}</div>
-                      </div>
-                      <Button variant="outline">
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        View All Properties
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+          {/* 'Properties' tab removed per request */}
 
           <TabsContent value="history" className="space-y-6">
             <Card>

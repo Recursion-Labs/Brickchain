@@ -1,5 +1,9 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
 import { Book, Menu, Sunset, Trees, Zap } from "lucide-react";
+import Link from "next/link";
+import Logo from "@/components/custom/Logo";
+import { useState } from "react";
 
 import {
   Accordion,
@@ -91,6 +95,9 @@ const Header = ({
     },
   ],
 }: Navbar1Props) => {
+  const [isMobileOpen, setMobileOpen] = useState(false);
+  // No user-specific links in the header by default
+
   return (
     <section className="sticky top-0 z-50 bg-background border-b border-border">
       <div className="max-w-7xl mx-auto py-4 px-4">
@@ -99,11 +106,7 @@ const Header = ({
           <div className="flex items-center gap-6">
             {/* Logo */}
             <a href={logo.url} className="flex items-center gap-2">
-              <img
-                src={logo.src}
-                className="max-h-12"
-                alt={logo.alt}
-              />
+              <Logo width={56} height={56} className="max-h-12" />
               <span className="ml-2 text-xl font-bold tracking-tighter text-foreground">
                 {logo.title}
               </span>
@@ -117,21 +120,31 @@ const Header = ({
             </div>
           </div>
           <div className="flex gap-2">
-            <Button
-              asChild
-              variant="ghost"
-              size="sm"
-              className="text-foreground hover:bg-secondary/80"
-            >
-              <a href="/waitlist">Join Waitlist</a>
-            </Button>
-            <Button
-              asChild
-              size="sm"
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              <a href="/me">Explore</a>
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="text-foreground hover:bg-secondary/80"
+              >
+                <a href="/waitlist">Join Waitlist</a>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="text-foreground border-border hover:bg-secondary/80"
+              >
+                <a href="/auth/login">Login</a>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                <a href="/me">Explore</a>
+              </Button>
+            </div>
           </div>
         </nav>
 
@@ -140,16 +153,12 @@ const Header = ({
           <div className="flex items-center justify-between">
             {/* Logo */}
             <a href={logo.url} className="flex items-center gap-2">
-              <img
-                src={logo.src}
-                className="max-h-12"
-                alt={logo.alt}
-              />
+              <Logo width={44} height={44} className="max-h-12" />
               <span className="ml-2 text-lg font-semibold text-foreground">
                 {logo.title}
               </span>
             </a>
-            <Sheet>
+            <Sheet open={isMobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
                 <Button
                   variant="ghost"
@@ -159,43 +168,46 @@ const Header = ({
                   <Menu className="size-4" />
                 </Button>
               </SheetTrigger>
-              <SheetContent className="overflow-y-auto bg-background text-foreground border-border">
+              <SheetContent side="left" aria-label="Mobile navigation" className="overflow-y-auto bg-background text-foreground border-border w-full sm:w-3/4 h-full">
                 <SheetHeader>
                   <SheetTitle>
-                    <a href={logo.url} className="flex items-center gap-2">
-                      <img
-                        src={logo.src}
-                        className="max-h-12"
-                        alt={logo.alt}
-                      />
+                    <Link href={logo.url} onClick={() => setMobileOpen(false)} className="flex items-center gap-2">
+                        <Logo width={44} height={44} className="max-h-12" />
                       <span className="ml-2 text-lg font-semibold text-foreground">
                         {logo.title}
                       </span>
-                    </a>
+                    </Link>
                   </SheetTitle>
                 </SheetHeader>
-                <div className="flex flex-col gap-6 p-4">
+                <div className="flex flex-col gap-6 p-4 h-full">
                   <Accordion
                     type="single"
                     collapsible
                     className="flex w-full flex-col gap-4"
                   >
-                    {menu.map((item) => renderMobileMenuItem(item))}
+                    {menu.map((item) => renderMobileMenuItem(item, setMobileOpen))}
                   </Accordion>
 
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-3 mt-auto">
                     <Button
                       asChild
                       variant="ghost"
                       className="text-foreground hover:bg-secondary/80 justify-start"
                     >
-                      <a href="/waitlist">Join Waitlist</a>
+                      <Link href="/waitlist" onClick={() => setMobileOpen(false)}>Join Waitlist</Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="text-foreground border-border hover:bg-secondary/80 justify-start"
+                    >
+                      <Link href="/auth/login" onClick={() => setMobileOpen(false)}>Login</Link>
                     </Button>
                     <Button
                       asChild
                       className="bg-primary text-primary-foreground hover:bg-primary/90 justify-start"
                     >
-                      <a href="/me">Explore</a>
+                      <Link href="/me" onClick={() => setMobileOpen(false)}>Explore</Link>
                     </Button>
                   </div>
                 </div>
@@ -236,7 +248,7 @@ const renderMenuItem = (item: MenuItem) => {
   );
 };
 
-const renderMobileMenuItem = (item: MenuItem) => {
+const renderMobileMenuItem = (item: MenuItem, onNavigate: (open: boolean) => void) => {
   if (item.items) {
     return (
       <AccordionItem key={item.title} value={item.title} className="border-b-0">
@@ -245,7 +257,17 @@ const renderMobileMenuItem = (item: MenuItem) => {
         </AccordionTrigger>
         <AccordionContent className="mt-2">
           {item.items.map((subItem) => (
-            <SubMenuLink key={subItem.title} item={subItem} />
+            <div key={subItem.title}>
+              <Link href={subItem.url} onClick={() => onNavigate(false)} className="hover:bg-secondary/80 text-foreground flex min-w-80 select-none flex-row gap-4 rounded-md p-3 leading-none no-underline outline-none transition-colors">
+                <div className="text-foreground">{subItem.icon}</div>
+                <div>
+                  <div className="text-sm font-semibold text-foreground">{subItem.title}</div>
+                  {subItem.description && (
+                    <p className="text-muted-foreground text-sm leading-snug">{subItem.description}</p>
+                  )}
+                </div>
+              </Link>
+            </div>
           ))}
         </AccordionContent>
       </AccordionItem>
@@ -253,9 +275,9 @@ const renderMobileMenuItem = (item: MenuItem) => {
   }
 
   return (
-    <a key={item.title} href={item.url} className="text-md font-semibold text-foreground">
+    <Link key={item.title} href={item.url} className="text-md font-semibold text-foreground" onClick={() => onNavigate(false)}>
       {item.title}
-    </a>
+    </Link>
   );
 };
 
