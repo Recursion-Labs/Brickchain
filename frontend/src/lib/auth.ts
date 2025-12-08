@@ -24,11 +24,22 @@ export class AuthManager {
   private static readonly REFRESH_TOKEN_KEY = 'refreshToken';
   private static readonly USER_KEY = 'user';
 
+  // Cookie options - secure only in production
+  private static getCookieOptions() {
+    const isProduction = process.env.NODE_ENV === 'production';
+    return {
+      secure: isProduction,
+      sameSite: 'strict' as const,
+      expires: 7, // 7 days
+    };
+  }
+
   // Store authentication data
   static setAuthData(user: User, tokens: AuthTokens): void {
-    Cookies.set(this.ACCESS_TOKEN_KEY, tokens.accessToken, { secure: true, sameSite: 'strict' });
-    Cookies.set(this.REFRESH_TOKEN_KEY, tokens.refreshToken, { secure: true, sameSite: 'strict' });
-    Cookies.set(this.USER_KEY, JSON.stringify(user), { secure: true, sameSite: 'strict' });
+    const options = this.getCookieOptions();
+    Cookies.set(this.ACCESS_TOKEN_KEY, tokens.accessToken, options);
+    Cookies.set(this.REFRESH_TOKEN_KEY, tokens.refreshToken, options);
+    Cookies.set(this.USER_KEY, JSON.stringify(user), options);
   }
 
   // Get stored user data

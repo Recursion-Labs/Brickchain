@@ -1,4 +1,7 @@
-// Wallet types and interfaces for multi-provider wallet integration
+/**
+ * Wallet Types
+ * Multi-provider wallet integration types
+ */
 
 export type WalletProvider = 'metamask' | 'walletconnect' | 'lace' | 'midnight';
 
@@ -10,7 +13,7 @@ export interface WalletState {
   balance?: string;
   isConnecting: boolean;
   error: string | null;
-  // Extended Midnight wallet state (from create-midnight-dapp)
+  // Extended Midnight wallet state
   walletState?: MidnightWalletState;
   providerName?: string;
   walletName?: string;
@@ -35,7 +38,6 @@ export interface WalletConnectionResult {
   address?: string;
   error?: string;
   provider?: WalletProvider;
-  // Extended fields for detailed wallet state
   walletState?: MidnightWalletState;
   providerName?: string;
   walletName?: string;
@@ -82,14 +84,6 @@ export const WALLET_ERRORS = {
 } as const;
 
 export type WalletErrorType = typeof WALLET_ERRORS[keyof typeof WALLET_ERRORS];
-
-// Wallet detection functions
-export interface WalletDetector {
-  isInstalled(): boolean;
-  getProvider(): Record<string, unknown> | null;
-  getName(): string;
-  getIcon(): string;
-}
 
 // Network configurations
 export interface NetworkConfig {
@@ -141,7 +135,7 @@ export const MIDNIGHT_NETWORKS: Record<string, NetworkConfig> = {
   },
 };
 
-// Ethereum network config (for MetaMask)
+// Ethereum network config
 export const ETHEREUM_NETWORKS: Record<string, NetworkConfig> = {
   mainnet: {
     chainId: 1,

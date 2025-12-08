@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 const API_BASE_URL_FORMS = process.env.NEXT_PUBLIC_API_BASE_URL_FORMS || 'http://localhost:8000';
 
 import { AuthManager } from './auth';
@@ -161,6 +161,80 @@ class ApiClient {
       method: 'PUT',
       body: JSON.stringify({ status }),
     });
+  }
+
+  // Property endpoints
+  async getProperties(): Promise<ApiResponse> {
+    return this.base_request('/v1/public/property');
+  }
+
+  async getProperty(id: string): Promise<ApiResponse> {
+    return this.base_request(`/v1/public/property/${id}`);
+  }
+
+  async addProperty(data: {
+    name: string;
+    description: string;
+    documentId: string;
+    type: string;
+    location: string;
+    value: number;
+    shares: number;
+    documents?: Array<{
+      id: string;
+      cid: string;
+      filename: string;
+      ipfsUrl: string;
+      blockHash: string;
+    }>;
+  }): Promise<ApiResponse> {
+    return this.base_request('/v1/admin/property', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateProperty(id: string, data: Partial<{
+    name: string;
+    description: string;
+    documentId: string;
+    type: string;
+    location: string;
+    value: number;
+    shares: number;
+  }>): Promise<ApiResponse> {
+    return this.base_request(`/v1/admin/property/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteProperty(id: string): Promise<ApiResponse> {
+    return this.base_request(`/v1/admin/property/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deletePropertyWithDocuments(
+    id: string,
+    deleteDocuments: boolean = false
+  ): Promise<ApiResponse> {
+    // Import deletePropertyWithDocuments from property.ts if available
+    // Otherwise delegate to deleteProperty
+    try {
+      // For now, import and call the function from property.ts
+      const { deletePropertyWithDocuments: deletePropertyFn } = await import('./property');
+      const result = await deletePropertyFn(id, deleteDocuments);
+      return {
+        success: result.success,
+        data: {},
+        message: result.message,
+        status: result.success ? 200 : 400,
+      };
+    } catch {
+      // Fallback to basic delete if import fails
+      return this.deleteProperty(id);
+    }
   }
 }
 
