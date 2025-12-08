@@ -66,9 +66,9 @@ const Waitlist = () => {
   };
 
   return (
-    <section className="flex h-full min-h-screen w-screen items-center justify-center overflow-hidden py-32 bg-white text-black">
+    <section className="flex h-full min-h-screen w-screen items-center justify-center overflow-hidden py-12 sm:py-32 bg-white text-black">
       <BackgroundLines className="container flex w-full flex-col items-center justify-center px-4 md:h-full">
-        <h2 className="relative z-20 py-2 text-center font-sans text-5xl font-semibold tracking-tighter md:py-10 lg:text-8xl">
+        <h2 className="relative z-20 py-2 text-center font-sans text-3xl sm:text-5xl md:text-6xl font-semibold tracking-tighter md:py-10 lg:text-8xl">
           Join the Waitlist
         </h2>
         <p className="text-md text-muted-foreground mx-auto max-w-xl text-center lg:text-lg">
@@ -81,7 +81,7 @@ const Waitlist = () => {
         <p className="mt-4 text-xs text-muted-foreground/80 mx-auto max-w-xl text-center">
           Invites roll out soon — we’ll email you when it’s your turn. We only use your email for product updates.
         </p>
-        <form onSubmit={handleSubmit} className="relative z-20 mt-10 flex w-full max-w-md items-center gap-3 rounded-full p-1">
+        <form onSubmit={handleSubmit} className="relative z-20 mt-6 sm:mt-10 flex w-full max-w-md items-center gap-3 rounded-full p-1 flex-col sm:flex-row">
           <Input
             className="bg-muted h-10 w-full rounded-xl border-none shadow-none ring-0 focus-visible:outline-none focus-visible:ring-0 active:outline-0 active:ring-0"
             placeholder="Enter your email"
@@ -90,14 +90,14 @@ const Waitlist = () => {
             onChange={(e) => setEmail(e.target.value)}
             disabled={isSubmitting}
           />
-          <Button type="submit" className="h-10 rounded-xl" disabled={isSubmitting}>
+          <Button type="submit" className="h-10 rounded-xl w-full sm:w-auto" disabled={isSubmitting}>
             {isSubmitting ? "Joining..." : "Join the Waitlist"}
           </Button>
         </form>
-        <div className="mt-10 flex items-center gap-2">
+        <div className="mt-8 sm:mt-10 flex items-center gap-2">
           <span className="inline-flex items-center -space-x-2.5">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <Avatar key={index} className="size-8">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Avatar key={index} className="size-6 sm:size-8">
                 <AvatarImage
                   src={`https://deifkwefumgah.cloudfront.net/shadcnblocks/block/guri3/avatar${index + 1}.png`}
                   alt="placeholder"
@@ -106,19 +106,19 @@ const Waitlist = () => {
             ))}
           </span>
           <p className="text-muted-foreground/80 tracking-tight">
-            1,000+ people have signed up
+            100+ people have signed up
           </p>
         </div>
       </BackgroundLines>
 
       {/* Popup Modal */}
-      {popup.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="relative mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 ease-out">
+        {popup.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-(--overlay) backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="relative mx-4 w-full max-w-xs sm:max-w-md rounded-2xl bg-card p-6 shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 ease-out">
             <div className="flex items-start justify-between gap-4">
               {popup.type === 'success' ? (
                 <div className="flex items-center gap-4">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-600 shadow-lg">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-linear-to-br from-green-400 to-emerald-600 shadow-lg">
                     <svg className="h-8 w-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
@@ -150,8 +150,8 @@ const Waitlist = () => {
                 <h3 className="text-xl font-semibold text-slate-900">You are on the list 🎉</h3>
                 <p className="mt-2 text-sm text-slate-600">Thanks — we have sent a confirmation to your inbox. We will email you when invites roll out.</p>
 
-                <div className="mt-5 flex gap-3">
-                  <Button onClick={closePopup} className="bg-black text-white hover:opacity-95">
+                <div className="mt-5 flex gap-3 flex-col sm:flex-row">
+                  <Button onClick={closePopup} className="bg-primary text-primary-foreground hover:opacity-95 w-full sm:w-auto">
                     Close
                   </Button>
                   <Button
@@ -165,7 +165,7 @@ const Waitlist = () => {
                       }
                     }}
                     variant="ghost"
-                    className="border border-gray-200 text-gray-800"
+                    className="border border-gray-200 text-gray-800 w-full sm:w-auto"
                   >
                     {copied ? 'Copied!' : 'Share'}
                   </Button>
@@ -180,7 +180,7 @@ const Waitlist = () => {
                   {popup.message}
                 </p>
                 <div className="mt-6 flex justify-end">
-                  <Button onClick={closePopup} className="bg-red-600 hover:bg-red-700">
+                  <Button onClick={closePopup} className="bg-red-600 hover:bg-red-700 w-full sm:w-auto">
                     Try Again
                   </Button>
                 </div>
