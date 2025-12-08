@@ -54,8 +54,6 @@ const waitForFunds = (wallet: Wallet) =>
 
 
 async function main() {
-  console.log("Midnight Hello World Deployment\n");
-
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -110,52 +108,26 @@ async function main() {
 
     console.log(`Balance: ${balance}`);
 
-    // Deploy contract helper function
-    async function deployContractFile(
-      contractName: string, 
-      filepath: string, 
-      providers: any, 
-      privateStateId: string
-    ): Promise<string> {
-      try {
-        console.log(`Deploying ${contractName}...`);
-        const contractModule = await import(filepath);
-        const contractInstance = contractModule.contract;
-        
-        const deployed = await deployContract(providers, {
-          contract: contractInstance,
-          privateStateId: privateStateId,
-          initialPrivateState: {}
-        });
-        
-        const address = deployed.deployTxData.public.contractAddress;
-        console.log(`✓ ${contractName} deployed at: ${address}`);
-        return address;
-      } catch (error) {
-        console.error(`✗ Failed to deploy ${contractName}:`, error);
-        throw error;
-      }
-    }
 
-    // Load and deploy contracts
-    console.log("Loading and deploying contracts...");
-    const buildPath = path.join(process.cwd(), "build");
+
+    // Load compiled contract files
+    console.log("Loading contracts...");
+    const contractPath = path.join(process.cwd(), "contracts");
     
     const contractConfigs = [
-      { name: "main", file: "main/contract/index.cjs", stateId: "brickchainMainState" },
-      { name: "property_registry", file: "property_registry/contract/index.cjs", stateId: "propertyRegistryState" },
-      { name: "fractional_token", file: "fractional_token/contract/index.cjs", stateId: "fractionalTokenState" },
-      { name: "marketplace", file: "marketplace/contract/index.cjs", stateId: "marketplaceState" },
-      { name: "verification", file: "verification/contract/index.cjs", stateId: "verificationState" },
-      { name: "role", file: "role/contract/index.cjs", stateId: "roleState" },
-      { name: "utils", file: "utils/contract/index.cjs", stateId: "utilsState" }
+      { name: "main", path: "managed/main/contract/index.cjs", stateId: "brickchainMainState" },
+      { name: "property_registry", path: "managed/property_registry/contract/index.cjs", stateId: "propertyRegistryState" },
+      { name: "fractional_token", path: "managed/fractional_token/contract/index.cjs", stateId: "fractionalTokenState" },
+      { name: "marketplace", path: "managed/marketplace/contract/index.cjs", stateId: "marketplaceState" },
+      { name: "verification", path: "managed/verification/contract/index.cjs", stateId: "verificationState" },
+      { name: "role", path: "managed/role/contract/index.cjs", stateId: "roleState" }
     ];
 
     // Validate all contract files exist before deployment
     for (const config of contractConfigs) {
-      const contractPath = path.join(buildPath, config.file);
-      if (!fs.existsSync(contractPath)) {
-        console.error(`Contract ${config.name} not found at ${contractPath}! Run: npm run compile`);
+      const contractModulePath = path.join(contractPath, config.path);
+      if (!fs.existsSync(contractModulePath)) {
+        console.error(`Contract ${config.name} not found at ${contractModulePath}! Run: npm run compile`);
         process.exit(1);
       }
     }
@@ -192,15 +164,29 @@ async function main() {
     };
 
 
-    // Configure all required providers with error handling
+    // Configure all required providers
     console.log("Setting up providers...");
-    const zkConfigPath = path.join(buildPath, "managed", "brickchain");
+
+
+    // Deploy all contracts
+    console.log("Starting contract deployment (30-60 seconds per contract)...");
     
-    let providers: any;
-    try {
-      providers = {
+    const deployedAddresses: Record<string, string> = {};
+    
+    for (const config of contractConfigs) {
+      const contractModulePath = path.join(contractPath, config.path);
+      const zkConfigPath = path.join(contractPath, "managed", config.name);
+      
+      console.log(`\nDeploying ${config.name}...`);
+      
+      // Load contract module
+      const ContractModule = await import(contractModulePath);
+      const contractInstance = new ContractModule.Contract({});
+      
+      // Configure providers for this contract
+      const providers = {
         privateStateProvider: levelPrivateStateProvider({
-          privateStateStoreName: "brickchain-state"
+          privateStateStoreName: `${config.name}-state`
         }),
         publicDataProvider: indexerPublicDataProvider(
           TESTNET_CONFIG.indexer,
@@ -211,72 +197,44 @@ async function main() {
         walletProvider: walletProvider,
         midnightProvider: walletProvider
       };
-      console.log("✓ Providers configured successfully");
-    } catch (providerError) {
-      console.error("❌ Failed to configure providers:", providerError);
-      throw new Error(`Provider configuration failed: ${providerError}`);
-    }
-
-
-    // Deploy all contracts
-    console.log("Starting contract deployment (30-60 seconds per contract)...");
-    
-    const deployedAddresses: Record<string, string> = {};
-    
-    for (const config of contractConfigs) {
-      const contractFilePath = path.join(buildPath, config.file);
-      try {
-        // Create fresh providers for each contract to avoid config reuse bugs
-        const contractProviders = {
-          ...providers,
-          privateStateProvider: levelPrivateStateProvider({
-            privateStateStoreName: `${config.name}-state`
-          })
-        };
-        
-        deployedAddresses[config.name] = await deployContractFile(
-          config.name,
-          contractFilePath,
-          contractProviders,
-          config.stateId
-        );
-      } catch (error) {
-        console.error(`❌ Failed to deploy ${config.name}:`, error);
-        // Log detailed error for debugging
-        console.error(`Contract path: ${contractFilePath}`);
-        console.error(`State ID: ${config.stateId}`);
-        throw new Error(`Deployment failed for ${config.name}: ${error}`);
-      }
+      
+      // Deploy contract to blockchain
+      const deployed = await deployContract(providers, {
+        contract: contractInstance,
+        privateStateId: config.stateId,
+        initialPrivateState: {}
+      });
+      
+      const contractAddress = deployed.deployTxData.public.contractAddress;
+      deployedAddresses[config.name] = contractAddress;
+      console.log(`✓ ${config.name} deployed at: ${contractAddress}`);
     }
 
     // Save deployment information
-    console.log("\n🎉 ALL CONTRACTS DEPLOYED!");
+    console.log("\nDEPLOYED!");
+    console.log("Contracts:");
     Object.entries(deployedAddresses).forEach(([name, address]) => {
-      console.log(`${name}: ${address}`);
+      console.log(`  ${name}: ${address}`);
     });
 
-    const deploymentInfo = {
+    const info = {
       contracts: deployedAddresses,
       deployedAt: new Date().toISOString(),
       network: "testnet",
       deployer: walletState.address
     };
 
-    fs.writeFileSync("deployment.json", JSON.stringify(deploymentInfo, null, 2));
-    console.log("\n📄 Deployment info saved to deployment.json");
-
+    fs.writeFileSync("deployment.json", JSON.stringify(info, null, 2));
+    console.log("\nSaved to deployment.json");
+    
     // Close wallet connection
     await wallet.close();
+
   } catch (error) {
     console.error("❌ Deployment failed:", error);
     process.exit(1);
   } finally {
     rl.close();
-    try {
-      await wallet?.close();
-    } catch (closeError) {
-      console.warn("Warning: Failed to close wallet connection:", closeError);
-    }
   }
 }
 

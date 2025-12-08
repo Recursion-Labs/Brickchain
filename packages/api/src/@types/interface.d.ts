@@ -11,6 +11,7 @@ declare global {
 
 export const registerSchema = z.object({
 	email: z.string().email(),
+	name: z.string().min(1).max(100),
 });
 export type RegisterInput = z.infer<typeof registerSchema>;
 

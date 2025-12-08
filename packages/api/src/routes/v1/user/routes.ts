@@ -10,5 +10,13 @@ router.get("/@me", authenticate, v1.user.profileController.getUserByToken);
 // Profile routes
 router.post("/profile/avatar", authenticate, imageUpload.single('image'), v1.user.profileController.uploadProfilePicture);
 router.post("/profile/banner", authenticate, imageUpload.single('image'), v1.user.profileController.uploadBanner);
+router.put("/profile", authenticate, v1.user.profileController.updateProfile);
+
+// Property request routes
+router.get("/property-requests", authenticate, v1.user.propertyRequestController.requestedProperties);
+router.post("/property-requests", authenticate, v1.user.propertyRequestController.requestProperty);
+router.delete("/property-requests/:id", authenticate, v1.user.propertyRequestController.deletePropertyRequest);
+
+router.post("/property/request/image", authenticate, imageUpload.single('image'), v1.user.propertyRequestController.uploadRequestImage);
 
 export default router;

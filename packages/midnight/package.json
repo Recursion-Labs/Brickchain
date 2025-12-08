@@ -6,18 +6,12 @@
   "scripts": {
     "compile": "for file in contracts/*.compact; do name=$(basename \"$file\" .compact); echo \"Compiling $file to build/$name\"; mkdir -p build/$name && compact compile $file build/$name; done",
     "build": "tsc",
-    "deploy": "npm run build && node dist/deploy.js",
-    "migrate": "npm run build && node dist/migrate.js",
-    "interact": "npm run build && node dist/interact.js",
-    "test": "vitest",
+    "deploy": "node dist/deploy.js",
+    "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
-    "validate-config": "npm run build && node dist/config.js",
-    "clean": "rm -rf build dist",
-    "dev": "npm run compile && npm run test",
-    "full-deploy": "npm run clean && npm run compile && npm run deploy && npm run migrate",
-    "check": "npm run compile && npm run test && npm run validate-config"
+    "clean": "rm -rf build dist deployments"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-runtime": "^0.8.1",
