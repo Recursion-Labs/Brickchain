@@ -15,16 +15,30 @@ datasource db {
 }
 
 model User {
-  id             String     @id @default(uuid())
-  email          String     @unique
-  bio            String?
-  profilePicture String?
-  banner         String?
-  name           String?
-  myProperties   Property[]
-  role           Role       @default(USER)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  id                  String             @id @default(uuid())
+  email               String             @unique
+  bio                 String?
+  profilePicture      String?
+  banner              String?
+  name                String?
+  minecraftAuthToken  String             @default(cuid())
+  minecraftPlayerData Json?
+  myProperties        Property[]
+  requestedProperties PropertyRequests[]
+  role                Role               @default(USER)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+}
+
+model PropertyRequests {
+  id                String        @id @default(uuid())
+  entity            String
+  minecraftPlayerId String
+  status            RequestStatus @default(PENDING)
+  user              User?         @relation(fields: [userId], references: [id])
+  userId            String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 }
 
 model Property {
@@ -56,4 +70,10 @@ enum PropertyType {
   OFFICE_BUILDING
   RETAIL
   MIXED_USE
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
