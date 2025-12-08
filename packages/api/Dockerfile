@@ -13,7 +13,7 @@ RUN bun run build
 
 FROM oven/bun:alpine AS production
 
-RUN apk add --no-cache curl
+RUN apk update && apk add --no-cache ca-certificates curl
 
 WORKDIR /app
 

@@ -1,15 +1,29 @@
 services:
   api:
     build:
-      context: /Users/samarthhhh/Documents/mlh-internship/BrickChain/packages/api
-      dockerfile: /Users/samarthhhh/Documents/mlh-internship/BrickChain/packages/api/Dockerfile
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      context: E:\codebase\Recurison-labs\Brickchain\packages/api
+      dockerfile: E:\codebase\Recurison-labs\Brickchain\packages\api\Dockerfile
+    container_name: 'api-server'
+    env_file:
+      - ../packages/api/.env.docker
     depends_on:
       - redis
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:8000:8000"
+    develop:
+      watch:
+        - action: rebuild
+          path: packages/api/src
+          target: /app/src
+        - action: rebuild
+          path: packages/api/package.json
+          target: /app/package.json
+        - action: rebuild
+          path: packages/api/tsconfig.json
+          target: /app/tsconfig.json
+        - action: rebuild
+          path: packages/api/.env.docker
+          target: /app/.env
   redis:
     image: redis:7-alpine
     ports:
@@ -56,7 +70,41 @@ services:
     environment:
       RUST_BACKTRACE: "full"
 
+  storage:
+    build:
+      context: E:\codebase\Recurison-labs\Brickchain\packages/storage
+      dockerfile: E:\codebase\Recurison-labs\Brickchain\packages\storage\Dockerfile
+    container_name: 'storage-server'
+    ports:
+      - "127.0.0.1:3020:3020"
+    volumes:
+      - pdfdb:/app/data
+    environment:
+      RUST_LOG: "info"
+      IPFS_URL: "http://ipfs:5001"
+      NODE_URL: "ws://node:9944"
+      SEED: "//Alice"
+    depends_on:
+      - ipfs
+      - node
+    develop:
+      watch:
+        - action: rebuild
+          path: packages/storage/src
+          target: /app/src
+        - action: rebuild
+          path: packages/storage/Cargo.toml
+          target: /app/Cargo.toml
+        - action: rebuild
+          path: packages/storage/Cargo.lock
+          target: /app/Cargo.lock
+
 volumes:
   pdfdb:
   ipfs_staging:
   ipfs_data:
+
+networks:
+  default:
+    name: brickchain
+    external: true

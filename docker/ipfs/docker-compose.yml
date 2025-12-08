@@ -2,11 +2,11 @@ services:
   ipfs:
     image: ipfs/kubo:latest
     ports:
-      - "5001:5001"
-      - "8080:8080"
+      - "5001:5001"    # IPFS API (upload files)
+      - "8081:8080"    # IPFS Gateway (download files) - Changed from 8080 to avoid conflict with waitlist
     volumes:
-      - ipfs_staging:/export
-      - ipfs_data:/data/ipfs
+      - ipfs_staging:/export      # Temporary working directory
+      - ipfs_data:/data/ipfs      # Persistent data & pinned files
 volumes:
   pdfdb:
   ipfs_staging:

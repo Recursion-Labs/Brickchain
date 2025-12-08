@@ -7,7 +7,24 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:8000:8000"
+    develop:
+      watch:
+        - action: rebuild
+          path: ../../packages/api/src
+          target: /app/src
+        - action: rebuild
+          path: ../../packages/api/package.json
+          target: /app/package.json
+        - action: rebuild
+          path: ../../packages/api/tsconfig.json
+          target: /app/tsconfig.json
+        - action: rebuild
+          path: ../../packages/api/prisma
+          target: /app/prisma
+        - action: rebuild
+          path: ../../packages/api/.env
+          target: /app/.env
   redis:
     image: redis:7-alpine
     ports:

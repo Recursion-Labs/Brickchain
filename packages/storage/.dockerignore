@@ -1,0 +1,10 @@
+target/
+.git/
+.gitignore
+.env
+.pdfdb/
+node_modules/
+build/
+reports/
+.vscode/
+*.lock

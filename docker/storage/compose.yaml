@@ -1,0 +1,35 @@
+services:
+  storage:
+    build:
+      context: ../../packages/storage
+      dockerfile: Dockerfile
+    container_name: 'storage-server'
+    ports:
+      - "127.0.0.1:3020:3020"
+    volumes:
+      - pdfdb:/app/data
+    environment:
+      RUST_LOG: "info"
+      IPFS_URL: "http://ipfs:5001"
+      NODE_URL: "ws://node:9944"
+      SEED: "//Alice"
+    networks:
+      - brickchain
+    develop:
+      watch:
+        - action: rebuild
+          path: ../../packages/storage/src
+          target: /app/src
+        - action: rebuild
+          path: ../../packages/storage/Cargo.toml
+          target: /app/Cargo.toml
+        - action: rebuild
+          path: ../../packages/storage/Cargo.lock
+          target: /app/Cargo.lock
+
+volumes:
+  pdfdb:
+
+networks:
+  brickchain:
+    external: true
