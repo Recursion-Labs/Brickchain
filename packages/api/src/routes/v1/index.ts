@@ -3,6 +3,7 @@ import authRoutes from "./auth/routes";
 import userRoutes from "./user/routes";
 import adminRoutes from "./admin/index";
 import publicRoutes from "./public/index";
+import marketplaceRoutes from "./marketplace/index";
 
 const router = Router();
 
@@ -22,6 +23,10 @@ const default_routes = [
 	{
 		path: "/public",
 		routes: publicRoutes,
+	},
+	{
+		path: "/marketplace",
+		routes: marketplaceRoutes,
 	},
 ];
 default_routes.forEach((route) => {
