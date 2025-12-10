@@ -1,5 +1,5 @@
 import { db } from "@/config/database";
-import { PropertyStatus } from "generated/prisma/enums";
+import { PropertyStatus } from "generated/prisma/client";
 
 interface CreatePropertyData {
 	propertyId: string;

@@ -1,5 +1,3 @@
-//@ts-nocheck
-
 import RedisService from "@/services/redis.service";
 import { logger } from "@/utils/logger";
 import { PrismaClient } from "../../generated/prisma/client";

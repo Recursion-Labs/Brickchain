@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { z } from "zod";
 import * as crypto from "crypto";
 import { ListingService } from "@/services/listing.service";
-import { ListingStatus } from "generated/prisma/enums";
+import { ListingStatus } from "generated/prisma/client";
 
 const listingService = new ListingService();
 

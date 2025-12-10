@@ -20,7 +20,6 @@
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
     "outDir": "./dist",
-    "rootDir": "./src",
     "incremental": true,
     "sourceMap": true,
     "baseUrl": "./",
@@ -30,6 +29,6 @@
     },
     "types": ["node", "express"]
   },
-  "include": ["src", "src/types"],
+  "include": ["src", "src/types", "generated"],
   "exclude": ["node_modules", "dist"]
 }

@@ -1,5 +1,5 @@
 import { db } from "@/config/database";
-import { BidStatus, ListingStatus } from "generated/prisma/enums";
+import { BidStatus, ListingStatus } from "generated/prisma/client";
 
 interface CreateBidData {
 	listingId: string;

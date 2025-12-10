@@ -6,6 +6,7 @@ import { z } from "zod";
 dotenv.config({ path: path.join(__dirname, "../../.env") });
 
 const EnvConfigSchema = z.object({
+	DATABASE_URL: z.string().min(1, { message: "DATABASE_URL is required" }),
 	PORT: z.coerce
 		.number({
 			error: "PORT must be a valid number",
@@ -49,6 +50,7 @@ const EnvConfigSchema = z.object({
 export type EnvConfig = z.infer<typeof EnvConfigSchema>;
 
 const rawConfig = {
+	DATABASE_URL: process.env.DATABASE_URL,
 	PORT: process.env.PORT,
 	NODE_ENV: process.env.NODE_ENV,
 	RESEND_API_KEY: process.env.RESEND_API_KEY,
@@ -84,6 +86,7 @@ try {
 }
 
 export const {
+	DATABASE_URL,
 	PORT,
 	NODE_ENV,
 	RESEND_API_KEY,

@@ -1,6 +1,6 @@
 import { PropertyService } from "@/services/property.service";
 import { Request, Response } from "express";
-import { PropertyStatus } from "generated/prisma/enums";
+import { PropertyStatus } from "generated/prisma/client";
 import { z } from "zod";
 
 const propertyService = new PropertyService();
