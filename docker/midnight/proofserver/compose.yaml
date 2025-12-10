@@ -3,7 +3,7 @@ version: '3.8'
 services:
   proof-server:
     container_name: 'counter-proof-server'
-    image: "midnightnetwork/proof-server:latest"
+    image: "midnightnetwork/proof-server:4.0.0"
     ports:
       - "6300:6300"
     environment:
