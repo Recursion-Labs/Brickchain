@@ -6,6 +6,7 @@ import { z } from "zod";
 dotenv.config({ path: path.join(__dirname, "../../.env") });
 
 const EnvConfigSchema = z.object({
+	DATABASE_URL: z.string().min(1, { message: "DATABASE_URL is required" }),
 	PORT: z.coerce
 		.number({
 			error: "PORT must be a valid number",
@@ -49,6 +50,7 @@ const EnvConfigSchema = z.object({
 export type EnvConfig = z.infer<typeof EnvConfigSchema>;
 
 const rawConfig = {
+	DATABASE_URL: process.env.DATABASE_URL,
 	PORT: process.env.PORT,
 	NODE_ENV: process.env.NODE_ENV,
 	RESEND_API_KEY: process.env.RESEND_API_KEY,
@@ -83,6 +85,23 @@ try {
 	throw new Error("Environment configuration validation failed. Check environment variables.");
 }
 
-export const { PORT, NODE_ENV, RESEND_API_KEY, REDIS_HOST, REDIS_PORT, REDIS_DB, JWT_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL, FRONTEND_CALLBACK_URL, PDF_MAX_MB, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET } = envVars;
+export const {
+	DATABASE_URL,
+	PORT,
+	NODE_ENV,
+	RESEND_API_KEY,
+	REDIS_HOST,
+	REDIS_PORT,
+	REDIS_DB,
+	JWT_SECRET,
+	GOOGLE_CLIENT_ID,
+	GOOGLE_CLIENT_SECRET,
+	GOOGLE_CALLBACK_URL,
+	FRONTEND_CALLBACK_URL,
+	PDF_MAX_MB,
+	CLOUDINARY_CLOUD_NAME,
+	CLOUDINARY_API_KEY,
+	CLOUDINARY_API_SECRET,
+} = envVars;
 
 export default envVars;

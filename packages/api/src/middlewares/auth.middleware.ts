@@ -13,7 +13,7 @@ declare global {
 export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const authHeader = req.headers.authorization;
 	const token = authHeader && authHeader.split(" ")[1];
-	const minecraftToken = req.headers['x-minecraft-token'] as string;
+	const minecraftToken = req.headers["x-minecraft-token"] as string;
 
 	// Try JWT authentication first
 	if (token) {
@@ -72,7 +72,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
 
 export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
 	const user = (req as any).user;
-	if (!user || user.role !== 'ADMIN') {
+	if (!user || user.role !== "ADMIN") {
 		res.status(403).json({ message: "Access denied: Admin role required" });
 		return;
 	}

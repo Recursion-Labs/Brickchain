@@ -1,1 +1,1 @@
-export * as propertyControllers from "./property"
+export * as propertyControllers from "./property";

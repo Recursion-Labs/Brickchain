@@ -1,5 +1,6 @@
 import { Router } from "express";
 import propertyRoutes from "./property/routes";
+import marketplaceRoutes from "./marketplace/routes";
 
 const router = Router();
 
@@ -7,6 +8,10 @@ const public_routes = [
 	{
 		path: "/property",
 		routes: propertyRoutes,
+	},
+	{
+		path: "/marketplace",
+		routes: marketplaceRoutes,
 	},
 ];
 

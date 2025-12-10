@@ -25,7 +25,7 @@ const pdfUpload = multer({
 
 // Image upload middleware
 const imageFileFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
-	const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+	const allowedMimes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 	if (allowedMimes.includes(file.mimetype)) {
 		cb(null, true);
 	} else {
