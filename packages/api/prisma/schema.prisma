@@ -11,23 +11,25 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
-  id                  String             @id @default(uuid())
-  email               String             @unique
+  id                  String               @id @default(uuid())
+  email               String               @unique
   bio                 String?
   profilePicture      String?
   banner              String?
   name                String?
-  minecraftAuthToken  String             @default(cuid())
+  minecraftAuthToken  String               @default(cuid())
   minecraftPlayerData Json?
   myProperties        Property[]
   requestedProperties PropertyRequests[]
-  role                Role               @default(USER)
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
+  role                Role                 @default(USER)
+  walletAddress       String?              @unique
+  marketplaceListings MarketplaceListing[]
+  bids                Bid[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 }
 
 model PropertyRequests {
@@ -53,19 +55,70 @@ model images {
 }
 
 model Property {
-  id          String       @id @default(uuid())
-  name        String
-  description String
-  documentId  String
-  type        PropertyType
-  location    String
-  value       Float
-  shares      Int
-  gallery     images[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  user        User?        @relation(fields: [userId], references: [id])
-  userId      String?
+  id           String               @id @default(uuid())
+  name         String
+  description  String
+  documentId   String
+  type         PropertyType
+  location     String
+  value        Float
+  shares       Int
+  gallery      images[]
+  user         User?                @relation(fields: [userId], references: [id])
+  userId       String?
+  propertyId   String?              @unique
+  owner        String?
+  valuation    String?
+  locationHash String?
+  documentHash String?
+  status       PropertyStatus?      @default(ACTIVE)
+  listings     MarketplaceListing[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+}
+
+model MarketplaceListing {
+  id           String        @id @default(uuid())
+  listingId    String        @unique // On-chain listing ID
+  propertyId   String
+  property     Property      @relation(fields: [propertyDbId], references: [id])
+  propertyDbId String
+  seller       User          @relation(fields: [sellerId], references: [id])
+  sellerId     String
+  price        String
+  status       ListingStatus @default(ACTIVE)
+  expiresAt    DateTime
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  bids         Bid[]
+}
+
+model Bid {
+  id        String             @id @default(uuid())
+  listing   MarketplaceListing @relation(fields: [listingId], references: [id])
+  listingId String
+  bidder    User               @relation(fields: [bidderId], references: [id])
+  bidderId  String
+  amount    String // Bid amount in smallest unit
+  status    BidStatus          @default(PENDING)
+  message   String? // Optional message from bidder
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
+enum ListingStatus {
+  ACTIVE
+  SOLD
+  CANCELLED
+  EXPIRED
+}
+
+enum BidStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+  EXPIRED
 }
 
 enum Role {
@@ -94,4 +147,10 @@ enum RequestStage {
   STAGE_1
   STAGE_2
   STAGE_3
+}
+
+enum PropertyStatus {
+  ACTIVE
+  SOLD
+  CANCELLED
 }
