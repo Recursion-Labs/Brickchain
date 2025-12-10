@@ -24,7 +24,7 @@ const googleCallback = [
 
 			// Redirect to frontend callback page with tokens as query parameters
 			const frontendCallbackUrl = envVars.FRONTEND_CALLBACK_URL || "http://localhost:3000/auth/google/callback";
-			console.log("Access Token:", accessToken)
+			console.log("Access Token:", accessToken);
 			const redirectUrl = `${frontendCallbackUrl}?accessToken=${encodeURIComponent(accessToken)}&refreshToken=${encodeURIComponent(refreshToken)}&user=${encodeURIComponent(JSON.stringify(user))}`;
 
 			res.redirect(redirectUrl);

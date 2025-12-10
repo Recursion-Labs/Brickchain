@@ -23,8 +23,7 @@ const uploadProfilePicture = catchAsync(async (req: Request, res: Response) => {
 	// Delete old profile picture if exists
 	if (user.profilePicture) {
 		try {
-			// Extract public_id from the URL
-			const publicId = user.profilePicture.split('/').pop()?.split('.')[0];
+			const publicId = user.profilePicture.split("/").pop()?.split(".")[0];
 			if (publicId) {
 				await ImageService.deleteImage(`profile-pictures/${publicId}`);
 			}
@@ -62,7 +61,7 @@ const uploadBanner = catchAsync(async (req: Request, res: Response) => {
 	if (user.banner) {
 		try {
 			// Extract public_id from the URL
-			const publicId = user.banner.split('/').pop()?.split('.')[0];
+			const publicId = user.banner.split("/").pop()?.split(".")[0];
 			if (publicId) {
 				await ImageService.deleteImage(`banners/${publicId}`);
 			}
@@ -85,9 +84,8 @@ const uploadBanner = catchAsync(async (req: Request, res: Response) => {
 		user: updatedUser,
 		imageUrl: uploadResult.secure_url,
 	});
-	return
+	return;
 });
-
 
 const updateProfile = catchAsync(async (req: Request, res: Response) => {
 	const user = req.user as User;
@@ -95,25 +93,25 @@ const updateProfile = catchAsync(async (req: Request, res: Response) => {
 	try {
 		await db.user.update({
 			where: {
-				id: user.id
+				id: user.id,
 			},
 			data: {
 				name,
-				bio
-			}
-		})
+				bio,
+			},
+		});
 		res.status(200).json({
 			message: "Profile updated successfully",
-		})
-		return
+		});
+		return;
 	} catch (error) {
-		throw new APIError(500, "Failed to update profile")
+		throw new APIError(500, "Failed to update profile");
 	}
-})
+});
 
 export default {
 	getUserByToken,
 	uploadProfilePicture,
 	uploadBanner,
-	updateProfile
+	updateProfile,
 };
