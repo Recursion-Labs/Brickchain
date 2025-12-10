@@ -121,10 +121,41 @@ const deletePropertyRequest = catchAsync(async (req: Request, res: Response) => 
 	return;
 });
 
+const getPropertyRequestsStatus = catchAsync(async (req: Request, res: Response) => {
+	const user = req.user as User;
+
+	const requests = await db.propertyRequests.findMany({
+		where: { userId: user.id },
+		select: {
+			id: true,
+			entity: true,
+			status: true,
+			stage: true,
+			createdAt: true,
+			updatedAt: true,
+		},
+		orderBy: { createdAt: "desc" },
+	});
+
+	const statusSummary = {
+		total: requests.length,
+		pending: requests.filter(r => r.status === "PENDING").length,
+		approved: requests.filter(r => r.status === "APPROVED").length,
+		rejected: requests.filter(r => r.status === "REJECTED").length,
+	};
+
+	res.status(200).json({
+		statusSummary,
+		requests,
+	});
+	return;
+});
+
 export default {
 	requestProperty,
 	checkEligibility,
 	requestedProperties,
 	uploadRequestImage,
 	deletePropertyRequest,
+	getPropertyRequestsStatus,
 };

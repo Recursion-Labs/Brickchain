@@ -18,6 +18,7 @@ router.put("/profile", v1.user.profileController.updateProfile);
 
 // Property request routes
 router.get("/property-requests", v1.user.propertyRequestController.requestedProperties);
+router.get("/property-requests/status", v1.user.propertyRequestController.getPropertyRequestsStatus);
 router.get("/property-requests/eligibility", v1.user.propertyRequestController.checkEligibility);
 router.post("/property-requests", v1.user.propertyRequestController.requestProperty);
 router.delete("/property-requests/:id", v1.user.propertyRequestController.deletePropertyRequest);

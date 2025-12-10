@@ -47,7 +47,7 @@ const sendOtp = catchAsync(async (req: Request, res: Response) => {
 	}
 	const check_reg = await redis.getValue(`user:${email}:registered`);
 	const check_login = await db.user.findFirst({ where: { email } });
-	if (!check_reg && !check_login) {
+	if (!check_login && !check_reg) {
 		throw new APIError(404, "User not registered");
 	}
 	try {

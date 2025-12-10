@@ -34,10 +34,10 @@ const updateRequest = catchAsync(async (req: Request, res: Response) => {
 			});
 
 			if (!response.ok) {
-				console.error("Failed to notify Minecraft plugin:", response.statusText);
+				console.warn("Failed to notify Minecraft plugin:", response.statusText);
 			}
 		} catch (error) {
-			console.error("Error notifying Minecraft plugin:", error);
+			console.warn("Minecraft plugin notification failed (server may not be running):", error instanceof Error ? error.message : String(error));
 		}
 	}
 
