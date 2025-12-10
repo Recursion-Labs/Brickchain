@@ -14,13 +14,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(
-  session({
-    secret: envVars.JWT_SECRET,
-    resave: false,
-    saveUninitialized: false,
-  })
+	session({
+		secret: envVars.JWT_SECRET,
+		resave: false,
+		saveUninitialized: false,
+	}),
 );
-
 
 app.use(cors());
 app.use(morgan("dev"));
